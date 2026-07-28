@@ -1,9 +1,5 @@
 """
 가장 먼저 이거부터 실행해서 토큰이 살아있는지 확인하세요.
-
-    pip install openai python-dotenv --break-system-packages
-    export UPSTAGE_API_KEY=up_xxxxxxxx   (또는 .env 파일에 넣기)
-    python test_connection.py
 """
 
 import os

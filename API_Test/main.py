@@ -1,7 +1,4 @@
 """
-AI & Integration 서비스 진입점.
-Backend(2번)나 Frontend(1번)가 이 서비스를 별도 컨테이너로 호출한다고 가정합니다.
-
 로컬 실행:
     pip install -r requirements.txt --break-system-packages
     uvicorn main:app --reload --port 8001
@@ -11,9 +8,9 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import Any, Optional
 
-from API_Test.rule_extractor import process_policy
-from API_Test.policy_qa import answer_policy_question
-from API_Test.application_checklist import generate_checklist_explanation
+from rule_extractor import process_policy
+from policy_qa import answer_policy_question
+from application_checklist import generate_application_checklist
 
 app = FastAPI(title="civiclens AI service")
 
@@ -33,16 +30,19 @@ def extract_rules_endpoint(req: ExtractRequest):
     return process_policy(req.raw_policy)
 
 
-# ---------- S10. 가입 준비하기 체크리스트 설명 ----------
+# ---------- S10. 가입 준비하기 전체 체크리스트 ----------
 class ChecklistRequest(BaseModel):
     policy: dict[str, Any]
-    mismatched_fields: list[dict[str, Any]]  # Backend가 이미 계산한 결과
-    ai_interpreted: dict[str, Any]  # A02 결과 재사용
+    condition_results: list[dict[str, Any]]  # Backend가 계산한 전체 조건 결과 (일부만 X)
+    requirements: list[dict[str, Any]]
+    ai_interpreted: dict[str, Any]
 
 
 @app.post("/checklist-explain")
 def checklist_explain_endpoint(req: ChecklistRequest):
-    return generate_checklist_explanation(req.policy, req.mismatched_fields, req.ai_interpreted)
+    return generate_application_checklist(
+        req.policy, req.condition_results, req.requirements, req.ai_interpreted
+    )
 
 
 # ---------- S07. 정책 Q&A ----------
