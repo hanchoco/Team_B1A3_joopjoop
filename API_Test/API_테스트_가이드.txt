@@ -14,6 +14,8 @@
 5. 온통청년API_Test.py 실행
    → raw_policy_sample.json에 데이터 잘 담겼는지 확인 (한 줄 정상)
 
+6. batch_process_policies.py 실행
+
 6. main.py 로컬실행 가이드대로 서버 실행
    → http://127.0.0.1:8001/health 로 서버 켜짐 확인
    → http://127.0.0.1:8001/docs 에서 각 엔드포인트 직접 눌러서 테스트
