@@ -15,17 +15,16 @@
     (3) 서류 체크리스트와 전체 요약을 자연어로 정리합니다.
 """
 
- 
 import json
- 
+
 try:
     from .solar_client import client, SOLAR_MODEL
     from .prompt_templates import CHECKLIST_SYSTEM_PROMPT
 except ImportError:
     from solar_client import client, SOLAR_MODEL
     from prompt_templates import CHECKLIST_SYSTEM_PROMPT
- 
- 
+
+
 def generate_application_checklist(
     policy: dict,
     condition_results: list,
@@ -42,7 +41,7 @@ def generate_application_checklist(
         ]
     requirements: policy_documents 테이블 목록 그대로
     ai_interpreted: A02의 결과 (income_note 등 예외조항/추가조건 원문 포함)
- 
+
     반환: {"checklist": [ {"type": "condition|exception|participation_limit|document", ...}, ... ]}
     """
     context = f"""
@@ -61,7 +60,7 @@ def generate_application_checklist(
         ],
     )
     result = json.loads(response.choices[0].message.content)
- 
+
     # 안전장치: type="exception"인데 condition_results에 실제로 없던 condition_key가
     # 들어있으면(=AI가 ai_interpreted만 보고 없는 조건을 지어낸 것) 강제로 제거.
     real_keys = {c.get("condition_key") for c in condition_results}
@@ -69,5 +68,40 @@ def generate_application_checklist(
         item for item in result.get("checklist", [])
         if item.get("type") != "exception" or item.get("condition_key") in real_keys
     ]
- 
+
     return result
+
+
+# ============================================================
+# 호환 레이어 (app/services/ai/__init__.py가 기대하는 이름들)
+# 주의: 실제 호출부가 이 이름들을 정확히 어떻게 쓰는지 확인 전까지는
+# "최선의 추측" 구현입니다. generate_application_checklist()가 실제 로직이고,
+# 아래는 그 결과를 다른 이름/형태로 감싼 것뿐입니다.
+# ============================================================
+
+from dataclasses import dataclass, asdict
+
+
+@dataclass
+class GeneratedDocument:
+    """checklist 안의 서류(type="document") 한 항목을 담는 타입."""
+    title: str
+    is_required: bool = True
+    explanation: str = None
+    tip: str = None
+    link: str = None
+
+
+def generate_checklist(policy: dict, condition_results: list, requirements: list, ai_interpreted: dict) -> dict:
+    """generate_application_checklist()의 별칭. 이름만 다르고 로직은 동일합니다."""
+    return generate_application_checklist(policy, condition_results, requirements, ai_interpreted)
+
+
+def create_checklist_draft(document: GeneratedDocument) -> dict:
+    """GeneratedDocument -> DB INSERT용 dict."""
+    return asdict(document)
+
+
+def validate_checklist_payload(payload: dict) -> bool:
+    """checklist 항목 최소 검증: type과 title이 있는지만 확인."""
+    return bool(payload.get("type")) and bool(payload.get("title"))
