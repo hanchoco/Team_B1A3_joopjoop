@@ -35,14 +35,13 @@ class ConditionStatus(str, Enum):
 class PolicyCardStatus(str, Enum):
     """Card-level status used on recommendation/list screens.
 
-    A policy card intentionally has no separate "ineligible" value: every
-    policy whose conditions are not all satisfied is grouped under
-    ``NEEDS_REVIEW`` according to the product rule.
+    Three states, matching the condition-level 3단계 판정 체계:
+    ELIGIBLE(가능성 높음) / NEEDS_REVIEW(추가 확인 필요) / INELIGIBLE(불충족).
     """
-
     LIKELY_ELIGIBLE = "가능성 높음"
     HIGH_PROBABILITY = "가능성 높음"
     NEEDS_REVIEW = "추가 확인 필요"
+    INELIGIBLE = "불충족"
 
 
 class PolicySort(str, Enum):

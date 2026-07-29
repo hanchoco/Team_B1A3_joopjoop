@@ -259,8 +259,11 @@ def _condition_db_status(status: object) -> str:
 
 def _card_db_status(status: object) -> str:
     name = str(getattr(status, "name", status)).split(".")[-1]
-    return "ELIGIBLE" if name in {"HIGH_PROBABILITY", "LIKELY_ELIGIBLE"} else "NEEDS_REVIEW"
-
+    if name in {"HIGH_PROBABILITY", "LIKELY_ELIGIBLE"}:
+        return "ELIGIBLE"
+    if name == "INELIGIBLE":
+        return "INELIGIBLE"
+    return "NEEDS_REVIEW"
 
 def _is_high_probability(item: EvaluatedPolicy) -> int:
     return 1 if _card_db_status(item.evaluation.status) == "ELIGIBLE" else 0
