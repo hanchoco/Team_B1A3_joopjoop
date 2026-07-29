@@ -15,7 +15,7 @@ from datetime import date, datetime, timezone
 
 import httpx
 
-DEFAULT_YOUTH_POLICY_API_URL = "https://www.youthcenter.go.kr/opi/youthPlcyList.do"
+DEFAULT_YOUTH_POLICY_API_URL = "https://www.youthcenter.go.kr/go/ythip/getPlcy"
 DEFAULT_PAGE_SIZE = 100
 _DATE_PATTERN = re.compile(
     r"(?P<year>\d{4})[.\-/년]?\s*(?P<month>\d{1,2})[.\-/월]?\s*" r"(?P<day>\d{1,2})일?"
@@ -520,10 +520,11 @@ class YouthPolicyClient:
         if page_size < 1 or page_size > 1_000:
             raise ValueError("page_size must be between 1 and 1000")
         params: dict[str, str | int] = {
-            "openApiVlak": self._request_key(),
-            "pageIndex": page_index,
-            "display": page_size,
-        }
+            "apiKeyNm": self._request_key(),
+            "pageNum": page_index,
+            "pageSize": page_size,
+            "rtnType": "json",
+            }
         if filters is not None:
             params.update(
                 {str(key): str(value) for key, value in filters.items() if str(value).strip()}

@@ -1,345 +1,281 @@
-"""Validated policy-condition extraction with review-only draft output.
+"""
+정책 원문 -> 팀이 정한 DB 스키마에 맞춘 Rule 초안 추출
 
-This module deliberately has no database dependency. AI output must be written
-to and reviewed as a draft before a CRUD layer can persist it.
+팀 DB 설계서 기준으로 데이터 생성
+
+원칙:
+  - 숫자로 이미 구조화된 조건(나이, 지역)은 AI 없이 그대로 매핑.
+  - AI(Solar)는 자유 텍스트만 다룹니다: 서류 목록 파싱, 소득/추가조건 요약, 혜택 계산규칙 추정.
+  - AI가 만든 결과는 전부 초안입니다.
 """
 
-from __future__ import annotations
+from dataclasses import dataclass, asdict, field
+from collections import defaultdict
 
-import json
-import os
-import re
-from collections.abc import Mapping, Sequence
-from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
-from pathlib import Path
-from uuid import uuid4
-
-from .prompt_templates import build_rule_extraction_messages
-from .solar_client import SolarClient
-
-ALLOWED_OPERATORS = frozenset(
-    {
-        "EQ",
-        "NE",
-        "IN",
-        "NOT_IN",
-        "GT",
-        "GTE",
-        "LT",
-        "LTE",
-        "BETWEEN",
-        "CONTAINS",
-        "EXISTS",
-        "MANUAL_CHECK",
-    }
-)
-ALLOWED_CHECK_MODES = frozenset({"AUTO", "MANUAL", "DOCUMENT"})
-AUTO_CONDITION_KEYS = frozenset(
-    {
-        "profile.age",
-        "profile.birth_year",
-        "profile.region_code",
-        "profile.region_sido",
-        "profile.region_sigungu",
-        "profile.income_band_code",
-        "profile.employment_status_code",
-        "profile.household_type_code",
-        "profile.household_size",
-        "profile.housing_type_code",
-        "profile.monthly_income_amount",
-        "profile.monthly_fixed_expense_amount",
-        "employment.company_size",
-        "employment.contract_type",
-        "employment.tenure_months",
-        "employment.insurance_enrolled",
-        "employment.job_field",
-        "housing.rental_contract_verified",
-    }
-)
-_CONDITION_KEY_PATTERN = re.compile(r"^[a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)*$")
-_MAX_RESPONSE_CHARACTERS = 1_000_000
+try:
+    from .solar_client import SolarClient
+    from .prompt_templates import CONDITION_SYSTEM_PROMPT
+except ImportError:
+    from solar_client import SolarClient
+    from prompt_templates import CONDITION_SYSTEM_PROMPT
 
 
-class ConditionValidationError(ValueError):
-    """Raised when generated condition JSON does not match the review schema."""
+# ============================================================
+# 타입
+# ============================================================
 
-
-@dataclass(frozen=True, slots=True)
+@dataclass
 class ExtractedCondition:
-    """One validated draft row for ``PolicyCondition``."""
-
+    """policy_conditions 한 행을 담는 타입."""
     condition_key: str
     operator: str
-    expected_value_json: object
-    condition_group_no: int
-    is_required: bool
-    check_mode: str
-    description: str
-    failure_message: str
-    sort_order: int
+    expected_value_json: object = None
+    condition_group_no: int = 1
+    is_required: bool = False
+    check_mode: str = "MANUAL"
+    description: str = None
+    failure_message: str = None
+    sort_order: int = 0
 
-    def to_dict(self) -> dict[str, object]:
+    def to_dict(self) -> dict:
         return asdict(self)
 
 
-def _strip_json_fence(text: str) -> str:
-    stripped = text.strip()
-    if not stripped.startswith("```"):
-        return stripped
-    lines = stripped.splitlines()
-    if len(lines) < 3 or not lines[-1].strip().startswith("```"):
-        raise ConditionValidationError("unterminated JSON code fence")
-    return "\n".join(lines[1:-1]).strip()
+# ============================================================
+# 코드 레지스트리
+# ============================================================
+
+CATEGORY_KEYWORD_MAP = {
+    "HOUSING": ["주거", "전월세", "주택"],
+    "TRANSPORT": ["교통"],
+    "FINANCE": ["금융", "자산형성", "대출", "저축"],
+    "TAX": ["세금", "세제"],
+    "EMPLOYMENT": ["일자리", "취업", "고용", "창업"],
+    "WELFARE": ["복지", "생활지원", "돌봄"],
+    "PARTICIPATION": ["참여", "청년참여", "네트워크"],
+}
+
+INCOME_BAND_ORDER = ["BELOW_50", "BETWEEN_50_75", "BETWEEN_75_100", "BETWEEN_100_120", "BETWEEN_120_150", "ABOVE_150"]
+INCOME_BAND_UPPER_BOUND = {
+    "BELOW_50": 50, "BETWEEN_50_75": 75, "BETWEEN_75_100": 100,
+    "BETWEEN_100_120": 120, "BETWEEN_120_150": 150, "ABOVE_150": None,
+}
+
+ALLOWED_CONDITION_KEYS = {
+    "profile.income_band_code", "profile.housing_type_code", "profile.household_type_code",
+    "profile.employment_status_code", "profile.household_size",
+    "employment.company_size", "employment.contract_type", "employment.tenure_months",
+    "employment.insurance_enrolled", "employment.job_field",
+}
+CHECKBOX_ONLY_CONDITION_KEYS = {"participation_limit"}
+
+CODE_REGISTRY_VALUES = {
+    "housing_type_code": {"OWNED", "JEONSE", "MONTHLY_RENT", "PUBLIC_RENTAL", "DORMITORY", "WITH_FAMILY", "OTHER"},
+    "household_type_code": {"SINGLE", "COUPLE", "WITH_PARENTS", "SINGLE_PARENT", "MULTI_PERSON", "OTHER"},
+    "employment_status_code": {"EMPLOYED", "SELF_EMPLOYED", "UNEMPLOYED", "JOB_SEEKER", "STUDENT", "ON_LEAVE", "OTHER"},
+}
+
+NO_RESTRICTION_PHRASES = ["제한 없음", "모든", "무관", "관계없이", "누구나", "가능(모든"]
+ENUM_COVERAGE_DROP_THRESHOLD = 0.8
+
+TOPIC_KEYWORDS = {
+    "employment.insurance_enrolled": ["보험"],
+}
 
 
-def _parse_json_object(text: str) -> Mapping[str, object]:
-    if not text.strip():
-        raise ConditionValidationError("AI response is empty")
-    if len(text) > _MAX_RESPONSE_CHARACTERS:
-        raise ConditionValidationError("AI response is too large")
-    try:
-        payload = json.loads(_strip_json_fence(text))
-    except json.JSONDecodeError as exc:
-        raise ConditionValidationError("AI response is not valid JSON") from exc
-    if not isinstance(payload, Mapping):
-        raise ConditionValidationError("AI response must be a JSON object")
-    return payload
+def categorize_policy(lclsf_nm: str, mclsf_nm: str) -> list:
+    text = f"{lclsf_nm or ''} {mclsf_nm or ''}"
+    matched = [code for code, keywords in CATEGORY_KEYWORD_MAP.items() if any(kw in text for kw in keywords)]
+    return matched or ["ETC"]
 
 
-def _required_string(
-    item: Mapping[str, object],
-    key: str,
-    *,
-    allow_empty: bool = False,
-    max_length: int | None = None,
-) -> str:
-    value = item.get(key)
-    if not isinstance(value, str):
-        raise ConditionValidationError(f"{key} must be a string")
-    normalized = value.strip()
-    if not allow_empty and not normalized:
-        raise ConditionValidationError(f"{key} must not be empty")
-    if max_length is not None and len(normalized) > max_length:
-        raise ConditionValidationError(f"{key} must be at most {max_length} characters")
-    return normalized
+def income_threshold_to_bands(percent: float) -> list:
+    bands = [code for code in INCOME_BAND_ORDER if percent <= (INCOME_BAND_UPPER_BOUND[code] or 9999)]
+    return bands or ["UNKNOWN"]
 
 
-def _required_int(
-    item: Mapping[str, object],
-    key: str,
-    *,
-    minimum: int,
-) -> int:
-    value = item.get(key)
-    if isinstance(value, bool) or not isinstance(value, int):
-        raise ConditionValidationError(f"{key} must be an integer")
-    if value < minimum:
-        raise ConditionValidationError(f"{key} must be at least {minimum}")
-    return value
+def _normalize_expected_value(operator: str, expected_value):
+    if operator in ("IN", "NOT_IN") and isinstance(expected_value, dict) and "values" in expected_value:
+        return expected_value["values"]
+    if operator in ("EQ", "NE") and isinstance(expected_value, dict) and "value" in expected_value:
+        return expected_value["value"]
+    return expected_value
 
 
-def _required_bool(item: Mapping[str, object], key: str) -> bool:
-    value = item.get(key)
-    if not isinstance(value, bool):
-        raise ConditionValidationError(f"{key} must be a boolean")
-    return value
+def _topic_mismatch(condition_key: str, description: str) -> bool:
+    keywords = TOPIC_KEYWORDS.get(condition_key)
+    if not keywords:
+        return False
+    return not any(kw in (description or "") for kw in keywords)
 
 
-def _validate_json_value(value: object) -> object:
-    try:
-        serialized = json.dumps(value, ensure_ascii=False, allow_nan=False)
-        return json.loads(serialized)
-    except (TypeError, ValueError) as exc:
-        raise ConditionValidationError("expected_value_json must be a valid JSON value") from exc
+def validate_conditions(raw_conditions: list) -> tuple:
+    """AI가 뽑은 조건 목록을 검증해서 (정상 목록, 걸러진 목록)을 반환."""
+    for c in raw_conditions:
+        c["expected_value"] = _normalize_expected_value(c.get("operator"), c.get("expected_value"))
+
+    grouped = defaultdict(list)
+    for c in raw_conditions:
+        grouped[c.get("condition_key")].append(c)
+
+    cleaned, dropped = [], []
+    for key, items in grouped.items():
+        if key not in ALLOWED_CONDITION_KEYS:
+            dropped += [{**c, "_drop_reason": f"허용되지 않은 condition_key: {key}"} for c in items]
+            continue
+
+        suffix = key.split(".")[-1]
+        registry = CODE_REGISTRY_VALUES.get(suffix)
+        if registry:
+            collected = set()
+            for c in items:
+                vals = c.get("expected_value")
+                if isinstance(vals, list):
+                    collected.update(vals)
+                elif isinstance(vals, str):
+                    collected.add(vals)
+            coverage = len(collected & registry) / len(registry)
+            if coverage >= ENUM_COVERAGE_DROP_THRESHOLD:
+                dropped += [{**c, "_drop_reason": f"코드값 {coverage:.0%} 나열 - 사실상 무제한"} for c in items]
+                continue
+
+        for c in items:
+            desc = c.get("description") or ""
+            if any(p in desc for p in NO_RESTRICTION_PHRASES):
+                dropped.append({**c, "_drop_reason": "설명상 제한 없음으로 판단됨"})
+                continue
+            if _topic_mismatch(key, desc):
+                dropped.append({**c, "_drop_reason": f"설명이 {key}의 의미와 안 맞음"})
+                continue
+            cleaned.append(c)
+
+    return cleaned, dropped
 
 
-def _validate_operator_value(
-    operator: str,
-    value: object,
-    *,
-    index: int,
-) -> None:
-    candidate = value
-    if isinstance(value, Mapping):
-        if operator in {"IN", "NOT_IN", "CONTAINS"} and "values" in value:
-            candidate = value["values"]
-        elif operator in {"IN", "NOT_IN"} and "value" in value:
-            candidate = value["value"]
-    if operator in {"IN", "NOT_IN"} and (
-        not isinstance(candidate, Sequence) or isinstance(candidate, (str, bytes, bytearray))
-    ):
-        raise ConditionValidationError(f"conditions[{index}] {operator} requires an array")
-    if operator == "BETWEEN":
-        has_mapping_range = isinstance(value, Mapping) and "min" in value and "max" in value
-        has_sequence_range = (
-            isinstance(value, Sequence)
-            and not isinstance(value, (str, bytes, bytearray))
-            and len(value) == 2
-        )
-        if not has_mapping_range and not has_sequence_range:
-            raise ConditionValidationError(f"conditions[{index}] BETWEEN requires min/max")
-    if operator == "EXISTS" and value is not None and not isinstance(value, bool):
-        raise ConditionValidationError(f"conditions[{index}] EXISTS expects boolean or null")
+# ============================================================
+# 메인 함수 (실제 프로덕션 진입점)
+# ============================================================
+
+async def extract_conditions(policy_payload: dict, *, client: SolarClient) -> list[ExtractedCondition]:
+    """
+    policy_payload: youth_policy_api.py가 만든 정규화된 정책 dict.
+    client: SolarClient 인스턴스 (seed_policy_data.py가 생성해서 넘겨줌)
+    반환: ExtractedCondition 리스트
+    """
+    raw = policy_payload.get("raw_payload") or policy_payload
+
+    user_input = f"""
+[정책명] {raw.get('plcyNm') or policy_payload.get('title')}
+[추가 신청자격] {raw.get('addAplyQlfcCndCn', '') or '(없음)'}
+[참여제한 대상] {raw.get('ptcpPrpTrgtCn', '') or '(없음)'}
+[소득조건 상세] {raw.get('earnEtcCn', '') or '(없음)'}
+"""
+    ai_result = await client.complete_json(CONDITION_SYSTEM_PROMPT, user_input)
+
+    conditions = []
+
+    # 나이 - AUTO (숫자 필드 직접 매핑, AI 없음)
+    if raw.get("sprtTrgtMinAge") or raw.get("sprtTrgtMaxAge"):
+        age_min = int(raw["sprtTrgtMinAge"]) if raw.get("sprtTrgtMinAge") else None
+        age_max = int(raw["sprtTrgtMaxAge"]) if raw.get("sprtTrgtMaxAge") else None
+        conditions.append({
+            "condition_key": "profile.age",
+            "operator": "BETWEEN",
+            "expected_value_json": {"min": age_min, "max": age_max},
+            "condition_group_no": 1,
+            "is_required": raw.get("sprtTrgtAgeLmtYn") == "Y",
+            "check_mode": "AUTO",
+            "description": f"만 {age_min}세 ~ {age_max}세",
+            "failure_message": f"이 정책은 만 {age_min}세~{age_max}세만 신청할 수 있습니다.",
+        })
+
+    # 지역 - AUTO
+    zip_codes = raw.get("zipCd", "").split(",") if raw.get("zipCd") else []
+    if zip_codes:
+        conditions.append({
+            "condition_key": "profile.region_code",
+            "operator": "IN",
+            "expected_value_json": {"values": zip_codes},
+            "condition_group_no": 1,
+            "is_required": True,
+            "check_mode": "AUTO",
+            "description": "거주지역 조건",
+            "failure_message": "거주지역이 이 정책의 지원 지역에 포함되지 않습니다.",
+        })
+
+    # 소득구간 - MANUAL
+    income_note = ai_result.get("income_note", {})
+    if income_note.get("has_income_condition") and income_note.get("percent_threshold"):
+        threshold = income_note["percent_threshold"]
+        bands = income_threshold_to_bands(threshold)
+        conditions.append({
+            "condition_key": "profile.income_band_code",
+            "operator": "IN",
+            "expected_value_json": {"values": bands, "percent_threshold": threshold},
+            "condition_group_no": 1,
+            "is_required": False,
+            "check_mode": "MANUAL",
+            "description": income_note.get("summary", "소득조건 확인 필요"),
+            "failure_message": "소득 조건은 정확한 확인이 필요합니다.",
+        })
+
+    # AI가 자유텍스트에서 뽑은 조건들 - 검증 통과한 것만
+    valid_ai_conditions, dropped_ai_conditions = validate_conditions(ai_result.get("conditions", []))
+    for c in valid_ai_conditions:
+        conditions.append({
+            "condition_key": c.get("condition_key"),
+            "operator": c.get("operator", "MANUAL_CHECK"),
+            "expected_value_json": c.get("expected_value"),
+            "condition_group_no": 1,
+            "is_required": c.get("is_required", False),
+            "check_mode": "MANUAL",
+            "description": c.get("description"),
+            "failure_message": c.get("failure_message"),
+        })
+
+    # 참여제한/중복수혜 안내 - 체크박스 전용
+    for note in ai_result.get("participation_notes", []):
+        conditions.append({
+            "condition_key": "participation_limit",
+            "operator": "MANUAL_CHECK",
+            "expected_value_json": None,
+            "condition_group_no": 1,
+            "is_required": False,
+            "check_mode": "MANUAL",
+            "description": note.get("summary"),
+            "failure_message": None,
+        })
+
+    for i, c in enumerate(conditions):
+        c["sort_order"] = i + 1
+
+    valid_fields = ExtractedCondition.__dataclass_fields__.keys()
+    return [ExtractedCondition(**{k: v for k, v in c.items() if k in valid_fields}) for c in conditions]
 
 
-def validate_condition_payload(payload: object) -> list[ExtractedCondition]:
-    """Validate a decoded ``{"conditions": [...]}`` payload."""
-
-    if not isinstance(payload, Mapping):
-        raise ConditionValidationError("condition payload must be an object")
-    raw_conditions = payload.get("conditions")
-    if not isinstance(raw_conditions, Sequence) or isinstance(
-        raw_conditions, (str, bytes, bytearray)
-    ):
-        raise ConditionValidationError("conditions must be an array")
-
-    conditions: list[ExtractedCondition] = []
-    seen: set[tuple[int, str, str]] = set()
-    for index, raw_condition in enumerate(raw_conditions):
-        if not isinstance(raw_condition, Mapping):
-            raise ConditionValidationError(f"conditions[{index}] must be an object")
-        condition_key = _required_string(raw_condition, "condition_key")
-        if len(condition_key) > 100 or not _CONDITION_KEY_PATTERN.fullmatch(condition_key):
-            raise ConditionValidationError(f"conditions[{index}].condition_key is invalid")
-        operator = _required_string(raw_condition, "operator").upper()
-        if operator not in ALLOWED_OPERATORS:
-            raise ConditionValidationError(f"conditions[{index}].operator is unsupported")
-        check_mode = _required_string(raw_condition, "check_mode").upper()
-        if check_mode not in ALLOWED_CHECK_MODES:
-            raise ConditionValidationError(f"conditions[{index}].check_mode is unsupported")
-        if (
-            check_mode == "AUTO"
-            and operator != "MANUAL_CHECK"
-            and condition_key not in AUTO_CONDITION_KEYS
-        ):
-            raise ConditionValidationError(
-                f"conditions[{index}].condition_key is not auto-evaluable"
-            )
-        if operator == "MANUAL_CHECK" and check_mode == "AUTO":
-            raise ConditionValidationError(
-                f"conditions[{index}] manual operator requires manual check_mode"
-            )
-        if "expected_value_json" not in raw_condition:
-            raise ConditionValidationError(f"conditions[{index}].expected_value_json is required")
-        expected_value = _validate_json_value(raw_condition["expected_value_json"])
-        _validate_operator_value(operator, expected_value, index=index)
-        condition_group_no = _required_int(
-            raw_condition,
-            "condition_group_no",
-            minimum=1,
-        )
-        identity = (condition_group_no, condition_key, operator)
-        if identity in seen:
-            raise ConditionValidationError(f"conditions[{index}] duplicates a prior condition")
-        seen.add(identity)
-        conditions.append(
-            ExtractedCondition(
-                condition_key=condition_key,
-                operator=operator,
-                expected_value_json=expected_value,
-                condition_group_no=condition_group_no,
-                is_required=_required_bool(raw_condition, "is_required"),
-                check_mode=check_mode,
-                description=_required_string(
-                    raw_condition,
-                    "description",
-                    max_length=500,
-                ),
-                failure_message=_required_string(
-                    raw_condition,
-                    "failure_message",
-                    allow_empty=True,
-                    max_length=500,
-                ),
-                sort_order=_required_int(
-                    raw_condition,
-                    "sort_order",
-                    minimum=0,
-                ),
-            )
-        )
-    return conditions
+def create_condition_draft(extracted: ExtractedCondition) -> dict:
+    """ExtractedCondition -> DB INSERT용 dict."""
+    return extracted.to_dict()
 
 
-def parse_condition_response(response_text: str) -> list[ExtractedCondition]:
-    """Decode and validate a raw Solar extraction response."""
+def validate_condition_payload(payload: dict) -> list[ExtractedCondition]:
+    """저장된 초안 JSON에서 다시 읽어들인 조건 목록을 검증하고
+    ExtractedCondition 객체 리스트로 복원합니다.
+    payload: {"conditions": [{...dict...}, ...]}
+    """
+    items = payload.get("conditions")
+    if not isinstance(items, list):
+        raise ValueError("conditions must be a list")
 
-    return validate_condition_payload(_parse_json_object(response_text))
-
-
-async def extract_conditions(
-    policy: Mapping[str, object],
-    *,
-    client: SolarClient | None = None,
-) -> list[ExtractedCondition]:
-    """Extract conditions for review; this function never writes to the DB."""
-
-    messages = build_rule_extraction_messages(policy)
-    if client is not None:
-        response = await client.complete(messages, temperature=0.0)
-        return parse_condition_response(response)
-    async with SolarClient() as solar_client:
-        response = await solar_client.complete(messages, temperature=0.0)
-        return parse_condition_response(response)
-
-
-def _review_directory(review_dir: str | Path | None) -> Path:
-    configured = (
-        Path(review_dir)
-        if review_dir is not None
-        else Path(os.getenv("JOOP_REVIEW_DIR", Path.cwd() / "review_drafts"))
-    )
-    resolved = configured.expanduser().resolve()
-    if resolved == Path(resolved.anchor):
-        raise ValueError("review directory must not be a filesystem root")
-    resolved.mkdir(parents=True, exist_ok=True)
-    if not resolved.is_dir():
-        raise ValueError("review directory must be a directory")
-    return resolved
-
-
-def _safe_policy_token(policy: Mapping[str, object]) -> str:
-    candidate = str(
-        policy.get("external_id") or policy.get("id") or policy.get("title") or "policy"
-    )
-    token = re.sub(r"[^A-Za-z0-9_-]+", "-", candidate).strip("-_")
-    return (token or "policy")[:64]
-
-
-def _write_json_atomically(path: Path, payload: Mapping[str, object]) -> None:
-    temporary_path = path.with_name(f".{path.name}.{uuid4().hex}.tmp")
-    temporary_path.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True),
-        encoding="utf-8",
-    )
-    temporary_path.replace(path)
-
-
-async def create_condition_draft(
-    policy: Mapping[str, object],
-    *,
-    review_dir: str | Path | None = None,
-    client: SolarClient | None = None,
-) -> Path:
-    """Generate a pending-review JSON file without touching persistent data."""
-
-    conditions = await extract_conditions(policy, client=client)
-    draft_id = uuid4().hex
-    draft: dict[str, object] = {
-        "schema_version": 1,
-        "kind": "policy_conditions",
-        "status": "pending_review",
-        "draft_id": draft_id,
-        "generated_at": datetime.now(timezone.utc).isoformat(),
-        "policy": {
-            "external_id": policy.get("external_id"),
-            "id": policy.get("id"),
-            "title": policy.get("title"),
-        },
-        "conditions": [condition.to_dict() for condition in conditions],
-    }
-    filename = f"conditions-{_safe_policy_token(policy)}-{draft_id}.json"
-    path = _review_directory(review_dir) / filename
-    _write_json_atomically(path, draft)
-    return path
+    valid_fields = ExtractedCondition.__dataclass_fields__.keys()
+    result = []
+    for item in items:
+        if not isinstance(item, dict):
+            raise ValueError("each condition must be an object")
+        if not item.get("condition_key") or not item.get("operator"):
+            raise ValueError("condition missing condition_key/operator")
+        if (item["condition_key"] not in ALLOWED_CONDITION_KEYS
+                and item["condition_key"] not in CHECKBOX_ONLY_CONDITION_KEYS):
+            raise ValueError(f"unknown condition_key: {item['condition_key']}")
+        result.append(ExtractedCondition(**{k: v for k, v in item.items() if k in valid_fields}))
+    return result

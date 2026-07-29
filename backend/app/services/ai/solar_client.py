@@ -1,194 +1,139 @@
-"""Upstage Solar HTTP client and policy-scoped Q&A.
+"""
+services/ai/solar_client.py  (구 policy_qa.py)
 
-This is the only module that sends requests to the Solar chat-completions API.
-No API key is required at import time; configuration is checked immediately
-before the first network request.
+이 파일 두 가지 역할:
+  1. Upstage(Solar) API 클라이언트를 한 곳에서 만들어서, rule_extractor.py /
+     checklist_generator.py가 여기서 import해서 재사용합니다. (client 중복 생성 방지)
+  2. 정책 Q&A 함수(answer_policy_question)를 담고 있습니다.
+
+핵심 원칙: answer_policy_question()은 자격 여부/금액을 스스로 "계산"하지 않습니다.
+Backend/Policy Engine이 이미 계산해서 넘겨준 matching_result의 eligibility 판정은
+절대 뒤집지 않고, 그 외에는 정책 원문+일반 상식을 활용해 자유롭게 설명합니다.
 """
 
-from __future__ import annotations
-
+import json
 import os
-from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from openai import OpenAI, AsyncOpenAI
+from dotenv import load_dotenv
 
-import httpx
+try:
+    from .prompt_templates import QA_SYSTEM_PROMPT
+except ImportError:
+    from prompt_templates import QA_SYSTEM_PROMPT
 
-from .prompt_templates import build_policy_qa_messages
+load_dotenv()
 
-DEFAULT_UPSTAGE_BASE_URL = "https://api.upstage.ai/v1"
-DEFAULT_SOLAR_MODEL = "solar-pro3"
+_API_KEY = os.environ["UPSTAGE_API_KEY"]
+_BASE_URL = os.environ.get("UPSTAGE_BASE_URL", "https://api.upstage.ai/v1")
+
+# 동기(sync) 컨텍스트에서 쓰는 공용 클라이언트/모델명.
+# checklist_generator.py의 generate_application_checklist()(S10 실시간 화면용,
+# 동기 함수)가 이걸 가져다 씁니다. 나머지(A02 파이프라인)는 아래 SolarClient(비동기)를 씁니다.
+client = OpenAI(api_key=_API_KEY, base_url=_BASE_URL)
+SOLAR_MODEL = os.environ.get("UPSTAGE_SOLAR_MODEL", "solar-pro2")
 
 
-class SolarClientError(RuntimeError):
-    """Raised when Solar configuration, transport, or response data is invalid."""
+class SolarClientError(Exception):
+    """Solar API 호출이 실패했을 때 발생. chatbot_service.py가 이걸 잡아서
+    ExternalServiceError로 다시 감쌉니다."""
+    pass
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass
 class SolarClientConfig:
-    """Runtime configuration for the Solar API."""
-
-    api_key: str | None = None
-    base_url: str = DEFAULT_UPSTAGE_BASE_URL
-    model: str = DEFAULT_SOLAR_MODEL
-    timeout_seconds: float = 30.0
+    """Solar API 연결 설정값. .env에서 읽어온 값을 그대로 담습니다."""
+    api_key: str
+    base_url: str = "https://api.upstage.ai/v1"
+    model: str = "solar-pro2"
 
     @classmethod
     def from_env(cls) -> "SolarClientConfig":
-        timeout_text = os.getenv("UPSTAGE_TIMEOUT_SECONDS", "30")
-        try:
-            timeout_seconds = float(timeout_text)
-        except ValueError as exc:
-            raise SolarClientError("UPSTAGE_TIMEOUT_SECONDS must be a number") from exc
-        if timeout_seconds <= 0:
-            raise SolarClientError("UPSTAGE_TIMEOUT_SECONDS must be positive")
         return cls(
-            api_key=(os.getenv("UPSTAGE_API_KEY") or os.getenv("SOLAR_API_KEY") or None),
-            base_url=os.getenv("UPSTAGE_BASE_URL", DEFAULT_UPSTAGE_BASE_URL),
-            model=(
-                os.getenv("UPSTAGE_SOLAR_MODEL") or os.getenv("SOLAR_MODEL") or DEFAULT_SOLAR_MODEL
-            ),
-            timeout_seconds=timeout_seconds,
+            api_key=os.environ["UPSTAGE_API_KEY"],
+            base_url=os.environ.get("UPSTAGE_BASE_URL", "https://api.upstage.ai/v1"),
+            model=os.environ.get("UPSTAGE_SOLAR_MODEL", "solar-pro2"),
         )
 
 
 class SolarClient:
-    """Small async client for Solar's OpenAI-compatible chat endpoint."""
+    """비동기 Solar 클라이언트. seed_policy_data.py가 `SolarClient()`로 인자 없이
+    생성하고, extract_conditions()/generate_checklist()에 client=로 넘깁니다."""
 
-    def __init__(
-        self,
-        config: SolarClientConfig | None = None,
-        *,
-        http_client: httpx.AsyncClient | None = None,
-    ) -> None:
-        self._config = config or SolarClientConfig.from_env()
-        self._http_client = http_client
-        self._owns_http_client = http_client is None
+    def __init__(self, config: SolarClientConfig | None = None):
+        self.config = config or SolarClientConfig.from_env()
+        self._client = AsyncOpenAI(api_key=self.config.api_key, base_url=self.config.base_url)
 
-    @property
-    def model(self) -> str:
-        return self._config.model
-
-    def _endpoint(self) -> str:
-        base_url = self._config.base_url.rstrip("/")
-        if base_url.endswith("/chat/completions"):
-            return base_url
-        return f"{base_url}/chat/completions"
-
-    def _authorization_headers(self) -> dict[str, str]:
-        api_key = (self._config.api_key or "").strip()
-        if not api_key:
-            raise SolarClientError("UPSTAGE_API_KEY is required when calling the Solar API")
-        return {
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-        }
-
-    def _client(self) -> httpx.AsyncClient:
-        if self._http_client is None:
-            self._http_client = httpx.AsyncClient(timeout=self._config.timeout_seconds)
-        return self._http_client
-
-    async def complete(
-        self,
-        messages: Sequence[Mapping[str, str]],
-        *,
-        temperature: float = 0.1,
-        max_tokens: int = 2_048,
-    ) -> str:
-        """Return one Solar response for explicitly supplied messages."""
-
-        if not messages:
-            raise ValueError("messages must not be empty")
-        if not 0 <= temperature <= 2:
-            raise ValueError("temperature must be between 0 and 2")
-        if max_tokens <= 0:
-            raise ValueError("max_tokens must be positive")
-
-        normalized_messages: list[dict[str, str]] = []
-        for message in messages:
-            role = message.get("role", "").strip()
-            content = message.get("content", "").strip()
-            if role not in {"system", "user", "assistant"}:
-                raise ValueError(f"unsupported message role: {role!r}")
-            if not content:
-                raise ValueError("message content must not be empty")
-            normalized_messages.append({"role": role, "content": content})
-
-        payload: dict[str, object] = {
-            "model": self._config.model,
-            "messages": normalized_messages,
-            "temperature": temperature,
-            "max_tokens": max_tokens,
-            "stream": False,
-        }
+    async def complete_json(self, system_prompt: str, user_content: str) -> dict:
+        """system_prompt/user_content로 Solar를 JSON 모드로 호출해서 dict로 반환."""
         try:
-            response = await self._client().post(
-                self._endpoint(),
-                headers=self._authorization_headers(),
-                json=payload,
+            response = await self._client.chat.completions.create(
+                model=self.config.model,
+                temperature=0,
+                response_format={"type": "json_object"},
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_content},
+                ],
             )
-        except httpx.TimeoutException as exc:
-            raise SolarClientError("Solar API request timed out") from exc
-        except httpx.HTTPError as exc:
-            raise SolarClientError("Solar API transport failed") from exc
+            return json.loads(response.choices[0].message.content)
+        except Exception as exc:
+            raise SolarClientError(f"Solar API 호출 실패: {exc}") from exc
 
-        if response.status_code < 200 or response.status_code >= 300:
-            raise SolarClientError(f"Solar API returned HTTP {response.status_code}")
+    async def complete_text(self, system_prompt: str, user_content: str) -> str:
+        """일반 텍스트 응답이 필요할 때(예: Q&A) 사용."""
         try:
-            response_payload = response.json()
-        except ValueError as exc:
-            raise SolarClientError("Solar API returned invalid JSON") from exc
-        if not isinstance(response_payload, Mapping):
-            raise SolarClientError("Solar API response must be a JSON object")
-
-        choices = response_payload.get("choices")
-        if (
-            not isinstance(choices, Sequence)
-            or isinstance(choices, (str, bytes, bytearray))
-            or not choices
-        ):
-            raise SolarClientError("Solar API response has no choices")
-        first_choice = choices[0]
-        if not isinstance(first_choice, Mapping):
-            raise SolarClientError("Solar API choice must be an object")
-        message = first_choice.get("message")
-        if not isinstance(message, Mapping):
-            raise SolarClientError("Solar API choice has no message")
-        content = message.get("content")
-        if not isinstance(content, str) or not content.strip():
-            raise SolarClientError("Solar API returned empty content")
-        return content.strip()
+            response = await self._client.chat.completions.create(
+                model=self.config.model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_content},
+                ],
+            )
+            return response.choices[0].message.content
+        except Exception as exc:
+            raise SolarClientError(f"Solar API 호출 실패: {exc}") from exc
 
     async def close(self) -> None:
-        """Close an internally-created transport."""
-
-        if self._owns_http_client and self._http_client is not None:
-            await self._http_client.aclose()
-            self._http_client = None
-
-    async def __aenter__(self) -> "SolarClient":
-        return self
-
-    async def __aexit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_value: BaseException | None,
-        traceback: object | None,
-    ) -> None:
-        del exc_type, exc_value, traceback
-        await self.close()
+        await self._client.close()
 
 
-async def answer_policy_question(
-    question: str,
-    policy: Mapping[str, object],
-    *,
-    client: SolarClient | None = None,
-) -> str:
-    """Answer one question without accepting or storing chat history."""
+# ============================================================
+# S07. 정책 Q&A - chatbot_service.py가 직접 호출 (client 없이, 내부 기본 클라이언트 사용)
+# ============================================================
 
-    messages = build_policy_qa_messages(question, policy)
-    if client is not None:
-        return await client.complete(messages, temperature=0.2)
-    async with SolarClient() as solar_client:
-        return await solar_client.complete(messages, temperature=0.2)
+_default_client: SolarClient | None = None
+
+
+def _get_default_client() -> SolarClient:
+    global _default_client
+    if _default_client is None:
+        _default_client = SolarClient()
+    return _default_client
+
+
+async def answer_policy_question(question: str, context: dict) -> str:
+    """
+    question: 사용자가 입력한 자유 질문
+    context: chatbot_service.py가 만들어서 넘기는 dict (policies 필드 + conditions 정의).
+             사용자별 충족/불충족 판정은 여기 없습니다 - 정책·조건 "정의"만 보고 설명합니다.
+    반환: 답변 문자열
+    """
+    prompt_context = f"""
+[정책명] {context.get('title')}
+[요약] {context.get('summary')}
+[상세 설명] {context.get('description')}
+[지원 대상] {context.get('support_target_text')}
+[지원 내용] {context.get('support_content_text')}
+[신청 방법] {context.get('application_method')}
+[신청 기간] {context.get('application_start_date')} ~ {context.get('application_end_date')}
+[상시 모집 여부] {context.get('is_ongoing')}
+[주관 기관] {context.get('provider_name')}
+[신청 URL] {context.get('application_url')}
+[문의처] {context.get('contact')}
+[정책 원문] {context.get('original_text')}
+[자격 조건 정의] {context.get('conditions')}
+[질문] {question}
+"""
+    client = _get_default_client()
+    return await client.complete_text(QA_SYSTEM_PROMPT, prompt_context)

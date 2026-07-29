@@ -32,7 +32,9 @@ def main():
         try:
             processed = process_policy(raw)
             results.append(processed)
-            print(f"[{i}/{len(raw_policies)}] 완료 - {name}")
+            dropped = len(processed.get("_dropped_conditions", []))
+            note = f" (걸러진 조건 {dropped}개)" if dropped else ""
+            print(f"[{i}/{len(raw_policies)}] 완료 - {name}{note}")
         except Exception as e:
             failed.append({"plcyNm": name, "error": str(e)})
             print(f"[{i}/{len(raw_policies)}] 실패 - {name} ({e})")
@@ -40,7 +42,8 @@ def main():
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
         json.dump(results, f, ensure_ascii=False, indent=2)
 
-    print(f"\n완료: {len(results)}개 성공, {len(failed)}개 실패")
+    total_dropped = sum(len(r.get("_dropped_conditions", [])) for r in results)
+    print(f"\n완료: {len(results)}개 성공, {len(failed)}개 실패, 총 걸러진 조건 {total_dropped}개")
     print(f"결과 저장: {OUTPUT_PATH}")
 
     if failed:
