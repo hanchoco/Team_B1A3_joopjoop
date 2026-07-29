@@ -10,6 +10,7 @@ services/ai/solar_client.py  (구 policy_qa.py)
 Backend/Policy Engine이 이미 계산해서 넘겨준 matching_result의 eligibility 판정은
 절대 뒤집지 않고, 그 외에는 정책 원문+일반 상식을 활용해 자유롭게 설명합니다.
 """
+
 import os
 from openai import OpenAI
 from dotenv import load_dotenv
@@ -22,11 +23,14 @@ except ImportError:
 load_dotenv()
 
 # 다른 ai/ 모듈(rule_extractor.py, checklist_generator.py)이
-# `from solar_client import client`로 그대로 가져다 씁니다.
+# `from solar_client import client, SOLAR_MODEL`로 그대로 가져다 씁니다.
 client = OpenAI(
     api_key=os.environ["UPSTAGE_API_KEY"],
-    base_url="https://api.upstage.ai/v1",
+    base_url=os.environ.get("UPSTAGE_BASE_URL", "https://api.upstage.ai/v1"),
 )
+
+# .env의 UPSTAGE_SOLAR_MODEL을 읽음. 값이 없으면 solar-pro2로 안전하게 fallback.
+SOLAR_MODEL = os.environ.get("UPSTAGE_SOLAR_MODEL", "solar-pro2")
 
 
 def answer_policy_question(policy: dict, user_profile: dict, matching_result: dict, question: str) -> dict:
@@ -45,7 +49,7 @@ def answer_policy_question(policy: dict, user_profile: dict, matching_result: di
 [질문] {question}
 """
     response = client.chat.completions.create(
-        model="solar-pro2",
+        model=SOLAR_MODEL,
         messages=[
             {"role": "system", "content": QA_SYSTEM_PROMPT},
             {"role": "user", "content": context},

@@ -15,16 +15,17 @@
     (3) 서류 체크리스트와 전체 요약을 자연어로 정리합니다.
 """
 
+ 
 import json
-
+ 
 try:
-    from .solar_client import client
+    from .solar_client import client, SOLAR_MODEL
     from .prompt_templates import CHECKLIST_SYSTEM_PROMPT
 except ImportError:
-    from solar_client import client
+    from solar_client import client, SOLAR_MODEL
     from prompt_templates import CHECKLIST_SYSTEM_PROMPT
-
-
+ 
+ 
 def generate_application_checklist(
     policy: dict,
     condition_results: list,
@@ -41,7 +42,7 @@ def generate_application_checklist(
         ]
     requirements: policy_documents 테이블 목록 그대로
     ai_interpreted: A02의 결과 (income_note 등 예외조항/추가조건 원문 포함)
-
+ 
     반환: {"checklist": [ {"type": "condition|exception|participation_limit|document", ...}, ... ]}
     """
     context = f"""
@@ -51,7 +52,7 @@ def generate_application_checklist(
 [예외조항 정보] {ai_interpreted}
 """
     response = client.chat.completions.create(
-        model="solar-pro2",
+        model=SOLAR_MODEL,
         temperature=0,
         response_format={"type": "json_object"},
         messages=[
@@ -60,7 +61,7 @@ def generate_application_checklist(
         ],
     )
     result = json.loads(response.choices[0].message.content)
-
+ 
     # 안전장치: type="exception"인데 condition_results에 실제로 없던 condition_key가
     # 들어있으면(=AI가 ai_interpreted만 보고 없는 조건을 지어낸 것) 강제로 제거.
     real_keys = {c.get("condition_key") for c in condition_results}
@@ -68,5 +69,5 @@ def generate_application_checklist(
         item for item in result.get("checklist", [])
         if item.get("type") != "exception" or item.get("condition_key") in real_keys
     ]
-
+ 
     return result
