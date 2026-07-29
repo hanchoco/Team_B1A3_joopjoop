@@ -44,15 +44,6 @@ AI_SYSTEM_PROMPT = """당신은 한국 청년 정책 데이터를 정리하는 �
 2. requirements: 제출서류 텍스트를 항목별로 쪼갠 리스트.
    각 항목: {"title": "서류명", "is_required": true/false, "description": "간단 설명"}
    원문에 "(필수)","(선택)" 표시가 있으면 그대로 반영하세요.
-
-   서류 정보가 없는 경우, 아래 두 가지를 구분하세요:
-   a) 원문이 "제출서류 없음", "해당없음"처럼 서류가 아예 필요 없다는 뜻이면
-      -> requirements를 빈 배열([])로 두세요.
-   b) 원문이 "붙임파일 확인", "첨부파일 참조"처럼 서류는 있지만 이 텍스트에
-      구체적인 이름이 없는 경우 -> requirements에 아래처럼 안내용 항목 하나를 넣으세요.
-      {"title": "첨부파일 확인 필요", "is_required": true,
-       "description": "정확한 제출 서류 목록은 정책 공고문 첨부파일에서 확인해야 합니다."}
-   빈 배열로 둘지 안내 항목을 넣을지 헷갈리면 b)를 선택하세요 (정보 누락보다 안내가 안전).
 3. benefit_hint: 지원내용 텍스트에서 계산 방식을 추정.
    {"calculator_type": "FIXED_MONTHLY|FIXED_ONCE|RENT_SUPPORT|TRANSPORT_REFUND|SAVINGS_MATCH|TAX_ESTIMATE|CUSTOM",
     "monthly_cap": 숫자 또는 null, "duration_months": 숫자 또는 null,
