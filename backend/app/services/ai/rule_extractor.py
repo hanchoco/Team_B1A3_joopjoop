@@ -12,7 +12,7 @@
 import json
 from datetime import datetime
 
-from solar_client import client
+from backend.app.services.ai.solar_client import client
 from prompt_templates import EXTRACTOR_SYSTEM_PROMPT
 
 # ============================================================

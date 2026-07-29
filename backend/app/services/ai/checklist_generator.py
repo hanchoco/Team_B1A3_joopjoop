@@ -17,7 +17,7 @@
 
 import json
 
-from solar_client import client
+from backend.app.services.ai.solar_client import client
 from prompt_templates import CHECKLIST_SYSTEM_PROMPT
 
 
