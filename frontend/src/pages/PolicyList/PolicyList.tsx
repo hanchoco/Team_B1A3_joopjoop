@@ -1,4 +1,14 @@
-import { ChevronDown, Filter, Star } from 'lucide-react'
+import {
+  BriefcaseBusiness,
+  ChevronDown,
+  CreditCard,
+  Filter,
+  Heart,
+  House,
+  ReceiptText,
+  Star,
+  TrainFront,
+} from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useApp } from '../../store/useApp'
@@ -105,6 +115,15 @@ const possibilityFilters = [
   { value: 'REVIEW_REQUIRED', label: '추가 확인 필요' },
   { value: 'ALL', label: '전체' },
 ]
+
+const categoryIcons: Record<string, typeof House> = {
+  주거: House,
+  금융: CreditCard,
+  교통: TrainFront,
+  고용: BriefcaseBusiness,
+  복지: Heart,
+  세금: ReceiptText,
+}
 
 function queryPolicies({ profile, filter, category, sort }: PolicyQuery) {
   return policies
@@ -246,6 +265,7 @@ export default function PolicyList() {
         {visiblePolicies.map((policy) => {
           const { id, title, description, category, chance, benefit, condition, deadline } = policy
           const favorite = Boolean(favoritePolicies[id])
+          const CategoryIcon = categoryIcons[category] ?? ReceiptText
           return (
             <article
               key={id}
@@ -277,26 +297,33 @@ export default function PolicyList() {
                 </div>
               </header>
 
-              <div className="mt-4 flex flex-1 flex-col gap-3">
-                <h2 className="text-xl font-bold text-gray-950">{title}</h2>
-                <p className="text-sm leading-7 text-gray-500">{description}</p>
-                <p className="text-base font-bold leading-7 text-blue-700">{benefit}</p>
-              </div>
+              <div className="mt-4 grid flex-1 grid-cols-[56px_minmax(0,1fr)] gap-4">
+                <span className="grid h-14 w-14 place-items-center rounded-lg bg-slate-100 text-gray-500">
+                  <CategoryIcon size={27} strokeWidth={1.7} />
+                </span>
+                <div className="flex min-w-0 flex-col">
+                  <div className="flex flex-1 flex-col gap-3">
+                    <h2 className="text-xl font-bold text-gray-950">{title}</h2>
+                    <p className="text-sm leading-7 text-gray-500">{description}</p>
+                    <p className="text-base font-bold leading-7 text-blue-700">{benefit}</p>
+                  </div>
 
-              <footer className="mt-auto flex flex-col gap-3 pt-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex flex-wrap items-center gap-3 text-sm">
-                  <span className="font-semibold text-rose-500">마감 D-{deadline}</span>
-                  <span className="h-3 w-px bg-gray-200" />
-                  <span className="text-gray-500">{condition}</span>
+                  <footer className="mt-auto flex flex-col gap-3 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-wrap items-center gap-3 text-sm">
+                      <span className="font-semibold text-rose-500">마감 D-{deadline}</span>
+                      <span className="h-3 w-px bg-gray-200" />
+                      <span className="text-gray-500">{condition}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/policies/${id}`)}
+                      className="self-end rounded-lg border border-blue-600 px-4 py-2 text-sm font-medium text-blue-600 transition hover:bg-blue-50"
+                    >
+                      자세히 보기
+                    </button>
+                  </footer>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => navigate(`/policies/${id}`)}
-                  className="self-end rounded-lg border border-blue-600 px-4 py-2 text-sm font-medium text-blue-600 transition hover:bg-blue-50"
-                >
-                  자세히 보기
-                </button>
-              </footer>
+              </div>
             </article>
           )
         })}
