@@ -16,7 +16,6 @@ try:
     from .solar_client import client
     from .prompt_templates import EXTRACTOR_SYSTEM_PROMPT
 except ImportError:
-    # 독립 실행(python rule_extractor.py)일 때는 상대 import가 안 되니 이쪽으로
     from solar_client import client
     from prompt_templates import EXTRACTOR_SYSTEM_PROMPT
 
@@ -271,7 +270,7 @@ def process_policy(raw: dict) -> dict:
             "condition_key": "profile.age",
             "operator": "BETWEEN",
             "expected_value_json": {"min": age_min, "max": age_max},
-            "condition_group_no": 0,
+            "condition_group_no": 1,  # DB 제약: 0보다 커야 함. 같은 그룹=AND, 대부분 정책은 1그룹으로 충분
             "is_required": raw.get("sprtTrgtAgeLmtYn") == "Y",
             "check_mode": "AUTO",
             "description": f"만 {age_min}세 ~ {age_max}세",
@@ -284,7 +283,7 @@ def process_policy(raw: dict) -> dict:
             "condition_key": "profile.region_code",
             "operator": "IN",
             "expected_value_json": {"values": zip_codes},
-            "condition_group_no": 0,
+            "condition_group_no": 1,  # DB 제약: 0보다 커야 함. 같은 그룹=AND, 대부분 정책은 1그룹으로 충분
             "is_required": True,
             "check_mode": "AUTO",
             "description": "거주지역 조건",
@@ -302,7 +301,7 @@ def process_policy(raw: dict) -> dict:
             # percent_threshold를 같이 넘겨서, Policy Engine이 매칭 시점에
             # "경계에 걸친 구간만 확인필요, 나머지는 자동판정" 로직을 짤 수 있게 함
             "expected_value_json": {"values": bands, "percent_threshold": threshold},
-            "condition_group_no": 0,
+            "condition_group_no": 1,  # DB 제약: 0보다 커야 함. 같은 그룹=AND, 대부분 정책은 1그룹으로 충분
             "is_required": False,  # 근사치라 필수 조건으로 강제하지 않음
             "check_mode": "MANUAL",  # 기본값. Policy Engine이 경계 밖이면 AUTO처럼 취급 가능
             "description": income_note.get("summary", "소득조건 확인 필요"),
@@ -316,7 +315,7 @@ def process_policy(raw: dict) -> dict:
             "condition_key": c.get("condition_key"),
             "operator": c.get("operator", "MANUAL_CHECK"),
             "expected_value_json": c.get("expected_value"),
-            "condition_group_no": 0,
+            "condition_group_no": 1,  # DB 제약: 0보다 커야 함. 같은 그룹=AND, 대부분 정책은 1그룹으로 충분
             "is_required": c.get("is_required", False),
             "check_mode": "MANUAL",
             "description": c.get("description"),
@@ -331,7 +330,7 @@ def process_policy(raw: dict) -> dict:
             "condition_key": "participation_limit",
             "operator": "MANUAL_CHECK",
             "expected_value_json": None,
-            "condition_group_no": 0,
+            "condition_group_no": 1,  # DB 제약: 0보다 커야 함. 같은 그룹=AND, 대부분 정책은 1그룹으로 충분
             "is_required": False,
             "check_mode": "MANUAL",
             "description": note.get("summary"),
@@ -361,9 +360,11 @@ def process_policy(raw: dict) -> dict:
         }
 
     # ---------- policy_documents ----------
+    # document_code: NOT NULL + UNIQUE(policy_id, document_code) 제약이 있어서
+    # None으로 두면 안 됨. policy_id 안에서만 유일하면 되니 순번으로 충분.
     policy_documents = [
         {
-            "document_code": None,  # Backend에서 채번
+            "document_code": f"DOC-{i + 1:02d}",
             "document_name": d.get("document_name"),
             "required_reason": d.get("required_reason"),
             "issuing_organization": d.get("issuing_organization"),
