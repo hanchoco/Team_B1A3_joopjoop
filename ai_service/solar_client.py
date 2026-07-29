@@ -1,37 +1,30 @@
 """
-정책 Q&A (AI 정책 도우미)
+services/ai/solar_client.py  (구 policy_qa.py)
 
-핵심 원칙: 이 모듈은 자격 여부/금액을 스스로 "계산"하지 않습니다.
-Backend/Policy Engine이 이미 계산해서 넘겨준 matching_result를
-"쉬운 말로 설명"만 합니다. (기획 문서 9장: AI가 하지 않는 것 / 하는 것 참고) -> 확인 필요
+이 파일 두 가지 역할:
+  1. Upstage(Solar) API 클라이언트를 한 곳에서 만들어서, rule_extractor.py /
+     checklist_generator.py가 여기서 import해서 재사용합니다. (client 중복 생성 방지)
+  2. 정책 Q&A 함수(answer_policy_question)를 담고 있습니다.
+
+핵심 원칙: answer_policy_question()은 자격 여부/금액을 스스로 "계산"하지 않습니다.
+Backend/Policy Engine이 이미 계산해서 넘겨준 matching_result의 eligibility 판정은
+절대 뒤집지 않고, 그 외에는 정책 원문+일반 상식을 활용해 자유롭게 설명합니다.
 """
 
 import os
 from openai import OpenAI
 from dotenv import load_dotenv
 
+from prompt_templates import QA_SYSTEM_PROMPT
+
 load_dotenv()
 
+# 다른 ai/ 모듈(rule_extractor.py, checklist_generator.py)이
+# `from solar_client import client`로 그대로 가져다 씁니다.
 client = OpenAI(
     api_key=os.environ["UPSTAGE_API_KEY"],
     base_url="https://api.upstage.ai/v1",
 )
-
-SYSTEM_PROMPT = """당신은 civiclens의 정책 도우미입니다.
-지금 사용자가 보고 있는 정책 하나에 대해서만 답변합니다.
-
-질문은 크게 두 종류입니다. 어떤 데이터를 근거로 답해야 하는지 구분하세요.
-1. 자격 관련 질문("왜 제가 대상인가요?", "저도 받을 수 있나요?")
-   → 반드시 [매칭 결과]에 있는 값만 사용해서 설명하세요. 지원 가능 여부나 금액을 새로 계산하지 마세요.
-2. 내용 관련 질문("서류가 뭐예요?", "신청 기한이 언제예요?", "어떻게 신청해요?")
-   → [정책 원문]에서 관련 내용을 찾아 쉬운 말로 풀어서 설명하세요.
-
-공통 규칙:
-- [매칭 결과]와 [정책 원문] 어디에도 없는 내용은 절대 만들어내지 마세요.
-  이 경우 "정확한 내용은 신청 페이지 또는 담당 기관에서 확인이 필요하다"고 솔직하게 안내하세요.
-- 행정 용어를 쉬운 말로 풀어서 설명하세요.
-- 답변은 3~4문장 이내로 짧게 하세요.
-"""
 
 
 def answer_policy_question(policy: dict, user_profile: dict, matching_result: dict, question: str) -> dict:
@@ -52,14 +45,14 @@ def answer_policy_question(policy: dict, user_profile: dict, matching_result: di
     response = client.chat.completions.create(
         model="solar-pro2",
         messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "system", "content": QA_SYSTEM_PROMPT},
             {"role": "user", "content": context},
         ],
     )
     answer = response.choices[0].message.content
 
-    # S05로 돌아가는 "근거 확인하기" 버튼에 쓸 수 있도록 어떤 필드를 근거로 썼는지 같이 반환
-    source_fields = [r["field"] for r in matching_result.get("matched_rules", [])]
+    # S05로 돌아가는 "근거 확인하기" 버튼에 쓸 수 있도록 어떤 조건을 근거로 썼는지 같이 반환
+    source_fields = [r["condition_key"] for r in matching_result.get("matched_rules", [])]
 
     return {"answer": answer, "source_fields": source_fields}
 
@@ -77,9 +70,9 @@ if __name__ == "__main__":
     matching_result = {
         "eligibility": "high",
         "matched_rules": [
-            {"field": "AGE", "status": "충족"},
-            {"field": "REGION", "status": "충족"},
-            {"field": "HOUSING_TYPE", "status": "충족"},
+            {"condition_key": "profile.age", "status": "충족"},
+            {"condition_key": "profile.region_code", "status": "충족"},
+            {"condition_key": "profile.housing_type_code", "status": "충족"},
         ],
         "benefit": {"monthly": 200000, "annual_max": 2400000},
     }
