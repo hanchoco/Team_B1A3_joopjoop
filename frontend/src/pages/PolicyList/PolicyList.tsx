@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useApp } from '../../store/useApp'
 
 type PossibilityFilter = 'POSSIBILITY_HIGH' | 'REVIEW_REQUIRED' | 'ALL'
+type PolicySort = 'recommended' | 'deadline'
 
 interface PolicyQueryProfile {
   age: number
@@ -17,17 +18,21 @@ interface PolicyQuery {
   profile: PolicyQueryProfile
   filter: string
   category: string | null
+  sort: PolicySort
 }
 
 const policies = [
   {
     id: 'youth-rent',
     title: '청년 월세 한시 특별지원',
+    description: '월세 부담이 큰 청년이 조금 더 안정적으로 생활할 수 있도록 주거비를 지원해요.',
     category: '주거',
     possibility: 'POSSIBILITY_HIGH',
     chance: '가능성 높음',
     benefit: '월 최대 20만 원 · 최대 12개월',
     condition: '현재 조건 5개 중 4개 충족',
+    matchedConditions: 4,
+    totalConditions: 5,
     deadline: 23,
     minAge: 19,
     maxAge: 34,
@@ -39,11 +44,14 @@ const policies = [
   {
     id: 'youth-account',
     title: '청년도약계좌',
+    description: '청년이 꾸준히 자산을 형성할 수 있도록 정부 기여금과 비과세 혜택을 지원해요.',
     category: '금융',
     possibility: 'POSSIBILITY_HIGH',
     chance: '가능성 높음',
     benefit: '만기 약 5,400만 원 · 정부 기여금 지원',
     condition: '현재 조건 5개 중 5개 충족',
+    matchedConditions: 5,
+    totalConditions: 5,
     deadline: 51,
     minAge: 19,
     maxAge: 34,
@@ -55,11 +63,14 @@ const policies = [
   {
     id: 'transport',
     title: '청년 교통비 지원사업',
+    description: '대중교통을 자주 이용하는 청년의 생활비 부담을 덜어드려요.',
     category: '교통',
     possibility: 'REVIEW_REQUIRED',
     chance: '추가 확인 필요',
     benefit: '월 최대 5만 원 · 교통비 환급',
     condition: '현재 조건 5개 중 3개 충족',
+    matchedConditions: 3,
+    totalConditions: 5,
     deadline: 38,
     minAge: 19,
     maxAge: 34,
@@ -71,11 +82,14 @@ const policies = [
   {
     id: 'career-return',
     title: '청년 재직자 경력 지원',
+    description: '청년 재직자의 직무 역량 향상과 안정적인 경력 개발을 지원해요.',
     category: '고용',
-    possibility: 'NOT_ELIGIBLE',
-    chance: '불충족',
+    possibility: 'REVIEW_REQUIRED',
+    chance: '추가 확인 필요',
     benefit: '교육비 최대 100만 원',
     condition: '현재 조건 5개 중 2개 충족',
+    matchedConditions: 2,
+    totalConditions: 5,
     deadline: 67,
     minAge: 19,
     maxAge: 34,
@@ -92,7 +106,7 @@ const possibilityFilters = [
   { value: 'ALL', label: '전체' },
 ]
 
-function queryPolicies({ profile, filter, category }: PolicyQuery) {
+function queryPolicies({ profile, filter, category, sort }: PolicyQuery) {
   return policies
     .map((policy) => {
       const ageMatch = profile.age >= policy.minAge && profile.age <= policy.maxAge
@@ -102,22 +116,29 @@ function queryPolicies({ profile, filter, category }: PolicyQuery) {
         policy.employments.includes('전체') || policy.employments.includes(profile.employment)
       const housingMatch =
         policy.housingTypes.includes('전체') || policy.housingTypes.includes(profile.housing)
-      const computedPossibility =
+      const allProfileConditionsMatch =
         ageMatch && regionMatch && incomeMatch && employmentMatch && housingMatch
-          ? policy.possibility
-          : 'NOT_ELIGIBLE'
-      const chance =
-        computedPossibility === 'POSSIBILITY_HIGH'
-          ? '가능성 높음'
-          : computedPossibility === 'REVIEW_REQUIRED'
-            ? '추가 확인 필요'
-            : '불충족'
+      const allConditionsFulfilled = policy.matchedConditions === policy.totalConditions
+      const computedPossibility =
+        allProfileConditionsMatch && allConditionsFulfilled ? 'POSSIBILITY_HIGH' : 'REVIEW_REQUIRED'
+      const chance = computedPossibility === 'POSSIBILITY_HIGH' ? '가능성 높음' : '추가 확인 필요'
       return { ...policy, possibility: computedPossibility, chance }
     })
     .filter((policy) => {
       const matchesPossibility = filter === 'ALL' || policy.possibility === filter
       const matchesCategory = !category || policy.category === category
       return matchesPossibility && matchesCategory
+    })
+    .sort((a, b) => {
+      if (sort === 'deadline') return a.deadline - b.deadline
+
+      if (a.possibility !== b.possibility) {
+        return a.possibility === 'POSSIBILITY_HIGH' ? -1 : 1
+      }
+
+      const aConditionRatio = a.matchedConditions / a.totalConditions
+      const bConditionRatio = b.matchedConditions / b.totalConditions
+      return bConditionRatio - aConditionRatio || a.deadline - b.deadline
     })
 }
 
@@ -128,6 +149,8 @@ export default function PolicyList() {
   const { favoritePolicies, toggleFavorite, userProfile } = useApp()
   const selectedCategory = searchParams.get('category')
   const activeFilter = searchParams.get('filter') || 'POSSIBILITY_HIGH'
+  const activeSort: PolicySort =
+    searchParams.get('sort') === 'deadline' ? 'deadline' : 'recommended'
   const visiblePolicies = queryPolicies({
     profile: {
       age: userProfile.age,
@@ -138,6 +161,7 @@ export default function PolicyList() {
     },
     filter: activeFilter,
     category: selectedCategory,
+    sort: activeSort,
   })
 
   useEffect(() => {
@@ -203,22 +227,29 @@ export default function PolicyList() {
           </label>
           <label className="text-sm font-semibold">
             정렬
-            <select className="mt-2 w-full rounded-lg border border-gray-300 p-3 font-normal">
-              <option>추천순</option>
-              <option>마감순</option>
-              <option>혜택순</option>
+            <select
+              value={activeSort}
+              onChange={(event) => {
+                const nextParams = new URLSearchParams(searchParams)
+                nextParams.set('sort', event.target.value)
+                setSearchParams(nextParams)
+              }}
+              className="mt-2 w-full rounded-lg border border-gray-300 p-3 font-normal"
+            >
+              <option value="recommended">추천순</option>
+              <option value="deadline">마감순</option>
             </select>
           </label>
         </div>
       )}
       <div className="mt-6 space-y-3">
         {visiblePolicies.map((policy) => {
-          const { id, title, category, chance, benefit, condition, deadline } = policy
+          const { id, title, description, category, chance, benefit, condition, deadline } = policy
           const favorite = Boolean(favoritePolicies[id])
           return (
             <article
               key={id}
-              className="space-y-3 rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-all hover:border-blue-300"
+              className="flex min-h-[250px] flex-col rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-all hover:border-blue-300"
             >
               <header className="flex items-center justify-between gap-3">
                 <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">
@@ -246,21 +277,22 @@ export default function PolicyList() {
                 </div>
               </header>
 
-              <div>
-                <h2 className="text-xl font-bold tracking-tight text-gray-950">{title}</h2>
-                <p className="mt-2 text-base font-bold text-blue-700">{benefit}</p>
-                <div className="mt-3 flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:gap-3">
-                  <span className="font-semibold text-rose-500">마감 D-{deadline}</span>
-                  <span className="hidden h-3 w-px bg-gray-200 sm:block" />
-                  <span className="text-gray-500">{condition}</span>
-                </div>
+              <div className="mt-4 flex flex-1 flex-col gap-3">
+                <h2 className="text-xl font-bold text-gray-950">{title}</h2>
+                <p className="text-sm leading-7 text-gray-500">{description}</p>
+                <p className="text-base font-bold leading-7 text-blue-700">{benefit}</p>
               </div>
 
-              <footer className="flex justify-end border-t border-gray-100 pt-4">
+              <footer className="mt-auto flex flex-col gap-3 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-wrap items-center gap-3 text-sm">
+                  <span className="font-semibold text-rose-500">마감 D-{deadline}</span>
+                  <span className="h-3 w-px bg-gray-200" />
+                  <span className="text-gray-500">{condition}</span>
+                </div>
                 <button
                   type="button"
                   onClick={() => navigate(`/policies/${id}`)}
-                  className="rounded-lg border border-blue-600 px-4 py-1.5 text-sm font-medium text-blue-600 transition hover:bg-blue-50"
+                  className="self-end rounded-lg border border-blue-600 px-4 py-2 text-sm font-medium text-blue-600 transition hover:bg-blue-50"
                 >
                   자세히 보기
                 </button>
