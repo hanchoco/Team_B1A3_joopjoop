@@ -1,0 +1,3003 @@
+[
+  {
+    "policies": {
+      "external_id": "20260728005400213310",
+      "source": "YOUTH_CENTER",
+      "title": "2026년 하반기 임신부 가사지원서비스 지원사업",
+      "category": "FINANCE",
+      "subcategory": "건강",
+      "provider_name": "전남광주통합특별시",
+      "region_scope": "LOCAL",
+      "region_code": "12110",
+      "summary": "○ 임신부의 가사 어려움을 덜어주고 출산 준비를 돕기 위한 가사지원서비스 지원사업",
+      "description": "○ 가사 지원 또는 정리수납 서비스 이용 지원\r\n· 임신부 거주지 내 청소, 정리정돈 등 가사 지원 또는 정리수납 서비스 이용 지원\r\n· 전남광주통합특별시 자치구 내 주소지 공간 사용만 인정\r\n· 임신부 1인 기준 최대 200천원 한도 내 지원\r\n· 초과 비용 본인부담\r\n\r\n○ 지원방법\r\n· 가사서비스 이용 후, 이용금액 청구",
+      "application_start_date": "20260801",
+      "application_end_date": "20261231",
+      "is_ongoing": false,
+      "application_method": "○ 온라인시스템 신청\r\n· 신청처: https://jngji.kr\r\n· 홈페이지 접속 > 광주권역 거주자 > 임신부 가사지원서비스 > 임신부 본인 인증 및 개인정보 동의 > 신청서 작성 > 구비서류 첨부 > 신청",
+      "application_url": "https://www.xn--hc0by27bu6atul3dc6t.kr/main/housework",
+      "contact": "청년정책담당자",
+      "original_text": "○ 가사 지원 또는 정리수납 서비스 이용 지원\r\n· 임신부 거주지 내 청소, 정리정돈 등 가사 지원 또는 정리수납 서비스 이용 지원\r\n· 전남광주통합특별시 자치구 내 주소지 공간 사용만 인정\r\n· 임신부 1인 기준 최대 200천원 한도 내 지원\r\n· 초과 비용 본인부담\r\n\r\n○ 지원방법\r\n· 가사서비스 이용 후, 이용금액 청구",
+      "status": "ACTIVE",
+      "is_active": true
+    },
+    "policy_conditions": [
+      {
+        "attribute_key": "age",
+        "operator": "BETWEEN",
+        "expected_value": {
+          "min": 1,
+          "max": 99
+        },
+        "is_required": true,
+        "description": "만 1세 ~ 99세",
+        "group_no": 0,
+        "sort_order": 1
+      },
+      {
+        "attribute_key": "region_code",
+        "operator": "IN",
+        "expected_value": [
+          "12110",
+          "12130",
+          "12150",
+          "12170",
+          "12190",
+          "12210",
+          "12240",
+          "12270",
+          "12300",
+          "12330",
+          "12710",
+          "12720",
+          "12730",
+          "12740",
+          "12750",
+          "12760",
+          "12770",
+          "12780",
+          "12790",
+          "12800",
+          "12810",
+          "12820",
+          "12830",
+          "12840",
+          "12850",
+          "12860",
+          "12870"
+        ],
+        "is_required": true,
+        "description": "거주지역 조건",
+        "group_no": 0,
+        "sort_order": 2
+      }
+    ],
+    "policy_requirements": [
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "첨부파일 확인 필요",
+        "description": "정확한 제출 서류 목록은 정책 공고문 첨부파일에서 확인해야 합니다.",
+        "is_required": true,
+        "sort_order": 1
+      }
+    ],
+    "policy_benefit_rules": {
+      "calculator_type": "FIXED_ONCE",
+      "params_json": {
+        "monthly_cap": 200000,
+        "duration_months": null
+      },
+      "description": "임신부 1인 기준 최대 200천원 한도 내 지원",
+      "confidence": 0.9
+    }
+  },
+  {
+    "policies": {
+      "external_id": "20260728005400213309",
+      "source": "YOUTH_CENTER",
+      "title": "2026년 찬찬히 청년 사회생활(정서·심리)지원 캠퍼스 참여자 모집",
+      "category": "FINANCE",
+      "subcategory": "건강",
+      "provider_name": "전남광주통합특별시",
+      "region_scope": "LOCAL",
+      "region_code": "12300",
+      "summary": "○ 찬찬히 청년을 위한 맞춤형 평생학습 프로그램\n· 또래 친구들과 소그룹으로 함께하며 자기 이해 및 사회생활에 필요한 소통법 학습\n· 정서조절, 대인관계, 문제해결 등 사회생활 역량 강화",
+      "description": "○ 그룹형 교육과정 운영 및 통합 힐링 워크샵 병행\n· 자아존중감 향상\n· 정서 및 스트레스 조절\n· 의사소통\n· 대인관계\n· 문제해결 역량 강화\n※ 필요시 개인의 성향·특성에 맞는 개별 개입 병행",
+      "application_start_date": null,
+      "application_end_date": null,
+      "is_ongoing": true,
+      "application_method": "○ 네이버폼을 통한 온라인 접수\n· https://naver.me/x3cfS0qQ",
+      "application_url": "https://form.naver.com/response/2RU8EfZleUt",
+      "contact": "청년정책담당자",
+      "original_text": "○ 그룹형 교육과정 운영 및 통합 힐링 워크샵 병행\n· 자아존중감 향상\n· 정서 및 스트레스 조절\n· 의사소통\n· 대인관계\n· 문제해결 역량 강화\n※ 필요시 개인의 성향·특성에 맞는 개별 개입 병행",
+      "status": "ACTIVE",
+      "is_active": true
+    },
+    "policy_conditions": [
+      {
+        "attribute_key": "age",
+        "operator": "BETWEEN",
+        "expected_value": {
+          "min": 18,
+          "max": 34
+        },
+        "is_required": true,
+        "description": "만 18세 ~ 34세",
+        "group_no": 0,
+        "sort_order": 1
+      },
+      {
+        "attribute_key": "region_code",
+        "operator": "IN",
+        "expected_value": [
+          "12300"
+        ],
+        "is_required": true,
+        "description": "거주지역 조건",
+        "group_no": 0,
+        "sort_order": 2
+      }
+    ],
+    "policy_requirements": [],
+    "policy_benefit_rules": {
+      "calculator_type": "CUSTOM",
+      "params_json": {
+        "monthly_cap": null,
+        "duration_months": null
+      },
+      "description": "지원내용: 그룹형 교육과정 운영 및 통합 힐링 워크샵 병행 (자아존중감 향상, 정서 및 스트레스 조절, 의사소통, 대인관계, 문제해결 역량 강화)",
+      "confidence": 0.3
+    }
+  },
+  {
+    "policies": {
+      "external_id": "20260728005400213308",
+      "source": "YOUTH_CENTER",
+      "title": "[남구] 구직청년 증명사진 촬영지원",
+      "category": "EMPLOYMENT",
+      "subcategory": "취업",
+      "provider_name": "전남광주통합특별시",
+      "region_scope": "LOCAL",
+      "region_code": "12270",
+      "summary": "[남구] 구직청년 증명사진 촬영지원",
+      "description": "❍ 지원기간 : 2026. 7. ~ 12.   ※ 예산 소진 시 조기 마감\r\n❍ 지원대상 : 신청일 기준 청년 구직자로서, 본인이 남구 주민이거나 남구 소재 대학교에 재(휴)학 중인 청년\r\n❍ 지원내용 : 이력서(면접)용 증명사진 무료 촬영 지원(1인 연 1회)\r\n❍ 지원절차 : 신청(방문·이메일) → 승인(통보) → 사전예약 및 촬영 \r\n❍ 촬영업체 : 아래 사진관 중 택1 하여 신청\r\n\r\n  1) 고운날사진관  (남구 효천중앙로 62, 203호 / 062-710-0040)\r\n  2) 노블스튜디오 (남구 서문대로 676, 2층 / 062-651-7154)\r\n  3) 더인스튜디오 (남구 효우로 79, 6층 602호 / 062-672-5819)\r\n  4) 블루레코드     (남구 독립로 20, 3층 / 0507-1332-2574)\r\n  5) 연리지스튜디오 (남구 봉선로 1, 지하 1층 / 062-376-7343)",
+      "application_start_date": "20260727",
+      "application_end_date": "20261218",
+      "is_ongoing": false,
+      "application_method": " 1) 신청 및 접수\r\n   - 신청기간: 2026. 7. 27. ~ 12. 18.    ※ 예산 소진 시 조기 종료\r\n   - 신청방법: 방문 또는 이메일 신청\r\n     · 방  문: 남구청 일자리정책과 청년정책팀(남구 봉선로 1, 6층)\r\n     · 이메일: iljari1234@korea.kr\r\n   - 구비서류: ① 증명사진 촬영 지원 신청서 ② 워크넷 구직등록확인증③ 주민등록초본(1년 포함) 또는 대학교 재(휴)학 증명서 1부\r\n 2) 선    정: 대상 요건(연령, 거주기준 등) 검토 및 선정(개별통보)\r\n 3) 촬영예약: 촬영일시 확인 등 촬영업체에 신청자가 유선예약 실시\r\n     ※ 선정 안내일로부터 1개월 이내에 촬영하지 않을 경우, 선정 취소 및 예비순번 대상자 선정",
+      "application_url": "https://www.namgu.gwangju.kr/board.es?mid=a10604010000&bid=0001",
+      "contact": "청년정책담당자",
+      "original_text": "❍ 지원기간 : 2026. 7. ~ 12.   ※ 예산 소진 시 조기 마감\r\n❍ 지원대상 : 신청일 기준 청년 구직자로서, 본인이 남구 주민이거나 남구 소재 대학교에 재(휴)학 중인 청년\r\n❍ 지원내용 : 이력서(면접)용 증명사진 무료 촬영 지원(1인 연 1회)\r\n❍ 지원절차 : 신청(방문·이메일) → 승인(통보) → 사전예약 및 촬영 \r\n❍ 촬영업체 : 아래 사진관 중 택1 하여 신청\r\n\r\n  1) 고운날사진관  (남구 효천중앙로 62, 203호 / 062-710-0040)\r\n  2) 노블스튜디오 (남구 서문대로 676, 2층 / 062-651-7154)\r\n  3) 더인스튜디오 (남구 효우로 79, 6층 602호 / 062-672-5819)\r\n  4) 블루레코드     (남구 독립로 20, 3층 / 0507-1332-2574)\r\n  5) 연리지스튜디오 (남구 봉선로 1, 지하 1층 / 062-376-7343)",
+      "status": "ACTIVE",
+      "is_active": true
+    },
+    "policy_conditions": [
+      {
+        "attribute_key": "age",
+        "operator": "BETWEEN",
+        "expected_value": {
+          "min": 19,
+          "max": 39
+        },
+        "is_required": true,
+        "description": "만 19세 ~ 39세",
+        "group_no": 0,
+        "sort_order": 1
+      },
+      {
+        "attribute_key": "region_code",
+        "operator": "IN",
+        "expected_value": [
+          "12270"
+        ],
+        "is_required": true,
+        "description": "거주지역 조건",
+        "group_no": 0,
+        "sort_order": 2
+      }
+    ],
+    "policy_requirements": [],
+    "policy_benefit_rules": {
+      "calculator_type": "FIXED_ONCE",
+      "params_json": {
+        "monthly_cap": null,
+        "duration_months": null
+      },
+      "description": "지원내용: 이력서(면접)용 증명사진 무료 촬영 지원(1인 연 1회)",
+      "confidence": 0.9
+    }
+  },
+  {
+    "policies": {
+      "external_id": "20260724005400113307",
+      "source": "YOUTH_CENTER",
+      "title": "청년 자금지원을 위한 햇살론유스 운영",
+      "category": "FINANCE",
+      "subcategory": "취약계층 및 금융지원",
+      "provider_name": "서민금융진흥원",
+      "region_scope": "LOCAL",
+      "region_code": "11110",
+      "summary": "저소득 청년층을 위한 보증부대출",
+      "description": "대학생·청년층의 금융애로를 해소하고 향후 제도권 금융으로 안착할 수 있도록 지원 ",
+      "application_start_date": null,
+      "application_end_date": null,
+      "is_ongoing": true,
+      "application_method": "서민금융진흥원 앱에서 보증신청을 먼저 진행한 뒤, 협약은행에서 대출신청·실행을 진행\n(상세사항은 서민금융진흥원 홈페이지 참조)",
+      "application_url": "https://www.kinfa.or.kr/financialProduct/hessalLoanYoos.do",
+      "contact": "",
+      "original_text": "대학생·청년층의 금융애로를 해소하고 향후 제도권 금융으로 안착할 수 있도록 지원 ",
+      "status": "ACTIVE",
+      "is_active": true
+    },
+    "policy_conditions": [
+      {
+        "attribute_key": "age",
+        "operator": "BETWEEN",
+        "expected_value": {
+          "min": 19,
+          "max": 34
+        },
+        "is_required": false,
+        "description": "만 19세 ~ 34세",
+        "group_no": 0,
+        "sort_order": 1
+      },
+      {
+        "attribute_key": "region_code",
+        "operator": "IN",
+        "expected_value": [
+          "11110",
+          "11140",
+          "11170",
+          "11200",
+          "11215",
+          "11230",
+          "11260",
+          "11290",
+          "11305",
+          "11320",
+          "11350",
+          "11380",
+          "11410",
+          "11440",
+          "11470",
+          "11500",
+          "11530",
+          "11545",
+          "11560",
+          "11590",
+          "11620",
+          "11650",
+          "11680",
+          "11710",
+          "11740",
+          "12110",
+          "12130",
+          "12150",
+          "12170",
+          "12190",
+          "12210",
+          "12240",
+          "12270",
+          "12300",
+          "12330",
+          "12710",
+          "12720",
+          "12730",
+          "12740",
+          "12750",
+          "12760",
+          "12770",
+          "12780",
+          "12790",
+          "12800",
+          "12810",
+          "12820",
+          "12830",
+          "12840",
+          "12850",
+          "12860",
+          "12870",
+          "26110",
+          "26140",
+          "26170",
+          "26200",
+          "26230",
+          "26260",
+          "26290",
+          "26320",
+          "26350",
+          "26380",
+          "26410",
+          "26440",
+          "26470",
+          "26500",
+          "26530",
+          "26710",
+          "27110",
+          "27140",
+          "27170",
+          "27200",
+          "27230",
+          "27260",
+          "27290",
+          "27710",
+          "27720",
+          "28125",
+          "28155",
+          "28177",
+          "28185",
+          "28200",
+          "28237",
+          "28245",
+          "28275",
+          "28290",
+          "28710",
+          "28720",
+          "30110",
+          "30140",
+          "30170",
+          "30200",
+          "30230",
+          "31110",
+          "31140",
+          "31170",
+          "31200",
+          "31710",
+          "36110",
+          "41111",
+          "41113",
+          "41115",
+          "41117",
+          "41131",
+          "41133",
+          "41135",
+          "41150",
+          "41171",
+          "41173",
+          "41192",
+          "41194",
+          "41196",
+          "41210",
+          "41220",
+          "41250",
+          "41271",
+          "41273",
+          "41281",
+          "41285",
+          "41287",
+          "41290",
+          "41310",
+          "41360",
+          "41370",
+          "41390",
+          "41410",
+          "41430",
+          "41450",
+          "41461",
+          "41463",
+          "41465",
+          "41480",
+          "41500",
+          "41550",
+          "41570",
+          "41591",
+          "41593",
+          "41595",
+          "41597",
+          "41610",
+          "41630",
+          "41650",
+          "41670",
+          "41800",
+          "41820",
+          "41830",
+          "43111",
+          "43112",
+          "43113",
+          "43114",
+          "43130",
+          "43150",
+          "43720",
+          "43730",
+          "43740",
+          "43745",
+          "43750",
+          "43760",
+          "43770",
+          "43800",
+          "44131",
+          "44133",
+          "44150",
+          "44180",
+          "44200",
+          "44210",
+          "44230",
+          "44250",
+          "44270",
+          "44710",
+          "44760",
+          "44770",
+          "44790",
+          "44800",
+          "44810",
+          "44825",
+          "47111",
+          "47113",
+          "47130",
+          "47150",
+          "47170",
+          "47190",
+          "47210",
+          "47230",
+          "47250",
+          "47280",
+          "47290",
+          "47730",
+          "47750",
+          "47760",
+          "47770",
+          "47820",
+          "47830",
+          "47840",
+          "47850",
+          "47900",
+          "47920",
+          "47930",
+          "47940",
+          "48121",
+          "48123",
+          "48125",
+          "48127",
+          "48129",
+          "48170",
+          "48220",
+          "48240",
+          "48250",
+          "48270",
+          "48310",
+          "48330",
+          "48720",
+          "48730",
+          "48740",
+          "48820",
+          "48840",
+          "48850",
+          "48860",
+          "48870",
+          "48880",
+          "48890",
+          "50110",
+          "50130",
+          "51110",
+          "51130",
+          "51150",
+          "51170",
+          "51190",
+          "51210",
+          "51230",
+          "51720",
+          "51730",
+          "51750",
+          "51760",
+          "51770",
+          "51780",
+          "51790",
+          "51800",
+          "51810",
+          "51820",
+          "51830",
+          "52111",
+          "52113",
+          "52130",
+          "52140",
+          "52180",
+          "52190",
+          "52210",
+          "52710",
+          "52720",
+          "52730",
+          "52740",
+          "52750",
+          "52770",
+          "52790",
+          "52800"
+        ],
+        "is_required": true,
+        "description": "거주지역 조건",
+        "group_no": 0,
+        "sort_order": 2
+      }
+    ],
+    "policy_requirements": [],
+    "policy_benefit_rules": {
+      "calculator_type": "CUSTOM",
+      "params_json": {
+        "monthly_cap": null,
+        "duration_months": null
+      },
+      "description": "대학생·청년층의 금융애로 해소 및 제도권 금융 안착 지원",
+      "confidence": 0.3
+    }
+  },
+  {
+    "policies": {
+      "external_id": "20260724005400213306",
+      "source": "YOUTH_CENTER",
+      "title": "군복무 인천청년 상해보험 지원",
+      "category": "FINANCE",
+      "subcategory": "취약계층 및 금융지원",
+      "provider_name": "인천광역시 청년정책담당관",
+      "region_scope": "LOCAL",
+      "region_code": "28110",
+      "summary": "군복무 청년들의 불의의 사고에 대비하는 상해보험을 지원하여 본인과 가족의 사회안전망 확보",
+      "description": "○ 보장내용 \r\n  - 상해사망 : 보험기간 내 상해로 사망한 경우 1,000만원 보장\r\n  - 상해후유장해 : 보험기간 내 상해로 후유장해가 발생한 경우 장해지급률(3~100%)에 따라 최대 1,000만원 보장\r\n  - 질병사망 : 보험기간 내 질병으로 사망한 경우 1,000만원 보장\r\n  - 질병후유장해 : 보험기간 내 질병으로 80% 이상의 후유장해가 발생한 경우 최대 1,000만원 보장\r\n  - 중증장해진단비 : 보험기간 내 상해로 장해지급률이 100%에 해당되는 고도후유장해 진단시 1,000만원 보장\r\n  - 상해입원(일당) : 보험기간 내 상해로 인한 1일이상 입원시(180일 한도) 1만 5천원 보장\r\n  - 질병입원(일당) : 보험기간 내 질병으로 인한 1일이상 입원시(180일 한도) 1만 5천원 보장\r\n  - 정신질환위로금 : 보험기간 중 정신질환으로 진단 확정 시 보험가입금액 100만원 지급(1회한)\r\n  - 손/발가락 수술비 : 보험기간 내 상해·질병으로 인하여 특정 손/발가락 수술 시 20만원 보장(1회한)\r\n  - 골절발생위로금(회당) : 보험기간 내 사고로 인한 골절진단 시 10만원 보장(치아파절 제외)\r\n  - 화상발생위로금(회당) : 보험기간 내 사고로 인한 화상진단 시 10만원 보장(심재성 2도 이상 화상)\r\n  - 외상성절단진단비 : 보험기간 내 사고로 인한 외상성 절단 진단 확정 시 50만원 보장(1회한) * 2026년 추가\r\n  - 상해사망장례지원금 : 보험기간 내 상해로 사망하여 장례비가 발생한 경우 100만원 보장  *2026년 추가\r\n\r\n★보장항목에 따라 메리츠화재해상보험과 KB손해보험이 보장금액을 나눠서 지급하여 각각 안내 전화를 받으실 수 있습니다.",
+      "application_start_date": "2024-03-01",
+      "application_end_date": "2026-12-31",
+      "is_ongoing": false,
+      "application_method": "○ 보험금 청구 안내\r\n ▸보험 청구기간 3년 내 보험사로 청구(3년 내 미청구시 청구권 소멸)   \r\n ▸접수센터 : ☎ 070-4693-1655 또는 070-8892-3786\r\n ▸접수방법 : (팩스) 070-4758-8556 (이메일) a18997751@hanmail.net\r\n                     (우편] [06732] 서울특별시 서초구 서운로 13, 중앙로얄빌딩 19층 1902호 사병보험 접수센터 \r\n      ※ 팩스, 이메일, 우편 중 선택하여 접수 가능(단, 사망, 후유장해 청구건은 원본 서류 우편 접수 원칙)",
+      "application_url": "https://youth.incheon.go.kr/youthpolicy/youthPolicyInfoDetail.do?poly_seq=394",
+      "contact": "통합접수센터",
+      "original_text": "○ 보장내용 \r\n  - 상해사망 : 보험기간 내 상해로 사망한 경우 1,000만원 보장\r\n  - 상해후유장해 : 보험기간 내 상해로 후유장해가 발생한 경우 장해지급률(3~100%)에 따라 최대 1,000만원 보장\r\n  - 질병사망 : 보험기간 내 질병으로 사망한 경우 1,000만원 보장\r\n  - 질병후유장해 : 보험기간 내 질병으로 80% 이상의 후유장해가 발생한 경우 최대 1,000만원 보장\r\n  - 중증장해진단비 : 보험기간 내 상해로 장해지급률이 100%에 해당되는 고도후유장해 진단시 1,000만원 보장\r\n  - 상해입원(일당) : 보험기간 내 상해로 인한 1일이상 입원시(180일 한도) 1만 5천원 보장\r\n  - 질병입원(일당) : 보험기간 내 질병으로 인한 1일이상 입원시(180일 한도) 1만 5천원 보장\r\n  - 정신질환위로금 : 보험기간 중 정신질환으로 진단 확정 시 보험가입금액 100만원 지급(1회한)\r\n  - 손/발가락 수술비 : 보험기간 내 상해·질병으로 인하여 특정 손/발가락 수술 시 20만원 보장(1회한)\r\n  - 골절발생위로금(회당) : 보험기간 내 사고로 인한 골절진단 시 10만원 보장(치아파절 제외)\r\n  - 화상발생위로금(회당) : 보험기간 내 사고로 인한 화상진단 시 10만원 보장(심재성 2도 이상 화상)\r\n  - 외상성절단진단비 : 보험기간 내 사고로 인한 외상성 절단 진단 확정 시 50만원 보장(1회한) * 2026년 추가\r\n  - 상해사망장례지원금 : 보험기간 내 상해로 사망하여 장례비가 발생한 경우 100만원 보장  *2026년 추가\r\n\r\n★보장항목에 따라 메리츠화재해상보험과 KB손해보험이 보장금액을 나눠서 지급하여 각각 안내 전화를 받으실 수 있습니다.",
+      "status": "ACTIVE",
+      "is_active": true
+    },
+    "policy_conditions": [
+      {
+        "attribute_key": "age",
+        "operator": "BETWEEN",
+        "expected_value": {
+          "min": 18,
+          "max": 39
+        },
+        "is_required": true,
+        "description": "만 18세 ~ 39세",
+        "group_no": 0,
+        "sort_order": 1
+      },
+      {
+        "attribute_key": "region_code",
+        "operator": "IN",
+        "expected_value": [
+          "28110",
+          "28140",
+          "28177",
+          "28185",
+          "28200",
+          "28237",
+          "28245",
+          "28260",
+          "28710",
+          "28720"
+        ],
+        "is_required": true,
+        "description": "거주지역 조건",
+        "group_no": 0,
+        "sort_order": 2
+      }
+    ],
+    "policy_requirements": [],
+    "policy_benefit_rules": {
+      "calculator_type": "CUSTOM",
+      "params_json": {
+        "monthly_cap": null,
+        "duration_months": null
+      },
+      "description": "보장내용 항목별 고정 금액 지급 (예: 상해사망 1,000만원, 상해입원 1일 1.5만원 등)",
+      "confidence": 0.6
+    }
+  },
+  {
+    "policies": {
+      "external_id": "20260724005400213305",
+      "source": "YOUTH_CENTER",
+      "title": "2026년 부평 청년주간행사 추진단 모집",
+      "category": "PARTICIPATION",
+      "subcategory": "청년참여",
+      "provider_name": "인천광역시 부평구 경제환경국 일자리창출과",
+      "region_scope": "LOCAL",
+      "region_code": "28237",
+      "summary": "청년이 주체가 되어 행사 전반에 대한 기획, 구성 및 실행에 참여",
+      "description": "부평구 청년주간행사 기획 및 운영 참여\r\n청년주간행사 슬로건 등 프로젝트 아이디어 발굴\r\n청년주간행사 마케팅 방안 수립 및 홍보 진행\r\n추진단 출범식 및 추진회의, 성과공유회 참석\r\n행사 운영스태프 활동 진행",
+      "application_start_date": "2026-06-01",
+      "application_end_date": "2026-10-31",
+      "is_ongoing": false,
+      "application_method": "신청서식(지원서, 개인정보 제공 동의서) 다운받아 작성·제출",
+      "application_url": "https://youth.incheon.go.kr/youthpolicy/youthPolicyInfoDetail.do?poly_seq=460",
+      "contact": "최정규",
+      "original_text": "부평구 청년주간행사 기획 및 운영 참여\r\n청년주간행사 슬로건 등 프로젝트 아이디어 발굴\r\n청년주간행사 마케팅 방안 수립 및 홍보 진행\r\n추진단 출범식 및 추진회의, 성과공유회 참석\r\n행사 운영스태프 활동 진행",
+      "status": "ACTIVE",
+      "is_active": true
+    },
+    "policy_conditions": [
+      {
+        "attribute_key": "age",
+        "operator": "BETWEEN",
+        "expected_value": {
+          "min": 19,
+          "max": 39
+        },
+        "is_required": true,
+        "description": "만 19세 ~ 39세",
+        "group_no": 0,
+        "sort_order": 1
+      },
+      {
+        "attribute_key": "region_code",
+        "operator": "IN",
+        "expected_value": [
+          "28237"
+        ],
+        "is_required": true,
+        "description": "거주지역 조건",
+        "group_no": 0,
+        "sort_order": 2
+      }
+    ],
+    "policy_requirements": [
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "청년주간행사 추진단 지원서",
+        "description": "필수 제출 서류",
+        "is_required": true,
+        "sort_order": 1
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "개인정보동의서",
+        "description": "필수 제출 서류",
+        "is_required": true,
+        "sort_order": 2
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "증빙자료",
+        "description": "선택 제출 서류",
+        "is_required": false,
+        "sort_order": 3
+      }
+    ],
+    "policy_benefit_rules": {
+      "calculator_type": "CUSTOM",
+      "params_json": {
+        "monthly_cap": null,
+        "duration_months": null
+      },
+      "description": "지원내용: 부평구 청년주간행사 기획 및 운영 참여, 슬로건 아이디어 발굴, 마케팅 방안 수립, 행사 운영스태프 활동 등",
+      "confidence": 0.3
+    }
+  },
+  {
+    "policies": {
+      "external_id": "20260724005400213304",
+      "source": "YOUTH_CENTER",
+      "title": "2026년 찾아가는 청년주거 상담소(국토교통부)",
+      "category": "FINANCE",
+      "subcategory": "취약계층 및 금융지원",
+      "provider_name": "인천광역시 청년정책담당관",
+      "region_scope": "LOCAL",
+      "region_code": "28110",
+      "summary": "주거교육을 희망하는 청년층을 대상으로 부동산 계약, 주택도시기금 대출, 공공·민영주택 청약 등 청년층이 필요로 하는 주거정책 및 관련 정보를 제공",
+      "description": "○ 행사일시: 2026. 6. 18.(목) 14:00 ~ 16:00\r\n○ 행사장소: 인천광역시청 본관 2층 대회의실\r\n○ 행사일정\r\n- 14:00 ~14:05(5‘)  : 개회 및 프로그램 안내, 국토부\r\n- 14:05 ~14:25(20‘) : 사회초년생을 위한 부동산 계약 교육, 자문위원(공인중개사)\r\n- 14:25 ~14:45(20‘) : 부동산 금융 및 전세사기 방지 교육, 주택도시보증공사\r\n- 14:45 ~15:05(20‘) : 공공주택‧청약 관련 교육, 한국토지주택공사\r\n- 15:05 ~15:25(20‘) : 민영주택‧청약 관련 교육, 한국부동산원\r\n- 15:25 ~15:55(30‘) : 분야별 주거상담(청약, 전세사기, 금융), 각 분야 강사\r\n- 15:55 ~16:00(5‘)   : 단체사진 촬영 및 폐회, 참석자 전원",
+      "application_start_date": "2026-06-18",
+      "application_end_date": "2026-06-18",
+      "is_ongoing": false,
+      "application_method": "",
+      "application_url": "https://youth.incheon.go.kr/youthpolicy/youthPolicyInfoDetail.do?poly_seq=461",
+      "contact": "이성호",
+      "original_text": "○ 행사일시: 2026. 6. 18.(목) 14:00 ~ 16:00\r\n○ 행사장소: 인천광역시청 본관 2층 대회의실\r\n○ 행사일정\r\n- 14:00 ~14:05(5‘)  : 개회 및 프로그램 안내, 국토부\r\n- 14:05 ~14:25(20‘) : 사회초년생을 위한 부동산 계약 교육, 자문위원(공인중개사)\r\n- 14:25 ~14:45(20‘) : 부동산 금융 및 전세사기 방지 교육, 주택도시보증공사\r\n- 14:45 ~15:05(20‘) : 공공주택‧청약 관련 교육, 한국토지주택공사\r\n- 15:05 ~15:25(20‘) : 민영주택‧청약 관련 교육, 한국부동산원\r\n- 15:25 ~15:55(30‘) : 분야별 주거상담(청약, 전세사기, 금융), 각 분야 강사\r\n- 15:55 ~16:00(5‘)   : 단체사진 촬영 및 폐회, 참석자 전원",
+      "status": "ACTIVE",
+      "is_active": true
+    },
+    "policy_conditions": [
+      {
+        "attribute_key": "age",
+        "operator": "BETWEEN",
+        "expected_value": {
+          "min": 18,
+          "max": 39
+        },
+        "is_required": true,
+        "description": "만 18세 ~ 39세",
+        "group_no": 0,
+        "sort_order": 1
+      },
+      {
+        "attribute_key": "region_code",
+        "operator": "IN",
+        "expected_value": [
+          "28110",
+          "28125",
+          "28140",
+          "28155",
+          "28177",
+          "28185",
+          "28200",
+          "28237",
+          "28245",
+          "28260",
+          "28275",
+          "28290",
+          "28710",
+          "28720"
+        ],
+        "is_required": true,
+        "description": "거주지역 조건",
+        "group_no": 0,
+        "sort_order": 2
+      }
+    ],
+    "policy_requirements": [],
+    "policy_benefit_rules": {
+      "calculator_type": "CUSTOM",
+      "params_json": {
+        "monthly_cap": null,
+        "duration_months": null
+      },
+      "description": "행사 참여 기회 제공(교육 및 상담)",
+      "confidence": 0.6
+    }
+  },
+  {
+    "policies": {
+      "external_id": "20260724005400213303",
+      "source": "YOUTH_CENTER",
+      "title": "(검단구) 인천시 청년월세 지원사업",
+      "category": "HOUSING",
+      "subcategory": "전월세 및 주거급여 지원",
+      "provider_name": "인천광역시 검단구 경제문화교통국 기업일자리정책과",
+      "region_scope": "LOCAL",
+      "region_code": "28290",
+      "summary": "경제적 어려움을 겪는 청년들의 주거비용 부담 경감",
+      "description": "지원금액 : 1인 월 20만원씩, 최대 24개월(회) 월세 지원(기존 지원횟수 포함 한사람당 최대 24회 지급 가능)\r\n   - 실제 납부하는 월세의 최대 20만원까지 지원(임차보증금, 관리비 등은 제외)\r\n◎ 지 급 일 : 매월 25일 현금으로 지급\r\n   - 토요일이거나 공휴일인 경우에는 그 전날 지급\r\n   - 지원대상으로 선정될 시, 2026. 5월에 지출한 월세부터 지급\r\n◎ 주거급여 수급자인 경우 전월(20일)에 지급한 주거급여를 차감하고 지급",
+      "application_start_date": "20260330",
+      "application_end_date": "20260529",
+      "is_ongoing": false,
+      "application_method": "(19세 ~ 34세) 복지로를 통한 온라인신청 및 관할 행정복지센터 방문 신청\r\n(35세 ~ 39세) 인천청년포털을 통한 온라인신청 또는 관할 행정복지센터 방문 신청",
+      "application_url": "https://youth.incheon.go.kr/youthpolicy/youthPolicyInfoDetail.do?poly_seq=463",
+      "contact": "송지호",
+      "original_text": "지원금액 : 1인 월 20만원씩, 최대 24개월(회) 월세 지원(기존 지원횟수 포함 한사람당 최대 24회 지급 가능)\r\n   - 실제 납부하는 월세의 최대 20만원까지 지원(임차보증금, 관리비 등은 제외)\r\n◎ 지 급 일 : 매월 25일 현금으로 지급\r\n   - 토요일이거나 공휴일인 경우에는 그 전날 지급\r\n   - 지원대상으로 선정될 시, 2026. 5월에 지출한 월세부터 지급\r\n◎ 주거급여 수급자인 경우 전월(20일)에 지급한 주거급여를 차감하고 지급",
+      "status": "ACTIVE",
+      "is_active": true
+    },
+    "policy_conditions": [
+      {
+        "attribute_key": "age",
+        "operator": "BETWEEN",
+        "expected_value": {
+          "min": 35,
+          "max": 39
+        },
+        "is_required": true,
+        "description": "만 35세 ~ 39세",
+        "group_no": 0,
+        "sort_order": 1
+      },
+      {
+        "attribute_key": "region_code",
+        "operator": "IN",
+        "expected_value": [
+          "28290"
+        ],
+        "is_required": true,
+        "description": "거주지역 조건",
+        "group_no": 0,
+        "sort_order": 2
+      },
+      {
+        "attribute_key": "household_monthly_income",
+        "operator": "EXISTS",
+        "expected_value": null,
+        "is_required": false,
+        "description": "청년독립가구는 기준중위소득 60% 이하, 원가구는 기준중위소득 100% 이하",
+        "group_no": 0,
+        "sort_order": 3,
+        "needs_admin_review": true
+      }
+    ],
+    "policy_requirements": [
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "월세지원 신청(변경)서",
+        "description": "필수 서류",
+        "is_required": true,
+        "sort_order": 1
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "소득·재산 신고서",
+        "description": "필수 서류",
+        "is_required": true,
+        "sort_order": 2
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "서약서",
+        "description": "필수 서류",
+        "is_required": true,
+        "sort_order": 3
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "임대차계약서(확정일자 날인) 사본",
+        "description": "필수 서류",
+        "is_required": true,
+        "sort_order": 4
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "월세이체 증빙 서류(최근 3개월)",
+        "description": "받는분, 보내는분, 날짜, 금액 명시 필수",
+        "is_required": true,
+        "sort_order": 5
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "(월세지급을 위한) 통장사본",
+        "description": "필수 서류",
+        "is_required": true,
+        "sort_order": 6
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "신청자 기준 가족관계증명서",
+        "description": "상세, 주민등록번호 공개 필수",
+        "is_required": true,
+        "sort_order": 7
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "부모님 기준 가족관계증명서 [부 / 모 기준 각 1부씩]",
+        "description": "상세, 주민등록번호 공개 필수",
+        "is_required": true,
+        "sort_order": 8
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "배우자 기준 가족관계증명서 및 배우자 부모의 가족관계증명서",
+        "description": "혼인한 경우 필수 제출, 상세, 주민등록번호 공개",
+        "is_required": false,
+        "sort_order": 9
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "신분증",
+        "description": "방문신청시 필수지참",
+        "is_required": false,
+        "sort_order": 10
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "추가 증빙서류(등기부등본 등)",
+        "description": "선택 서류",
+        "is_required": false,
+        "sort_order": 11
+      }
+    ],
+    "policy_benefit_rules": {
+      "calculator_type": "RENT_SUPPORT",
+      "params_json": {
+        "monthly_cap": 200000,
+        "duration_months": 24
+      },
+      "description": "지원금액 : 1인 월 20만원씩, 최대 24개월(회) 월세 지원(기존 지원횟수 포함 한사람당 최대 24회 지급 가능) - 실제 납부하는 월세의 최대 20만원까지 지원(임차보증금, 관리비 등은 제외)",
+      "confidence": 0.95
+    }
+  },
+  {
+    "policies": {
+      "external_id": "20260724005400213302",
+      "source": "YOUTH_CENTER",
+      "title": "(서해구) 인천시 청년월세 지원사업",
+      "category": "HOUSING",
+      "subcategory": "전월세 및 주거급여 지원",
+      "provider_name": "인천광역시 서해구 경제환경국 기업일자리정책과",
+      "region_scope": "LOCAL",
+      "region_code": "28275",
+      "summary": "경제적 어려움을 겪는 청년들의 주거비용 부담 경감",
+      "description": "지원금액 : 1인 월 20만원씩, 최대 24개월(회) 월세 지원(기존 지원횟수 포함 한사람당 최대 24회 지급 가능)\r\n   - 실제 납부하는 월세의 최대 20만원까지 지원(임차보증금, 관리비 등은 제외)\r\n◎ 지 급 일 : 매월 25일 현금으로 지급\r\n   - 토요일이거나 공휴일인 경우에는 그 전날 지급\r\n   - 지원대상으로 선정될 시, 2026. 5월에 지출한 월세부터 지급\r\n◎ 주거급여 수급자인 경우 전월(20일)에 지급한 주거급여를 차감하고 지급",
+      "application_start_date": "2026-03-30",
+      "application_end_date": "2026-05-29",
+      "is_ongoing": false,
+      "application_method": "(19세 ~ 34세) 복지로를 통한 온라인신청 및 관할 행정복지센터 방문 신청\r\n(35세 ~ 39세) 인천청년포털을 통한 온라인신청 또는 관할 행정복지센터 방문 신청",
+      "application_url": "https://youth.incheon.go.kr/youthpolicy/youthPolicyInfoDetail.do?poly_seq=464",
+      "contact": "한지혜",
+      "original_text": "지원금액 : 1인 월 20만원씩, 최대 24개월(회) 월세 지원(기존 지원횟수 포함 한사람당 최대 24회 지급 가능)\r\n   - 실제 납부하는 월세의 최대 20만원까지 지원(임차보증금, 관리비 등은 제외)\r\n◎ 지 급 일 : 매월 25일 현금으로 지급\r\n   - 토요일이거나 공휴일인 경우에는 그 전날 지급\r\n   - 지원대상으로 선정될 시, 2026. 5월에 지출한 월세부터 지급\r\n◎ 주거급여 수급자인 경우 전월(20일)에 지급한 주거급여를 차감하고 지급",
+      "status": "ACTIVE",
+      "is_active": true
+    },
+    "policy_conditions": [
+      {
+        "attribute_key": "age",
+        "operator": "BETWEEN",
+        "expected_value": {
+          "min": 35,
+          "max": 39
+        },
+        "is_required": true,
+        "description": "만 35세 ~ 39세",
+        "group_no": 0,
+        "sort_order": 1
+      },
+      {
+        "attribute_key": "region_code",
+        "operator": "IN",
+        "expected_value": [
+          "28275"
+        ],
+        "is_required": true,
+        "description": "거주지역 조건",
+        "group_no": 0,
+        "sort_order": 2
+      },
+      {
+        "attribute_key": "household_monthly_income",
+        "operator": "EXISTS",
+        "expected_value": null,
+        "is_required": false,
+        "description": "청년독립가구는 기준중위소득 60% 이하, 원가구는 기준중위소득 100% 이하",
+        "group_no": 0,
+        "sort_order": 3,
+        "needs_admin_review": true
+      }
+    ],
+    "policy_requirements": [
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "월세지원 신청(변경)서",
+        "description": "필수 서류",
+        "is_required": true,
+        "sort_order": 1
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "소득·재산 신고서",
+        "description": "필수 서류",
+        "is_required": true,
+        "sort_order": 2
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "서약서",
+        "description": "필수 서류",
+        "is_required": true,
+        "sort_order": 3
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "임대차계약서(확정일자 날인) 사본",
+        "description": "필수 서류",
+        "is_required": true,
+        "sort_order": 4
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "월세이체 증빙 서류(최근 3개월)",
+        "description": "받는분, 보내는분, 날짜, 금액 명시 필수",
+        "is_required": true,
+        "sort_order": 5
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "(월세지급을 위한) 통장사본",
+        "description": "필수 서류",
+        "is_required": true,
+        "sort_order": 6
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "신청자 기준 가족관계증명서",
+        "description": "상세, 주민등록번호 공개 필수",
+        "is_required": true,
+        "sort_order": 7
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "부모님 기준 가족관계증명서 [부 / 모 기준 각 1부씩]",
+        "description": "상세, 주민등록번호 공개 필수",
+        "is_required": true,
+        "sort_order": 8
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "배우자 기준 가족관계증명서 및 배우자 부모의 가족관계증명서",
+        "description": "혼인한 경우 필수 제출, 상세, 주민등록번호 공개",
+        "is_required": false,
+        "sort_order": 9
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "신분증",
+        "description": "방문신청시 필수지참",
+        "is_required": false,
+        "sort_order": 10
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "추가 증빙서류(등기부등본 등)",
+        "description": "선택 서류",
+        "is_required": false,
+        "sort_order": 11
+      }
+    ],
+    "policy_benefit_rules": {
+      "calculator_type": "RENT_SUPPORT",
+      "params_json": {
+        "monthly_cap": 200000,
+        "duration_months": 24
+      },
+      "description": "지원금액 : 1인 월 20만원씩, 최대 24개월(회) 월세 지원(기존 지원횟수 포함 한사람당 최대 24회 지급 가능) - 실제 납부하는 월세의 최대 20만원까지 지원(임차보증금, 관리비 등은 제외)",
+      "confidence": 0.9
+    }
+  },
+  {
+    "policies": {
+      "external_id": "20260724005400213301",
+      "source": "YOUTH_CENTER",
+      "title": "(영종구) 인천시 청년월세 지원사업",
+      "category": "HOUSING",
+      "subcategory": "전월세 및 주거급여 지원",
+      "provider_name": "인천광역시 영종구 경제산업국 경제지원과",
+      "region_scope": "LOCAL",
+      "region_code": "28155",
+      "summary": "경제적 어려움을 겪는 청년들의 주거비용 부담 경감",
+      "description": "○ 지원금액 : 1인 월 20만원씩, 최대 24개월(회) 월세 지원(기존 지원횟수 포함 한사람당 최대 24회 지급 가능)\r\n- 실제 납부하는 월세의 최대 20만원까지 지원(임차보증금, 관리비 등은 제외)\r\n○ 지 급 일 : 매월 25일 현금으로 지급\r\n- 토요일이거나 공휴일인 경우에는 그 전날 지급\r\n- 신규 신청자의 경우 선정된 이후 5월분 월세부터 소급 지원하며, 변경 신청자의 경우 신청월부터 가산하여 소급 지원\r\n○ 주거급여 수급자인 경우 전월(20일)에 지급한 주거급여를 차감하고 지급",
+      "application_start_date": "2026-03-30",
+      "application_end_date": "2026-05-29",
+      "is_ongoing": false,
+      "application_method": "[2026년 신청연령]\r\n(19세 ~ 34세(1991년~2007년)) 복지로를 통한 온라인신청 및 관할 행정복지센터 방문 신청\r\n(35세 ~ 39세(1986년~1990년)) 인천청년포털을 통한 온라인신청 또는 관할 행정복지센터 방문 신청\r\n※ 39세 이상 의무복무 제대군인의 경우, 군복무 기간을 고려하여 신청 가능 연령을 연장\r\n- 군복무 기간이 1년 미만인 경우 1세 연장(1985년생)\r\n- 군복무 기간이 1년이상~2년 미만인 경우 2세 연장(1984년생) \r\n- 군복무 기간이 2년 이상인 경우 3세 연장(1983년생)",
+      "application_url": "https://youth.incheon.go.kr/youthpolicy/youthPolicyInfoDetail.do?poly_seq=466",
+      "contact": "김나현",
+      "original_text": "○ 지원금액 : 1인 월 20만원씩, 최대 24개월(회) 월세 지원(기존 지원횟수 포함 한사람당 최대 24회 지급 가능)\r\n- 실제 납부하는 월세의 최대 20만원까지 지원(임차보증금, 관리비 등은 제외)\r\n○ 지 급 일 : 매월 25일 현금으로 지급\r\n- 토요일이거나 공휴일인 경우에는 그 전날 지급\r\n- 신규 신청자의 경우 선정된 이후 5월분 월세부터 소급 지원하며, 변경 신청자의 경우 신청월부터 가산하여 소급 지원\r\n○ 주거급여 수급자인 경우 전월(20일)에 지급한 주거급여를 차감하고 지급",
+      "status": "ACTIVE",
+      "is_active": true
+    },
+    "policy_conditions": [
+      {
+        "attribute_key": "age",
+        "operator": "BETWEEN",
+        "expected_value": {
+          "min": 35,
+          "max": 39
+        },
+        "is_required": true,
+        "description": "만 35세 ~ 39세",
+        "group_no": 0,
+        "sort_order": 1
+      },
+      {
+        "attribute_key": "region_code",
+        "operator": "IN",
+        "expected_value": [
+          "28155"
+        ],
+        "is_required": true,
+        "description": "거주지역 조건",
+        "group_no": 0,
+        "sort_order": 2
+      },
+      {
+        "attribute_key": "household_monthly_income",
+        "operator": "EXISTS",
+        "expected_value": null,
+        "is_required": false,
+        "description": "청년독립가구는 기준중위소득 60% 이하, 원가구는 기준중위소득 100% 이하",
+        "group_no": 0,
+        "sort_order": 3,
+        "needs_admin_review": true
+      }
+    ],
+    "policy_requirements": [
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "월세지원 신청(변경)서",
+        "description": "필수 서류",
+        "is_required": true,
+        "sort_order": 1
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "소득·재산 신고서",
+        "description": "필수 서류",
+        "is_required": true,
+        "sort_order": 2
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "서약서",
+        "description": "필수 서류",
+        "is_required": true,
+        "sort_order": 3
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "임대차계약서(확정일자 날인) 사본",
+        "description": "필수 서류",
+        "is_required": true,
+        "sort_order": 4
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "월세이체 증빙 서류(최근 3개월)",
+        "description": "받는분, 보내는분, 날짜, 금액 명시. 최근 계약시 최소1개월(회) 이상 필수",
+        "is_required": true,
+        "sort_order": 5
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "(월세지급을 위한) 통장사본",
+        "description": "필수 서류",
+        "is_required": true,
+        "sort_order": 6
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "신청자 기준 가족관계증명서 (상세, 주민등록번호 공개)",
+        "description": "필수 서류",
+        "is_required": true,
+        "sort_order": 7
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "부/모(각각) 기준 가족관계증명서 (상세, 주민등록번호 공개)",
+        "description": "필수 서류",
+        "is_required": true,
+        "sort_order": 8
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "(혼인한 경우 필수 제출) 배우자 기준 가족관계증명서 및 배우자 부모의 가족관계증명서 (상세, 주민등록번호 공개)",
+        "description": "혼인한 경우 선택 서류",
+        "is_required": false,
+        "sort_order": 9
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "신분증",
+        "description": "방문신청시 필수지참. 선택 서류",
+        "is_required": false,
+        "sort_order": 10
+      }
+    ],
+    "policy_benefit_rules": {
+      "calculator_type": "RENT_SUPPORT",
+      "params_json": {
+        "monthly_cap": 200000,
+        "duration_months": 24
+      },
+      "description": "지원금액 : 1인 월 20만원씩, 최대 24개월(회) 월세 지원(기존 지원횟수 포함 한사람당 최대 24회 지급 가능)",
+      "confidence": 0.95
+    }
+  },
+  {
+    "policies": {
+      "external_id": "20260724005400213300",
+      "source": "YOUTH_CENTER",
+      "title": "(영종구) 청년 자격증 응시료 지원",
+      "category": "EMPLOYMENT",
+      "subcategory": "취업",
+      "provider_name": "인천광역시 영종구 경제산업국 경제지원과",
+      "region_scope": "LOCAL",
+      "region_code": "28155",
+      "summary": "취업에 어려움을 겪고 있는 영종구 청년에게 자격증 응시료 지원을 통한 경제적 부담 경감 및 사회진입 활성화 도모",
+      "description": "○ 1인 1회, 연 최대 10만원 범위 자격증시험 응시료 지원\r\n※ 실제 본인이 부담한 비용만 신청 가능\r\n○ 자격증 한 종목 당 필기, 실기 등 여러 단계로 이루어져 있는 경우 그 중 1건만 지원 가능\r\n○ 1회에 여러 건을 신청한 경우, 금액이 가장 높은 1건에 대해서만 지원 가능\r\n○ 지원 자격증 종목\r\n - 국가기술자격증, 국가전문자격증, 국가공인민간자격, 한국사 및 어학시험\r\n ※ 자세한 자격증 종목은 하단의 참고사이트를 확인하시기 바랍니다.\r\n ※ 한국산업인력공단(Q-net) 국가기술자격 시험 응시료의 50%를 감면 지원받은 경우, 차액(실제 결제액)을 지원합니다.",
+      "application_start_date": null,
+      "application_end_date": null,
+      "is_ongoing": false,
+      "application_method": "",
+      "application_url": "https://youth.incheon.go.kr/youthpolicy/youthPolicyInfoDetail.do?poly_seq=467",
+      "contact": "김나경",
+      "original_text": "○ 1인 1회, 연 최대 10만원 범위 자격증시험 응시료 지원\r\n※ 실제 본인이 부담한 비용만 신청 가능\r\n○ 자격증 한 종목 당 필기, 실기 등 여러 단계로 이루어져 있는 경우 그 중 1건만 지원 가능\r\n○ 1회에 여러 건을 신청한 경우, 금액이 가장 높은 1건에 대해서만 지원 가능\r\n○ 지원 자격증 종목\r\n - 국가기술자격증, 국가전문자격증, 국가공인민간자격, 한국사 및 어학시험\r\n ※ 자세한 자격증 종목은 하단의 참고사이트를 확인하시기 바랍니다.\r\n ※ 한국산업인력공단(Q-net) 국가기술자격 시험 응시료의 50%를 감면 지원받은 경우, 차액(실제 결제액)을 지원합니다.",
+      "status": "ACTIVE",
+      "is_active": true
+    },
+    "policy_conditions": [
+      {
+        "attribute_key": "age",
+        "operator": "BETWEEN",
+        "expected_value": {
+          "min": 18,
+          "max": 39
+        },
+        "is_required": true,
+        "description": "만 18세 ~ 39세",
+        "group_no": 0,
+        "sort_order": 1
+      },
+      {
+        "attribute_key": "region_code",
+        "operator": "IN",
+        "expected_value": [
+          "28155"
+        ],
+        "is_required": true,
+        "description": "거주지역 조건",
+        "group_no": 0,
+        "sort_order": 2
+      }
+    ],
+    "policy_requirements": [
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "시험 결제영수증(실제 본인이 부담한 비용 증빙)",
+        "description": "필수 서류",
+        "is_required": true,
+        "sort_order": 1
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "시험응시 증빙서류(성적표, 응시확인서 등)",
+        "description": "필수 서류",
+        "is_required": true,
+        "sort_order": 2
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "통장사본(본인명의)",
+        "description": "필수 서류",
+        "is_required": true,
+        "sort_order": 3
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "사업자등록여부 사실증명",
+        "description": "필수 서류",
+        "is_required": true,
+        "sort_order": 4
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "건강보험자격득실확인서",
+        "description": "필수 서류",
+        "is_required": true,
+        "sort_order": 5
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "정부직접일자리 참여자 및 단기근로자 증빙서류(정부일자리 참여 확인서, 근로계약서 등)",
+        "description": "선택 서류",
+        "is_required": false,
+        "sort_order": 6
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "추가서류(필요시)",
+        "description": "선택 서류",
+        "is_required": false,
+        "sort_order": 7
+      }
+    ],
+    "policy_benefit_rules": {
+      "calculator_type": "FIXED_ONCE",
+      "params_json": {
+        "monthly_cap": null,
+        "duration_months": null
+      },
+      "description": "1인 1회, 연 최대 10만원 범위 자격증시험 응시료 지원",
+      "confidence": 0.9
+    }
+  },
+  {
+    "policies": {
+      "external_id": "20260722005400213299",
+      "source": "YOUTH_CENTER",
+      "title": "[남구] 2026년 구직 청년 면접용 정장대여",
+      "category": "EMPLOYMENT",
+      "subcategory": "취업",
+      "provider_name": "전남광주통합특별시",
+      "region_scope": "LOCAL",
+      "region_code": "12270",
+      "summary": "2026년 구직 청년 면접용 정장대여",
+      "description": "  ❍ 지원내용 : 면접용 정장 무료대여\n    - 대여품목 : (남자) 자켓, 셔츠, 바지, 넥타이(여자) 자켓, 블라우스, 스커트(바지)\n    - 대여기간 : 3박 4일(1인 연간 3회 이용 가능)",
+      "application_start_date": null,
+      "application_end_date": null,
+      "is_ongoing": true,
+      "application_method": "  ❍ 신청대상 : 남구 거주(주민등록)하는 청년(19세 ~ 39세)\n    - 신청일 기준 주민등록상 거주지가 남구로 되어 있는 자\n    - 일반교육, 모의면접, 대학교(원) 면접 제외\n    - 면접대상 기업에 대한 지역 제한 없음\n  ❍ 신청방법 : 방문 또는 이메일 신청\n    - 방    문 : 남구청 일자리정책과 청년정책팀(남구 봉선로 1, 6층)\n    - 이 메 일 : dbswl0980@korea.kr",
+      "application_url": "https://youth.gwangju.go.kr/www/51?siteId=www&plcyNo=20260408005400212638&url=%2Fwww%2Fpolicy%2FallYgPolicyView",
+      "contact": "청년정책담당자",
+      "original_text": "  ❍ 지원내용 : 면접용 정장 무료대여\n    - 대여품목 : (남자) 자켓, 셔츠, 바지, 넥타이(여자) 자켓, 블라우스, 스커트(바지)\n    - 대여기간 : 3박 4일(1인 연간 3회 이용 가능)",
+      "status": "ACTIVE",
+      "is_active": true
+    },
+    "policy_conditions": [
+      {
+        "attribute_key": "age",
+        "operator": "BETWEEN",
+        "expected_value": {
+          "min": 19,
+          "max": 39
+        },
+        "is_required": true,
+        "description": "만 19세 ~ 39세",
+        "group_no": 0,
+        "sort_order": 1
+      },
+      {
+        "attribute_key": "region_code",
+        "operator": "IN",
+        "expected_value": [
+          "12270"
+        ],
+        "is_required": true,
+        "description": "거주지역 조건",
+        "group_no": 0,
+        "sort_order": 2
+      }
+    ],
+    "policy_requirements": [
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "대여 신청서",
+        "description": "서식1에 따른 신청서 1부",
+        "is_required": true,
+        "sort_order": 1
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "신분증 사본",
+        "description": "1부 제출",
+        "is_required": true,
+        "sort_order": 2
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "주민등록표 초본",
+        "description": "1년 이내 발급분 1부 (최근 1개월 이내 발급분만 인정)",
+        "is_required": true,
+        "sort_order": 3
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "면접 증빙자료",
+        "description": "면접일·회사명 확인 가능한 자료 1부 (응시번호만 제출 불가, 본인 이름+응시번호 캡처본 필수)",
+        "is_required": true,
+        "sort_order": 4
+      }
+    ],
+    "policy_benefit_rules": {
+      "calculator_type": "CUSTOM",
+      "params_json": {
+        "monthly_cap": null,
+        "duration_months": null
+      },
+      "description": "면접용 정장 무료대여 (대여품목: 남자/여자 정장, 대여기간: 3박 4일, 1인 연간 3회 이용 가능)",
+      "confidence": 0.7
+    }
+  },
+  {
+    "policies": {
+      "external_id": "20260722005400213298",
+      "source": "YOUTH_CENTER",
+      "title": "청년월세지원",
+      "category": "HOUSING",
+      "subcategory": "전월세 및 주거급여 지원",
+      "provider_name": "전남광주통합특별시",
+      "region_scope": "LOCAL",
+      "region_code": "12110",
+      "summary": "고물가, 고금리 등으로 경제적 어려움을 겪고 있는 청년층의 주거비 부담 경감을 위하여 일시적으로 청년월세 지원 ",
+      "description": "월 최대 20만원 임대료 지원 (최장 24개월)\r\n* 생애 1회 / 임차보증금, 관리비 등은 제외",
+      "application_start_date": "20260101",
+      "application_end_date": "20261231",
+      "is_ongoing": false,
+      "application_method": "(온라인) 복지로 홈페이지(또는 앱) : [중앙부처 복지사업] 청년월세지원 신청\r\n(오프라인) 청년거주지(월세 임차지)의 관할 행정복지센터 방문 ",
+      "application_url": "https://www.bokjiro.go.kr/",
+      "contact": "청년정책담당자",
+      "original_text": "월 최대 20만원 임대료 지원 (최장 24개월)\r\n* 생애 1회 / 임차보증금, 관리비 등은 제외",
+      "status": "ACTIVE",
+      "is_active": true
+    },
+    "policy_conditions": [
+      {
+        "attribute_key": "age",
+        "operator": "BETWEEN",
+        "expected_value": {
+          "min": 19,
+          "max": 34
+        },
+        "is_required": true,
+        "description": "만 19세 ~ 34세",
+        "group_no": 0,
+        "sort_order": 1
+      },
+      {
+        "attribute_key": "region_code",
+        "operator": "IN",
+        "expected_value": [
+          "12110",
+          "12130",
+          "12150",
+          "12170",
+          "12190",
+          "12210",
+          "12240",
+          "12270",
+          "12300",
+          "12330",
+          "12710",
+          "12720",
+          "12730",
+          "12740",
+          "12750",
+          "12760",
+          "12770",
+          "12780",
+          "12790",
+          "12800",
+          "12810",
+          "12820",
+          "12830",
+          "12840",
+          "12850",
+          "12860",
+          "12870"
+        ],
+        "is_required": true,
+        "description": "거주지역 조건",
+        "group_no": 0,
+        "sort_order": 2
+      }
+    ],
+    "policy_requirements": [
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "월세지원 신청(변경)서",
+        "description": "필수 서류",
+        "is_required": true,
+        "sort_order": 1
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "소득·재산 신고서",
+        "description": "필수 서류",
+        "is_required": true,
+        "sort_order": 2
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "임대차계약(확정일자 날인) 및 월세이체 증빙서류",
+        "description": "필수 서류",
+        "is_required": true,
+        "sort_order": 3
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "서약서",
+        "description": "필수 서류",
+        "is_required": true,
+        "sort_order": 4
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "입금통장사본",
+        "description": "필수 서류",
+        "is_required": true,
+        "sort_order": 5
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "청년 및 부모의 가족관계증명서(상세)",
+        "description": "필수 서류",
+        "is_required": true,
+        "sort_order": 6
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "배우자 및 배우자 부모의 가족관계증명서(상세)",
+        "description": "필수 서류",
+        "is_required": true,
+        "sort_order": 7
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "위임장",
+        "description": "추가서류(필요시)",
+        "is_required": false,
+        "sort_order": 8
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "거주사실 입증 서류",
+        "description": "추가서류(필요시)",
+        "is_required": false,
+        "sort_order": 9
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "주택 구입 및 임차보증금 용도의 부채증빙 서류",
+        "description": "추가서류(필요시)",
+        "is_required": false,
+        "sort_order": 10
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "변경 계약서",
+        "description": "선정 후 주소 변경 시 제출 필수",
+        "is_required": true,
+        "sort_order": 11
+      }
+    ],
+    "policy_benefit_rules": {
+      "calculator_type": "RENT_SUPPORT",
+      "params_json": {
+        "monthly_cap": 200000,
+        "duration_months": 24
+      },
+      "description": "월 최대 20만원 임대료 지원 (최장 24개월)",
+      "confidence": 0.9
+    }
+  },
+  {
+    "policies": {
+      "external_id": "20260722005400213297",
+      "source": "YOUTH_CENTER",
+      "title": "2026년 광산구 구직청년 자격증 취득비용 지원사업 ",
+      "category": "ETC",
+      "subcategory": "교육비지원",
+      "provider_name": "전남광주통합특별시",
+      "region_scope": "LOCAL",
+      "region_code": "12330",
+      "summary": "광산구의 청년의 구직활동에 대한 경제적 부담 완화 및 취업역량 강화 기여하고자 구직청년 자격증 취득비용 지원사업 시행",
+      "description": "o 접수기간: 2026. 2. 2.(월) 09:00 ~ 11. 30.(월) 18:00   ※ 예산 소진 시 조기 마감\no 지원대상: 광산구에 주민등록을 둔 미취업 청년\no 지원분야: 국가기술자격증(540종), 국가전문자격증, 어학(16종), 한국사, 운전면허(1종 대형)\no 지원내용: 자격증 취득 소요 비용(응시료,수강료)의 80% 지원\n ※ 인당 연 2회, 최대 20만원\no 지원규모: 100명 내외(선착순 모집)\n\n※ 기타 자세한 사항은 공고문 확인",
+      "application_start_date": null,
+      "application_end_date": null,
+      "is_ongoing": true,
+      "application_method": "o 접수방법\n  - 직접방문 : 광산구청 3층, 일자리정책과\n  - 이 메 일 : gwangsanjob@korea.kr",
+      "application_url": "https://youth.gwangju.go.kr/www/50?formSeq=-1&mapngColumn=policy_id&mapngId=1268&url=%2Fwww%2Fform%2FapplFormView",
+      "contact": "청년정책담당자",
+      "original_text": "o 접수기간: 2026. 2. 2.(월) 09:00 ~ 11. 30.(월) 18:00   ※ 예산 소진 시 조기 마감\no 지원대상: 광산구에 주민등록을 둔 미취업 청년\no 지원분야: 국가기술자격증(540종), 국가전문자격증, 어학(16종), 한국사, 운전면허(1종 대형)\no 지원내용: 자격증 취득 소요 비용(응시료,수강료)의 80% 지원\n ※ 인당 연 2회, 최대 20만원\no 지원규모: 100명 내외(선착순 모집)\n\n※ 기타 자세한 사항은 공고문 확인",
+      "status": "ACTIVE",
+      "is_active": true
+    },
+    "policy_conditions": [
+      {
+        "attribute_key": "age",
+        "operator": "BETWEEN",
+        "expected_value": {
+          "min": 19,
+          "max": 39
+        },
+        "is_required": true,
+        "description": "만 19세 ~ 39세",
+        "group_no": 0,
+        "sort_order": 1
+      },
+      {
+        "attribute_key": "region_code",
+        "operator": "IN",
+        "expected_value": [
+          "12330"
+        ],
+        "is_required": true,
+        "description": "거주지역 조건",
+        "group_no": 0,
+        "sort_order": 2
+      }
+    ],
+    "policy_requirements": [],
+    "policy_benefit_rules": {
+      "calculator_type": "FIXED_ONCE",
+      "params_json": {
+        "monthly_cap": null,
+        "duration_months": null
+      },
+      "description": "자격증 취득 소요 비용(응시료,수강료)의 80% 지원 ※ 인당 연 2회, 최대 20만원",
+      "confidence": 0.9
+    }
+  },
+  {
+    "policies": {
+      "external_id": "20260722005400213296",
+      "source": "YOUTH_CENTER",
+      "title": "[남구]2026년 청년 자격증 취득 지원 사업",
+      "category": "ETC",
+      "subcategory": "교육비지원",
+      "provider_name": "전남광주통합특별시",
+      "region_scope": "LOCAL",
+      "region_code": "12270",
+      "summary": " 광주광역시 남구에서는 청년의 취업개발능력 향상 및 사회진입 활성화를  위해 「2026년 청년 자격증 취득 지원 사업」 을 다음과 같이 시행하오니 많은 신청 바랍니다.",
+      "description": "○ 시험 응시 인정기간: 2026. 1. 1. ~ 2026. 12. 17. 기간 내 해당 시험 응시\n\n○ 자격증 시험 응시료 지원(1인 연 2회, 최대 20만원 한도)\n\n○ 시험 응시료 20만원 이하: 실제 소요 금액(실비)만 지급\n\n○ 지원분야: 국가기술자격증(541종), 어학(16종), 한국사",
+      "application_start_date": null,
+      "application_end_date": null,
+      "is_ongoing": true,
+      "application_method": "○ 방문 또는 이메일 신청\n\n○ 방문: 남구청 일자리정책과 청년정책팀(남구 봉선로 1, 6층)\n\n○ 이메일: iljari1234@korea.kr",
+      "application_url": "https://youth.gwangju.go.kr/www/51?siteId=www&plcyNo=20260408005400212626&url=%2Fwww%2Fpolicy%2FallYgPolicyView",
+      "contact": "청년정책담당자",
+      "original_text": "○ 시험 응시 인정기간: 2026. 1. 1. ~ 2026. 12. 17. 기간 내 해당 시험 응시\n\n○ 자격증 시험 응시료 지원(1인 연 2회, 최대 20만원 한도)\n\n○ 시험 응시료 20만원 이하: 실제 소요 금액(실비)만 지급\n\n○ 지원분야: 국가기술자격증(541종), 어학(16종), 한국사",
+      "status": "ACTIVE",
+      "is_active": true
+    },
+    "policy_conditions": [
+      {
+        "attribute_key": "age",
+        "operator": "BETWEEN",
+        "expected_value": {
+          "min": 19,
+          "max": 39
+        },
+        "is_required": true,
+        "description": "만 19세 ~ 39세",
+        "group_no": 0,
+        "sort_order": 1
+      },
+      {
+        "attribute_key": "region_code",
+        "operator": "IN",
+        "expected_value": [
+          "12270"
+        ],
+        "is_required": true,
+        "description": "거주지역 조건",
+        "group_no": 0,
+        "sort_order": 2
+      }
+    ],
+    "policy_requirements": [
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "자격증 취득 지원사업 신청서(서식1)",
+        "description": "필수 서류",
+        "is_required": true,
+        "sort_order": 1
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "신청자 유의사항 및 동의서(서식 2)",
+        "description": "필수 서류",
+        "is_required": true,
+        "sort_order": 2
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "응시사실 증명서류(응시확인서 또는 성적표)",
+        "description": "접수확인서 불인정, 실제 응시 후 신청 가능",
+        "is_required": true,
+        "sort_order": 3
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "응시료 결제 영수증(내역서) 사본",
+        "description": "금융기관에서 발급, 시험과목/결제금액 표기 필수",
+        "is_required": true,
+        "sort_order": 4
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "주민등록초본(주소이력 5년, 신고일표시)",
+        "description": "광주 남구 거주사실 확인 필요",
+        "is_required": true,
+        "sort_order": 5
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "건강보험자격득실확인서",
+        "description": "미취업 여부 확인, 조회조건 전체/내역 전체 선택",
+        "is_required": true,
+        "sort_order": 6
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "통장 사본(신청자 본인 명의)",
+        "description": "필수 서류",
+        "is_required": true,
+        "sort_order": 7
+      }
+    ],
+    "policy_benefit_rules": {
+      "calculator_type": "FIXED_ONCE",
+      "params_json": {
+        "monthly_cap": null,
+        "duration_months": null
+      },
+      "description": "자격증 시험 응시료 지원(1인 연 2회, 최대 20만원 한도), 시험 응시료 20만원 이하: 실제 소요 금액(실비)만 지급",
+      "confidence": 0.9
+    }
+  },
+  {
+    "policies": {
+      "external_id": "20260722005400213295",
+      "source": "YOUTH_CENTER",
+      "title": "2026년 서구 청년도전지원사업",
+      "category": "EMPLOYMENT",
+      "subcategory": "취업",
+      "provider_name": "전남광주통합특별시",
+      "region_scope": "LOCAL",
+      "region_code": "12240",
+      "summary": "구직 단념 청년에게 맞춤형 프로그램(단·중·장기)을 통해 취업 의지 격려 및 쉬었음 상태 장기화 방지 등",
+      "description": "단계별 맞춤형 프로그램 및 수당(최대 350만원) 제공\n- 단기(5주, 50만원×1개월) : 밀착상담, 자신감 회복, 진로탐색, 취업역량\n- 중기(15주, 50만원×3개월) : 단기과정 + 외부연계  +자율활동\n- 장기(25주, 50만원×5개월) : 단기과정 + 외부연계  +자율활동\n  ※ 중·장기 과정 이수자 : 취·창업 인센티브 추가 지급",
+      "application_start_date": null,
+      "application_end_date": null,
+      "is_ongoing": true,
+      "application_method": "신청(고용 24 또는 센터 방문) → 신청자 조건 확인 → 프로그램 참여자 선정\n※ 온라인 신청시 운영기관 &apos;서구 청년도전지원센터&apos; 신청",
+      "application_url": "https://www.work24.go.kr/wk/g/b/1100/busiIntro.do",
+      "contact": "청년정책담당자",
+      "original_text": "단계별 맞춤형 프로그램 및 수당(최대 350만원) 제공\n- 단기(5주, 50만원×1개월) : 밀착상담, 자신감 회복, 진로탐색, 취업역량\n- 중기(15주, 50만원×3개월) : 단기과정 + 외부연계  +자율활동\n- 장기(25주, 50만원×5개월) : 단기과정 + 외부연계  +자율활동\n  ※ 중·장기 과정 이수자 : 취·창업 인센티브 추가 지급",
+      "status": "ACTIVE",
+      "is_active": true
+    },
+    "policy_conditions": [
+      {
+        "attribute_key": "age",
+        "operator": "BETWEEN",
+        "expected_value": {
+          "min": 18,
+          "max": 39
+        },
+        "is_required": true,
+        "description": "만 18세 ~ 39세",
+        "group_no": 0,
+        "sort_order": 1
+      },
+      {
+        "attribute_key": "region_code",
+        "operator": "IN",
+        "expected_value": [
+          "12240"
+        ],
+        "is_required": true,
+        "description": "거주지역 조건",
+        "group_no": 0,
+        "sort_order": 2
+      }
+    ],
+    "policy_requirements": [],
+    "policy_benefit_rules": {
+      "calculator_type": "FIXED_ONCE",
+      "params_json": {
+        "monthly_cap": 500000,
+        "duration_months": 5
+      },
+      "description": "[지원내용] 단계별 맞춤형 프로그램 및 수당(최대 350만원) 제공 - 단기(5주, 50만원×1개월) : 밀착상담, 자신감 회복, 진로탐색, 취업역량 - 중기(15주, 50만원×3개월) : 단기과정 + 외부연계  +자율활동 - 장기(25주, 50만원×5개월) : 단기과정 + 외부연계  +자율활동 ※ 중·장기 과정 이수자 : 취·창업 인센티브 추가 지급",
+      "confidence": 0.7
+    }
+  },
+  {
+    "policies": {
+      "external_id": "20260722005400213294",
+      "source": "YOUTH_CENTER",
+      "title": "[조선대학교] 현직자 리얼토크 멘토링 6월 : 앰코코리아, 광주교통공사",
+      "category": "EMPLOYMENT",
+      "subcategory": "취업",
+      "provider_name": "전남광주통합특별시",
+      "region_scope": "LOCAL",
+      "region_code": "12110",
+      "summary": "○ 현직자가 알려주는 취업 성공 노하우 공유\n· 진짜 취업 준비 과정 공개\n· 현직자가 전하는 생생한 업무 이야기\n· 합격 노하우 및 취업 전략 공유\n· 궁금한 점 직접 물어보는 Q&A",
+      "description": "○ 엠코코리아 멘토링\n· 일시: 6. 25.(목) 14:00 ~ 16:00\n· 분야: 공정기술(반도체)\n· 내용: 엠코코리아 취업 준비 방법, 현직자와 취업 준비 과정부터 직무 이야기까지\n○ 광주교통공사 멘토링\n· 일시: 6. 26.(금) 14:00 ~ 16:00\n· 분야: 신호팀 / 통신팀·전자팀\n· 내용: 신호 관리, 통신 설비, 전자 설비 준비 방법, 공기업 취업 전략과 직무별 핵심 노하우 공유",
+      "application_start_date": null,
+      "application_end_date": null,
+      "is_ongoing": true,
+      "application_method": "○ 학생통합지원시스템(THE조아) 참여 신청\n 엠코코리아 신청 : https://link24.kr/9iI9nvo\n 광주교통공사 신청 : https://link24.kr/7QOJ3Nj",
+      "application_url": "https://youth.gwangju.go.kr/www/50?siteId=www&policyId=1378&url=%2Fwww%2Fpolicy%2FgjYgPolicyView",
+      "contact": "청년정책담당자",
+      "original_text": "○ 엠코코리아 멘토링\n· 일시: 6. 25.(목) 14:00 ~ 16:00\n· 분야: 공정기술(반도체)\n· 내용: 엠코코리아 취업 준비 방법, 현직자와 취업 준비 과정부터 직무 이야기까지\n○ 광주교통공사 멘토링\n· 일시: 6. 26.(금) 14:00 ~ 16:00\n· 분야: 신호팀 / 통신팀·전자팀\n· 내용: 신호 관리, 통신 설비, 전자 설비 준비 방법, 공기업 취업 전략과 직무별 핵심 노하우 공유",
+      "status": "ACTIVE",
+      "is_active": true
+    },
+    "policy_conditions": [
+      {
+        "attribute_key": "age",
+        "operator": "BETWEEN",
+        "expected_value": {
+          "min": 19,
+          "max": 39
+        },
+        "is_required": true,
+        "description": "만 19세 ~ 39세",
+        "group_no": 0,
+        "sort_order": 1
+      },
+      {
+        "attribute_key": "region_code",
+        "operator": "IN",
+        "expected_value": [
+          "12110",
+          "12130",
+          "12150",
+          "12170",
+          "12190",
+          "12210",
+          "12240",
+          "12270",
+          "12300",
+          "12330",
+          "12710",
+          "12720",
+          "12730",
+          "12740",
+          "12750",
+          "12760",
+          "12770",
+          "12780",
+          "12790",
+          "12800",
+          "12810",
+          "12820",
+          "12830",
+          "12840",
+          "12850",
+          "12860",
+          "12870"
+        ],
+        "is_required": true,
+        "description": "거주지역 조건",
+        "group_no": 0,
+        "sort_order": 2
+      }
+    ],
+    "policy_requirements": [],
+    "policy_benefit_rules": {
+      "calculator_type": "CUSTOM",
+      "params_json": {
+        "monthly_cap": null,
+        "duration_months": null
+      },
+      "description": "지원내용: 엠코코리아 멘토링(6.25. 14:00~16:00), 광주교통공사 멘토링(6.26. 14:00~16:00) - 취업 준비 방법 및 직무 관련 정보 제공",
+      "confidence": 0.6
+    }
+  },
+  {
+    "policies": {
+      "external_id": "20260722005400213293",
+      "source": "YOUTH_CENTER",
+      "title": "청년정책 서포터즈 2기",
+      "category": "PARTICIPATION",
+      "subcategory": "청년참여",
+      "provider_name": "전남광주통합특별시",
+      "region_scope": "LOCAL",
+      "region_code": "12110",
+      "summary": "2026 청년정책 통합홍보사업으로 추진되는\n청년정책 서포터즈 2기를 모집합니다\n청년의 시선으로 청년과 정책을 연결합니다!",
+      "description": "활동실적에 따른 콘텐츠 제작비 지원\n교육지원: 분야별 역량강화 교육(4회, 2시간)",
+      "application_start_date": null,
+      "application_end_date": null,
+      "is_ongoing": true,
+      "application_method": "광주청년통합플랫폼 신청 또는 첨부파일의 신청서 양식을 작성하여 담당자 e-mail 제출\n( ssg6012@gjyouthcenter.kr )",
+      "application_url": "https://youth.gwangju.go.kr/www/50?formSeq=99&mapngColumn=policy_id&mapngId=1379&url=%2Fwww%2Fform%2FapplFormView",
+      "contact": "청년정책담당자",
+      "original_text": "활동실적에 따른 콘텐츠 제작비 지원\n교육지원: 분야별 역량강화 교육(4회, 2시간)",
+      "status": "ACTIVE",
+      "is_active": true
+    },
+    "policy_conditions": [
+      {
+        "attribute_key": "age",
+        "operator": "BETWEEN",
+        "expected_value": {
+          "min": 19,
+          "max": 39
+        },
+        "is_required": true,
+        "description": "만 19세 ~ 39세",
+        "group_no": 0,
+        "sort_order": 1
+      },
+      {
+        "attribute_key": "region_code",
+        "operator": "IN",
+        "expected_value": [
+          "12110",
+          "12130",
+          "12150",
+          "12170",
+          "12190",
+          "12210",
+          "12240",
+          "12270",
+          "12300",
+          "12330",
+          "12710",
+          "12720",
+          "12730",
+          "12740",
+          "12750",
+          "12760",
+          "12770",
+          "12780",
+          "12790",
+          "12800",
+          "12810",
+          "12820",
+          "12830",
+          "12840",
+          "12850",
+          "12860",
+          "12870"
+        ],
+        "is_required": true,
+        "description": "거주지역 조건",
+        "group_no": 0,
+        "sort_order": 2
+      }
+    ],
+    "policy_requirements": [
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "사업신청서",
+        "description": "필수 제출 서류",
+        "is_required": true,
+        "sort_order": 1
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "개인정보 수집·이용 및 제 3자 제공 동의서",
+        "description": "필수 제출 서류",
+        "is_required": true,
+        "sort_order": 2
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "거주지 증빙자료(주민등록초본, 재학증명서, 재직증명서 등)",
+        "description": "주민등록초본은 공고일 이후 발급, 주민등록번호 뒷자리 미공개. PDF로 변환 후 1개 파일로 제출",
+        "is_required": true,
+        "sort_order": 3
+      }
+    ],
+    "policy_benefit_rules": {
+      "calculator_type": "CUSTOM",
+      "params_json": {
+        "monthly_cap": null,
+        "duration_months": null
+      },
+      "description": "활동실적에 따른 콘텐츠 제작비 지원, 교육지원: 분야별 역량강화 교육(4회, 2시간)",
+      "confidence": 0.6
+    }
+  },
+  {
+    "policies": {
+      "external_id": "20260722005400213292",
+      "source": "YOUTH_CENTER",
+      "title": "[2026 광주청년드림은행 생활경제특강①]",
+      "category": "FINANCE",
+      "subcategory": "취약계층 및 금융지원",
+      "provider_name": "전남광주통합특별시",
+      "region_scope": "LOCAL",
+      "region_code": "12110",
+      "summary": "\"구해줘 내 집!\" - [전세사기 피해예방과 임대차보호법]\n\n생활 속 빈 곳을 채워 삶의 질을 높이는 특강!\n\n다채로운 삶의 영역에서 나만의 기준을 갖고 살아가고 싶을 때,\n\n안전하고 풍요로운 삶을 만들 수 있는 광주청년드림은행 특강을 소개합니다!\n\n<1강 소개>\n고민하며 시작한 독립, 더 나은 주거 환경을 위한 선택으로 전세를 고민하고 있나요?\n\n계약서 앞에서 자신이 없고 불안한 마음 때문에 고민하고 있나요?\n\n혹시 이미 피해가 발생한 것은 아닐지, 내가 사는 전세는 괜찮은지 점검하고 싶나요?\n\n혹하게 하는 말로 다가오지만 금전 피해뿐만 아니라 심리적 고통, 추가 피해까지 발생시키는 전세사기. 예방부터 대처까지, 나와 내 보금자리를 지키는 방법을 소개합니다.",
+      "description": "<강의내용>\n01 전세사기 주요 유형별 사례와 예방\n02 임대차보호법과 전세 계약 시 참고사항\n\n☞ 이런 분에게 적합해요\n- 안전한 독립생활을 꿈꾸는 청년\n- 전세사기피해로 고민하는 청년\n- 전세사기피해를 예방하고 싶은 청년\n- 전세사기와 임대차보호법에 대해 알고 싶은 청년\n\n◈ 앞 강의를 듣지 않아도, 내가 듣고 싶은 강의를 자유롭게 신청하실 수 있습니다.",
+      "application_start_date": null,
+      "application_end_date": null,
+      "is_ongoing": true,
+      "application_method": "✿ 일 시 : 2026년 6월 23일(화) 오후 7-9시(2시간)\n✿ 대 상 : 전세사기 예방에 관심있는 광주 청년 30명, 선착순\n✿ 장 소 : 광주청년드림은행 (광주광역시 북구 무등로 237 2층)\n✿ 참 가 비 : 무료(광주광역시 지원)\n✿ 신 청 : 2026년 6월 19일(금)까지 신청\n✿ 문 의 : 062-521-2567 광주청년드림은행",
+      "application_url": "https://youth.gwangju.go.kr/www/51?siteId=www&plcyNo=20260612005400213230&url=%2Fwww%2Fpolicy%2FallYgPolicyView",
+      "contact": "청년정책담당자",
+      "original_text": "<강의내용>\n01 전세사기 주요 유형별 사례와 예방\n02 임대차보호법과 전세 계약 시 참고사항\n\n☞ 이런 분에게 적합해요\n- 안전한 독립생활을 꿈꾸는 청년\n- 전세사기피해로 고민하는 청년\n- 전세사기피해를 예방하고 싶은 청년\n- 전세사기와 임대차보호법에 대해 알고 싶은 청년\n\n◈ 앞 강의를 듣지 않아도, 내가 듣고 싶은 강의를 자유롭게 신청하실 수 있습니다.",
+      "status": "ACTIVE",
+      "is_active": true
+    },
+    "policy_conditions": [
+      {
+        "attribute_key": "age",
+        "operator": "BETWEEN",
+        "expected_value": {
+          "min": 19,
+          "max": 39
+        },
+        "is_required": true,
+        "description": "만 19세 ~ 39세",
+        "group_no": 0,
+        "sort_order": 1
+      },
+      {
+        "attribute_key": "region_code",
+        "operator": "IN",
+        "expected_value": [
+          "12110",
+          "12130",
+          "12150",
+          "12170",
+          "12190",
+          "12210",
+          "12240",
+          "12270",
+          "12300",
+          "12330",
+          "12710",
+          "12720",
+          "12730",
+          "12740",
+          "12750",
+          "12760",
+          "12770",
+          "12780",
+          "12790",
+          "12800",
+          "12810",
+          "12820",
+          "12830",
+          "12840",
+          "12850",
+          "12860",
+          "12870"
+        ],
+        "is_required": true,
+        "description": "거주지역 조건",
+        "group_no": 0,
+        "sort_order": 2
+      }
+    ],
+    "policy_requirements": [],
+    "policy_benefit_rules": {
+      "calculator_type": "CUSTOM",
+      "params_json": {
+        "monthly_cap": null,
+        "duration_months": null
+      },
+      "description": "강의 제공(계산 가능한 금전적 혜택 없음)",
+      "confidence": 0.6
+    }
+  },
+  {
+    "policies": {
+      "external_id": "20260722005400213291",
+      "source": "YOUTH_CENTER",
+      "title": "2026년 서구 청년 크리에이터단 참여자 모집",
+      "category": "PARTICIPATION",
+      "subcategory": "청년참여",
+      "provider_name": "전남광주통합특별시",
+      "region_scope": "LOCAL",
+      "region_code": "12240",
+      "summary": "청년들의 정책 참여를 확대하고, SNS를 활용한 정책 홍보를 활성화하기 위해 「2026년 서구 청년 크리에이터단」 참여자를 모집하고자 합니다. 서구 청년정책에 관심이 많고, SNS 채널을 운영하는 사람이라면 누구나 지원 가능하오니 관심 있는 이들의 많은 참여 바랍니다.\n\n1. 모집기간 : 2026. 6. 10.(수) ~ 6. 19.(금)\n\n2. 모집대상 : 서구 청년정책에 관심이 많고, SNS 채널을 운영하는 자\n\n3. 모집인원 : 10명\n\n4. 활동내용 : 서구 청년정책에 참여한 후, 후기 콘텐츠를 제작하여 개인 SNS 채널에 게시\n\n5. 신청방법 : 신청 서류 작성 후, 이메일 접수(oroge_studio@naver.com)\n\n6. 문 의 처  : 서구 청년 크리에이터단 운영국(062-716-9353)\n\n※ 기타 자세한 사항은 서구청 홈페이지에 게시된 공고문에서 확인 바랍니다.",
+      "description": "1. 활동 내용 : 서구 청년정책 참여 및 후기 콘텐츠 제작, 게시\n\n2. 활동혜택 \n- 유튜브 : 건당 100,000원\n- 블로그 : 건당 70,000원\n- 인스타그램 : 건당 30,000원\n- 우수 크리에이터 선정 : 50,000원 (월 1명)\n\n※ 월 1건 인정 가능하며, 총 4개월간 활동 예정\n\n※ 활동비 지급 기준은 서구청 홈페이지 고시/공고 에서 확인 가능\n",
+      "application_start_date": null,
+      "application_end_date": null,
+      "is_ongoing": true,
+      "application_method": "신청 서류 작성 후, 이메일 접수 (oroge_studio@naver.com)      ※ 전송 후 수신 확인 (☎716-9353)",
+      "application_url": "https://youth.gwangju.go.kr/www/51?siteId=www&plcyNo=20260615005400213233&url=%2Fwww%2Fpolicy%2FallYgPolicyView",
+      "contact": "청년정책담당자",
+      "original_text": "1. 활동 내용 : 서구 청년정책 참여 및 후기 콘텐츠 제작, 게시\n\n2. 활동혜택 \n- 유튜브 : 건당 100,000원\n- 블로그 : 건당 70,000원\n- 인스타그램 : 건당 30,000원\n- 우수 크리에이터 선정 : 50,000원 (월 1명)\n\n※ 월 1건 인정 가능하며, 총 4개월간 활동 예정\n\n※ 활동비 지급 기준은 서구청 홈페이지 고시/공고 에서 확인 가능\n",
+      "status": "ACTIVE",
+      "is_active": true
+    },
+    "policy_conditions": [
+      {
+        "attribute_key": "age",
+        "operator": "BETWEEN",
+        "expected_value": {
+          "min": 19,
+          "max": 39
+        },
+        "is_required": true,
+        "description": "만 19세 ~ 39세",
+        "group_no": 0,
+        "sort_order": 1
+      },
+      {
+        "attribute_key": "region_code",
+        "operator": "IN",
+        "expected_value": [
+          "12240"
+        ],
+        "is_required": true,
+        "description": "거주지역 조건",
+        "group_no": 0,
+        "sort_order": 2
+      }
+    ],
+    "policy_requirements": [
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "참여 신청서",
+        "description": "공통 필수 서류",
+        "is_required": true,
+        "sort_order": 1
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "개인정보 제공, 이용 동의서",
+        "description": "공통 필수 서류",
+        "is_required": true,
+        "sort_order": 2
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "주소 입증자료 (주민등록초본 등)",
+        "description": "선택 서류",
+        "is_required": false,
+        "sort_order": 3
+      }
+    ],
+    "policy_benefit_rules": {
+      "calculator_type": "CUSTOM",
+      "params_json": {
+        "monthly_cap": null,
+        "duration_months": 4
+      },
+      "description": "유튜브 : 건당 100,000원, 블로그 : 건당 70,000원, 인스타그램 : 건당 30,000원, 우수 크리에이터 선정 : 50,000원 (월 1명), ※ 월 1건 인정 가능하며, 총 4개월간 활동 예정",
+      "confidence": 0.7
+    }
+  },
+  {
+    "policies": {
+      "external_id": "20260722005400213290",
+      "source": "YOUTH_CENTER",
+      "title": "오픈마이크 2기",
+      "category": "ETC",
+      "subcategory": "교육비지원",
+      "provider_name": "전남광주통합특별시",
+      "region_scope": "LOCAL",
+      "region_code": "12210",
+      "summary": "○ 청년 강연자 양성 프로젝트\n· 내 경험을 한 편의 강연으로 완성하고, 작은 무대(토크콘서트)에서 직접 발표하는 프로그램\n· 전문가 코칭과 또래 피드백 매 회차 운영\n· 말의 순서와 전달 방식 학습",
+      "description": "○ 프로그램 운영\n· 참가자 소개 및 아이스브레이킹, 스토리텔링의 개요\n· 특강 <당신의 이야기를 삽니다>\n· 기본 스피치 강연 내용 작성하기 <CODI법>\n· 설득하는 힘 <강연 스피치>\n· 전문가 코칭 및 상호 피드백\n· 토크콘서트 진행",
+      "application_start_date": null,
+      "application_end_date": null,
+      "is_ongoing": true,
+      "application_method": "○ 아지트 홈페이지 신청\n· [프로그램] → [오픈마이크 2기] → [프로그램 신청] 클릭 후 구글폼 작성",
+      "application_url": "https://youth.gwangju.go.kr/www/51?siteId=www&plcyNo=20260616005400213237&url=%2Fwww%2Fpolicy%2FallYgPolicyView",
+      "contact": "청년정책담당자",
+      "original_text": "○ 프로그램 운영\n· 참가자 소개 및 아이스브레이킹, 스토리텔링의 개요\n· 특강 <당신의 이야기를 삽니다>\n· 기본 스피치 강연 내용 작성하기 <CODI법>\n· 설득하는 힘 <강연 스피치>\n· 전문가 코칭 및 상호 피드백\n· 토크콘서트 진행",
+      "status": "ACTIVE",
+      "is_active": true
+    },
+    "policy_conditions": [
+      {
+        "attribute_key": "age",
+        "operator": "BETWEEN",
+        "expected_value": {
+          "min": 19,
+          "max": 39
+        },
+        "is_required": true,
+        "description": "만 19세 ~ 39세",
+        "group_no": 0,
+        "sort_order": 1
+      },
+      {
+        "attribute_key": "region_code",
+        "operator": "IN",
+        "expected_value": [
+          "12210"
+        ],
+        "is_required": true,
+        "description": "거주지역 조건",
+        "group_no": 0,
+        "sort_order": 2
+      }
+    ],
+    "policy_requirements": [],
+    "policy_benefit_rules": {
+      "calculator_type": "CUSTOM",
+      "params_json": {
+        "monthly_cap": null,
+        "duration_months": null
+      },
+      "description": "지원내용: 프로그램 운영(참가자 소개, 특강, 스피치 강연, 코칭, 토크콘서트 등)",
+      "confidence": 0.6
+    }
+  },
+  {
+    "policies": {
+      "external_id": "20260722005400213289",
+      "source": "YOUTH_CENTER",
+      "title": "2026 마음건강상담소 2차 참여자 모집 (접수 마감)",
+      "category": "FINANCE",
+      "subcategory": "건강",
+      "provider_name": "전남광주통합특별시",
+      "region_scope": "LOCAL",
+      "region_code": "12110",
+      "summary": "청년 정신건강 증진을 위한 1:1 전문심리상담 지원",
+      "description": " ·  1:1 전문 심리상담 제공 (기본 6회기, 최대 8회기)\n ·  필요 시 심리검사 지원\n ·  마음건강 증진 프로그램 운영",
+      "application_start_date": null,
+      "application_end_date": null,
+      "is_ongoing": true,
+      "application_method": "광주청년통합플랫폼 온라인 신청 → 상담소 배정 → 마음건강 상담 진행 → 만족도 조사",
+      "application_url": "https://youth.gwangju.go.kr/www/50?formSeq=100&mapngColumn=policy_id&mapngId=1383&url=%2Fwww%2Fform%2FapplFormView",
+      "contact": "청년정책담당자",
+      "original_text": " ·  1:1 전문 심리상담 제공 (기본 6회기, 최대 8회기)\n ·  필요 시 심리검사 지원\n ·  마음건강 증진 프로그램 운영",
+      "status": "ACTIVE",
+      "is_active": true
+    },
+    "policy_conditions": [
+      {
+        "attribute_key": "age",
+        "operator": "BETWEEN",
+        "expected_value": {
+          "min": 19,
+          "max": 39
+        },
+        "is_required": true,
+        "description": "만 19세 ~ 39세",
+        "group_no": 0,
+        "sort_order": 1
+      },
+      {
+        "attribute_key": "region_code",
+        "operator": "IN",
+        "expected_value": [
+          "12110",
+          "12130",
+          "12150",
+          "12170",
+          "12190",
+          "12210",
+          "12240",
+          "12270",
+          "12300",
+          "12330",
+          "12710",
+          "12720",
+          "12730",
+          "12740",
+          "12750",
+          "12760",
+          "12770",
+          "12780",
+          "12790",
+          "12800",
+          "12810",
+          "12820",
+          "12830",
+          "12840",
+          "12850",
+          "12860",
+          "12870"
+        ],
+        "is_required": true,
+        "description": "거주지역 조건",
+        "group_no": 0,
+        "sort_order": 2
+      }
+    ],
+    "policy_requirements": [],
+    "policy_benefit_rules": {
+      "calculator_type": "CUSTOM",
+      "params_json": {
+        "monthly_cap": null,
+        "duration_months": null
+      },
+      "description": "1:1 전문 심리상담 제공 (기본 6회기, 최대 8회기), 필요 시 심리검사 지원, 마음건강 증진 프로그램 운영",
+      "confidence": 0.6
+    }
+  },
+  {
+    "policies": {
+      "external_id": "20260722005400213288",
+      "source": "YOUTH_CENTER",
+      "title": "사회연대경제 청년 일경험사업 시범사업",
+      "category": "EMPLOYMENT",
+      "subcategory": "취업",
+      "provider_name": "전남광주통합특별시",
+      "region_scope": "LOCAL",
+      "region_code": "12110",
+      "summary": "○ 미취업 청년에게 사회연대경제 분야 일경험 기회 제공\n· 노동시장 진입 기반 마련\n· 진로탐색 및 직무역량 강화 지원",
+      "description": "○ 직무교육\n· 총 20시간(1일 최대 8시간 편성)\n· 사회연대경제 이해 및 직무 기초역량 강화, 참여청년 직무 분야별 실무교육, 진로 연계 등\n· 교육시간의 90% 이상 출석 시 수료\n\n○ 일경험 프로그램\n· 근로기간: 2026. 7. 1. ~ 11. 30. (5개월)\n· 근로시간: 주 5일(주 40시간), 1일 8시간(9:00~18:00)\n· 휴게시간: 12:00~13:00(1시간)\n· 임금수준: 시급 11,188원(월 209시간 개근 시 2,338,292원, 유급주휴 포함, 세전)\n· 급여공제: 근로소득세, 지방소득세, 근로자 부담 4대 보험료 등\n\n○ 청년밀착형 프로그램\n· 현장적응 지원, 고충 상담, 진로탐색, 심리･정서적 안정 지원\n\n○ 멘토링 프로그램\n· 직무수행, 진로탐색 등을 지원하기 위한 1:1 멘토 지정",
+      "application_start_date": null,
+      "application_end_date": null,
+      "is_ongoing": true,
+      "application_method": "○ 고용24 온라인신청\n· https://m.site.naver.com/29ZAK",
+      "application_url": "https://youth.gwangju.go.kr/www/51?siteId=www&plcyNo=20260616005400213235&url=%2Fwww%2Fpolicy%2FallYgPolicyView",
+      "contact": "청년정책담당자",
+      "original_text": "○ 직무교육\n· 총 20시간(1일 최대 8시간 편성)\n· 사회연대경제 이해 및 직무 기초역량 강화, 참여청년 직무 분야별 실무교육, 진로 연계 등\n· 교육시간의 90% 이상 출석 시 수료\n\n○ 일경험 프로그램\n· 근로기간: 2026. 7. 1. ~ 11. 30. (5개월)\n· 근로시간: 주 5일(주 40시간), 1일 8시간(9:00~18:00)\n· 휴게시간: 12:00~13:00(1시간)\n· 임금수준: 시급 11,188원(월 209시간 개근 시 2,338,292원, 유급주휴 포함, 세전)\n· 급여공제: 근로소득세, 지방소득세, 근로자 부담 4대 보험료 등\n\n○ 청년밀착형 프로그램\n· 현장적응 지원, 고충 상담, 진로탐색, 심리･정서적 안정 지원\n\n○ 멘토링 프로그램\n· 직무수행, 진로탐색 등을 지원하기 위한 1:1 멘토 지정",
+      "status": "ACTIVE",
+      "is_active": true
+    },
+    "policy_conditions": [
+      {
+        "attribute_key": "age",
+        "operator": "BETWEEN",
+        "expected_value": {
+          "min": 19,
+          "max": 39
+        },
+        "is_required": true,
+        "description": "만 19세 ~ 39세",
+        "group_no": 0,
+        "sort_order": 1
+      },
+      {
+        "attribute_key": "region_code",
+        "operator": "IN",
+        "expected_value": [
+          "12110",
+          "12130",
+          "12150",
+          "12170",
+          "12190",
+          "12210",
+          "12240",
+          "12270",
+          "12300",
+          "12330",
+          "12710",
+          "12720",
+          "12730",
+          "12740",
+          "12750",
+          "12760",
+          "12770",
+          "12780",
+          "12790",
+          "12800",
+          "12810",
+          "12820",
+          "12830",
+          "12840",
+          "12850",
+          "12860",
+          "12870"
+        ],
+        "is_required": true,
+        "description": "거주지역 조건",
+        "group_no": 0,
+        "sort_order": 2
+      }
+    ],
+    "policy_requirements": [
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "첨부파일 확인 필요",
+        "description": "정확한 제출 서류 목록은 정책 공고문 첨부파일에서 확인해야 합니다.",
+        "is_required": true,
+        "sort_order": 1
+      }
+    ],
+    "policy_benefit_rules": {
+      "calculator_type": "FIXED_MONTHLY",
+      "params_json": {
+        "monthly_cap": 2338292,
+        "duration_months": 5
+      },
+      "description": "임금수준: 시급 11,188원(월 209시간 개근 시 2,338,292원, 유급주휴 포함, 세전)",
+      "confidence": 0.9
+    }
+  },
+  {
+    "policies": {
+      "external_id": "20260722005400213287",
+      "source": "YOUTH_CENTER",
+      "title": "2026년 서구 하반기 청년강사 모집",
+      "category": "PARTICIPATION",
+      "subcategory": "청년참여",
+      "provider_name": "전남광주통합특별시",
+      "region_scope": "LOCAL",
+      "region_code": "12240",
+      "summary": "광주광역시 서구에서 청년의 지식과 재능을 공유하는 환경 조성을 위해 「2026년 서구 청년 PI스쿨」청년강사 하반기 참여자를 모집하고자 합니다. \n다양한 분야에서 경험을 지닌 서구 청년이라면 누구나 지원 가능하오니 열정과 재능있는 청년들의 많은 참여 바랍니다.\n\n  1. 지원자격 : 공유할 재능을 가지고 있는 광주광역시 및 서구 청년(19~39세)\n  2. 선정인원 : 최대 15명\n  3. 모집분야 : 취업·진로, IT·미디어, 문화예술, 금융·경제, 기타 공유하고 싶은 분야\n  4. 모집기간 : 2026. 6. 15.(월) ~ 6. 30.(화)\n  5. 신청방법 : 신청서 작성 후 이메일 접수(kmg127@korea.kr)\n  6. 선정발표 : 2026. 7. 10.(금)  ※ 공고 및 개별 통보\n  7. 문 의 처 : 062-360-7753 (서구청 일자리청년지원과 청년창업팀)",
+      "description": "1. 서구 청년 PI스쿨 청년강사 POOL 등록\n2. 선정자 대상 강사비 및 재료비 등 지원\n3. 우수 청년강사 대상 재등록",
+      "application_start_date": null,
+      "application_end_date": null,
+      "is_ongoing": true,
+      "application_method": "신청(이메일접수) - 서류 검토 - 선정자발표 - 프로그램 운영 ",
+      "application_url": "https://youth.gwangju.go.kr/www/51?siteId=www&plcyNo=20260618005400213239&url=%2Fwww%2Fpolicy%2FallYgPolicyView",
+      "contact": "청년정책담당자",
+      "original_text": "1. 서구 청년 PI스쿨 청년강사 POOL 등록\n2. 선정자 대상 강사비 및 재료비 등 지원\n3. 우수 청년강사 대상 재등록",
+      "status": "ACTIVE",
+      "is_active": true
+    },
+    "policy_conditions": [
+      {
+        "attribute_key": "age",
+        "operator": "BETWEEN",
+        "expected_value": {
+          "min": 19,
+          "max": 39
+        },
+        "is_required": true,
+        "description": "만 19세 ~ 39세",
+        "group_no": 0,
+        "sort_order": 1
+      },
+      {
+        "attribute_key": "region_code",
+        "operator": "IN",
+        "expected_value": [
+          "12240"
+        ],
+        "is_required": true,
+        "description": "거주지역 조건",
+        "group_no": 0,
+        "sort_order": 2
+      }
+    ],
+    "policy_requirements": [
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "지원서",
+        "description": "1부 제출",
+        "is_required": true,
+        "sort_order": 1
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "강의계획서",
+        "description": "1부 제출",
+        "is_required": true,
+        "sort_order": 2
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "개인정보 수집 및 활용 동의서",
+        "description": "1부 제출",
+        "is_required": true,
+        "sort_order": 3
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "주민등록초본",
+        "description": "1부 제출",
+        "is_required": true,
+        "sort_order": 4
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "학력 증명서 또는 수료증",
+        "description": "선택 서류",
+        "is_required": false,
+        "sort_order": 5
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "경력(재직)증명서",
+        "description": "1부 제출 (선택 서류)",
+        "is_required": false,
+        "sort_order": 6
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "관련분야 자격증 사본",
+        "description": "1부 제출 (선택 서류)",
+        "is_required": false,
+        "sort_order": 7
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "기타 필요하다고 인정되는 서류",
+        "description": "선택 서류",
+        "is_required": false,
+        "sort_order": 8
+      }
+    ],
+    "policy_benefit_rules": {
+      "calculator_type": "CUSTOM",
+      "params_json": {
+        "monthly_cap": null,
+        "duration_months": null
+      },
+      "description": "지원내용: 1. 서구 청년 PI스쿨 청년강사 POOL 등록, 2. 선정자 대상 강사비 및 재료비 등 지원, 3. 우수 청년강사 대상 재등록",
+      "confidence": 0.4
+    }
+  },
+  {
+    "policies": {
+      "external_id": "20260722005400213286",
+      "source": "YOUTH_CENTER",
+      "title": "[서구]2026년 전입 청년 웰컴 박스 지원사업",
+      "category": "EMPLOYMENT",
+      "subcategory": "취업",
+      "provider_name": "전남광주통합특별시",
+      "region_scope": "LOCAL",
+      "region_code": "12240",
+      "summary": "○ 전입 청년 웰컴 박스 지원\n· 광주광역시 서구로 전입한 1인 가구 청년들의 새로운 출발 응원 및 지역사회 적응 지원\n· 청년정책 안내 자료와 생활용품이 담긴 웰컴박스 지원",
+      "description": "○ 웰컴 박스 제공\n· 생활 물품과 청년정책 책자로 구성된 웰컴 박스 제공",
+      "application_start_date": null,
+      "application_end_date": null,
+      "is_ongoing": true,
+      "application_method": "○ 신청방법\n· 방문 및 이메일(satang2526@korea.kr) 신청 가능",
+      "application_url": "https://youth.gwangju.go.kr/www/51?siteId=www&plcyNo=20260616005400213236&url=%2Fwww%2Fpolicy%2FallYgPolicyView",
+      "contact": "청년정책담당자",
+      "original_text": "○ 웰컴 박스 제공\n· 생활 물품과 청년정책 책자로 구성된 웰컴 박스 제공",
+      "status": "ACTIVE",
+      "is_active": true
+    },
+    "policy_conditions": [
+      {
+        "attribute_key": "age",
+        "operator": "BETWEEN",
+        "expected_value": {
+          "min": 19,
+          "max": 39
+        },
+        "is_required": true,
+        "description": "만 19세 ~ 39세",
+        "group_no": 0,
+        "sort_order": 1
+      },
+      {
+        "attribute_key": "region_code",
+        "operator": "IN",
+        "expected_value": [
+          "12240"
+        ],
+        "is_required": true,
+        "description": "거주지역 조건",
+        "group_no": 0,
+        "sort_order": 2
+      }
+    ],
+    "policy_requirements": [
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "첨부파일 확인 필요",
+        "description": "정확한 제출 서류 목록은 정책 공고문 첨부파일에서 확인해야 합니다.",
+        "is_required": true,
+        "sort_order": 1
+      }
+    ],
+    "policy_benefit_rules": {
+      "calculator_type": "FIXED_ONCE",
+      "params_json": {
+        "monthly_cap": null,
+        "duration_months": null
+      },
+      "description": "생활 물품과 청년정책 책자로 구성된 웰컴 박스 제공",
+      "confidence": 0.9
+    }
+  },
+  {
+    "policies": {
+      "external_id": "20260722005400213285",
+      "source": "YOUTH_CENTER",
+      "title": "2026년 성인진로상담",
+      "category": "ETC",
+      "subcategory": "교육비지원",
+      "provider_name": "전남광주통합특별시",
+      "region_scope": "LOCAL",
+      "region_code": "12110",
+      "summary": "○ 광주시민이 자신의 진로를 자각, 탐색, 계획, 준비, 관리할 수 있도록 무료 상담 제공\n· 진흥원에서 양성한 성인진로컨설턴트 파견\n· 생애주기에 맞는 맞춤형 1:1 상담 제공",
+      "description": "○ 맞춤형 1:1 상담 제공\n· 진로 설계\n· 경력 전환\n· 학습 방향\n· 관계 및 마음 고민 상담\n○ 상담 운영\n· 상담 신청 후 성인진로컨설턴트 파견\n· 상담 진행 1~4회기\n· 1회 기준 90분\n○ 비용\n· 무료",
+      "application_start_date": null,
+      "application_end_date": null,
+      "is_ongoing": true,
+      "application_method": "○ 신청방법\n· 진흥원 홈페이지(www.gie.kr) 접속\n· 성인진로상담 메뉴 클릭\n· 정보입력 후 접수",
+      "application_url": "https://youth.gwangju.go.kr/www/51?siteId=www&plcyNo=20260618005400213240&url=%2Fwww%2Fpolicy%2FallYgPolicyView",
+      "contact": "청년정책담당자",
+      "original_text": "○ 맞춤형 1:1 상담 제공\n· 진로 설계\n· 경력 전환\n· 학습 방향\n· 관계 및 마음 고민 상담\n○ 상담 운영\n· 상담 신청 후 성인진로컨설턴트 파견\n· 상담 진행 1~4회기\n· 1회 기준 90분\n○ 비용\n· 무료",
+      "status": "ACTIVE",
+      "is_active": true
+    },
+    "policy_conditions": [
+      {
+        "attribute_key": "age",
+        "operator": "BETWEEN",
+        "expected_value": {
+          "min": 1,
+          "max": 99
+        },
+        "is_required": true,
+        "description": "만 1세 ~ 99세",
+        "group_no": 0,
+        "sort_order": 1
+      },
+      {
+        "attribute_key": "region_code",
+        "operator": "IN",
+        "expected_value": [
+          "12110",
+          "12130",
+          "12150",
+          "12170",
+          "12190",
+          "12210",
+          "12240",
+          "12270",
+          "12300",
+          "12330",
+          "12710",
+          "12720",
+          "12730",
+          "12740",
+          "12750",
+          "12760",
+          "12770",
+          "12780",
+          "12790",
+          "12800",
+          "12810",
+          "12820",
+          "12830",
+          "12840",
+          "12850",
+          "12860",
+          "12870"
+        ],
+        "is_required": true,
+        "description": "거주지역 조건",
+        "group_no": 0,
+        "sort_order": 2
+      }
+    ],
+    "policy_requirements": [],
+    "policy_benefit_rules": {
+      "calculator_type": "CUSTOM",
+      "params_json": {
+        "monthly_cap": null,
+        "duration_months": null
+      },
+      "description": "비용: 무료 / 상담 진행 1~4회기, 1회 기준 90분",
+      "confidence": 0.7
+    }
+  },
+  {
+    "policies": {
+      "external_id": "20260722005400213284",
+      "source": "YOUTH_CENTER",
+      "title": "[7월 마감] 2026년 구직청년 자격증 취득지원 사업(8월 3일 10시 접수 예정)",
+      "category": "ETC",
+      "subcategory": "교육비지원",
+      "provider_name": "전남광주통합특별시",
+      "region_scope": "LOCAL",
+      "region_code": "12110",
+      "summary": "구직활동에 필요한 어학(능력)·자격증 시험 응시료 지원",
+      "description": " ※ 단계별 시험(필기,실기 등)은 명칭과 상관 없이 합산 신청 가능(개별 신청하여 지급 완료 시, 당해 연도 추가 신청 및 소급 지원 불가)\n\n❍ 지원분야\n  - 한국사 및 어학능력시험 : 국사편찬위원회 주관 한국사 시험 및 어학능력시험 20종 \n  - 국가기술자격증 : 「국가기술자격법」시행규칙 별표2에 따른 국가기술자격증\n  - 국가전문자격증 : 한국산업인력공단(Q-net) 국가자격 종목별 상세정보 참고 /*자동차운전면허 제외\n  - 국가공인자격증 : 민간자격정보서비스에 등록된 &apos;공인&apos;자격증 /* 민간자격정보서비스 상의 구분이 \"부분공인\"이라면 국가공인 등급(급수) 취득 및 해당 성적 달성 시에 한하여 지원 가능 /* 민간자격정보서비스 상의 구분이 \"등록\"이라면 지원 제외 ",
+      "application_start_date": null,
+      "application_end_date": null,
+      "is_ongoing": true,
+      "application_method": "시험 응시 → 광주청년통합플랫폼 접수 → 제출 서류 확인 (자격심사 및 중복지원여부 조회) → 선정안내 및 만족도조사 → 지원금 지급",
+      "application_url": "https://youth.gwangju.go.kr/www/50?formSeq=125&mapngColumn=policy_id&mapngId=1389&url=%2Fwww%2Fform%2FapplFormView",
+      "contact": "청년정책담당자",
+      "original_text": " ※ 단계별 시험(필기,실기 등)은 명칭과 상관 없이 합산 신청 가능(개별 신청하여 지급 완료 시, 당해 연도 추가 신청 및 소급 지원 불가)\n\n❍ 지원분야\n  - 한국사 및 어학능력시험 : 국사편찬위원회 주관 한국사 시험 및 어학능력시험 20종 \n  - 국가기술자격증 : 「국가기술자격법」시행규칙 별표2에 따른 국가기술자격증\n  - 국가전문자격증 : 한국산업인력공단(Q-net) 국가자격 종목별 상세정보 참고 /*자동차운전면허 제외\n  - 국가공인자격증 : 민간자격정보서비스에 등록된 &apos;공인&apos;자격증 /* 민간자격정보서비스 상의 구분이 \"부분공인\"이라면 국가공인 등급(급수) 취득 및 해당 성적 달성 시에 한하여 지원 가능 /* 민간자격정보서비스 상의 구분이 \"등록\"이라면 지원 제외 ",
+      "status": "ACTIVE",
+      "is_active": true
+    },
+    "policy_conditions": [
+      {
+        "attribute_key": "age",
+        "operator": "BETWEEN",
+        "expected_value": {
+          "min": 19,
+          "max": 39
+        },
+        "is_required": true,
+        "description": "만 19세 ~ 39세",
+        "group_no": 0,
+        "sort_order": 1
+      },
+      {
+        "attribute_key": "region_code",
+        "operator": "IN",
+        "expected_value": [
+          "12110",
+          "12130",
+          "12150",
+          "12170",
+          "12190",
+          "12210",
+          "12240",
+          "12270",
+          "12300",
+          "12330",
+          "12710",
+          "12720",
+          "12730",
+          "12740",
+          "12750",
+          "12760",
+          "12770",
+          "12780",
+          "12790",
+          "12800",
+          "12810",
+          "12820",
+          "12830",
+          "12840",
+          "12850",
+          "12860",
+          "12870"
+        ],
+        "is_required": true,
+        "description": "거주지역 조건",
+        "group_no": 0,
+        "sort_order": 2
+      }
+    ],
+    "policy_requirements": [
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "주민등록표 초본",
+        "description": "신청월 발급본, 발생일/신고일 포함, 마지막장까지 제출",
+        "is_required": true,
+        "sort_order": 1
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "건강보험 자격득실 확인서 또는 고용보험자격이력내역서",
+        "description": "신청월 발급본, 발급시 조회 조건 전체. 건강보험 자격득실 확인서 가입자구분이 구분없음일 때 대체 제출",
+        "is_required": true,
+        "sort_order": 2
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "응시사실 증명서류",
+        "description": "응시 확인서 또는 성적표(성명, 응시일, 자격종목 확인 가능 서류). 민간자격정보서비스상 '부분공인' 종목은 국가공인 자격증 사본 또는 공인 등급 명시된 성적표 추가 제출",
+        "is_required": true,
+        "sort_order": 3
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "결제영수증",
+        "description": "결제 금액, 일시, 승인번호, 거래처 등 포함된 영수증(시험 사이트 발급 영수증 불인정)",
+        "is_required": true,
+        "sort_order": 4
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "통장 사본",
+        "description": "은행명, 성명, 계좌번호 표기",
+        "is_required": true,
+        "sort_order": 5
+      }
+    ],
+    "policy_benefit_rules": {
+      "calculator_type": "CUSTOM",
+      "params_json": {
+        "monthly_cap": null,
+        "duration_months": null
+      },
+      "description": "[지원내용] 텍스트에 구체적인 금액/기간 정보 없음",
+      "confidence": 0.3
+    }
+  },
+  {
+    "policies": {
+      "external_id": "20260722005400213283",
+      "source": "YOUTH_CENTER",
+      "title": "[조선대] 현직자 리얼토크 멘토링 : 하이트진로음료",
+      "category": "EMPLOYMENT",
+      "subcategory": "취업",
+      "provider_name": "전남광주통합특별시",
+      "region_scope": "LOCAL",
+      "region_code": "12110",
+      "summary": "○ 현직자 리얼토크 멘토링 : 하이트진로음료\r\n· 현직자가 알려주는 실무 이야기 및 취업 노하우 제공\r\n· 온라인 마케팅 현직자의 실제 업무 소개\r\n· 취업 준비 과정 및 합격 노하우 안내\r\n· 취업 전 알아야 할 현실 이야기 및 현직자 실시간 Q&A 운영",
+      "description": "○ 온라인 마케팅 전략\r\n· 온라인 채널, 광고 기획, 퍼포먼스 마케팅 전략 노하우 전수\r\n○ 자사몰 운영\r\n· 자사몰 기획 및 운영 실무 전체 흐름 안내\r\n○ 콜라보 브랜딩\r\n· 타사와의 콜라보 브랜딩 및 마케팅 역량 안내\r\n○ 취업 준비 전략\r\n· 현직자의 취업 준비 경험 및 취업 노하우 공유\r\n○ 현직자 Q&A\r\n· 취업 관련 궁금한 사항 질의응답",
+      "application_start_date": "20260721",
+      "application_end_date": "20260721",
+      "is_ongoing": false,
+      "application_method": "○ 신청방법\r\n· 학생통합지원시스템(THE조아) 참여 신청\r\n· 신청 링크: https://link24.kr/FAfoPnG",
+      "application_url": "https://link24.kr/FAfoPnG",
+      "contact": "청년정책담당자",
+      "original_text": "○ 온라인 마케팅 전략\r\n· 온라인 채널, 광고 기획, 퍼포먼스 마케팅 전략 노하우 전수\r\n○ 자사몰 운영\r\n· 자사몰 기획 및 운영 실무 전체 흐름 안내\r\n○ 콜라보 브랜딩\r\n· 타사와의 콜라보 브랜딩 및 마케팅 역량 안내\r\n○ 취업 준비 전략\r\n· 현직자의 취업 준비 경험 및 취업 노하우 공유\r\n○ 현직자 Q&A\r\n· 취업 관련 궁금한 사항 질의응답",
+      "status": "ACTIVE",
+      "is_active": true
+    },
+    "policy_conditions": [
+      {
+        "attribute_key": "age",
+        "operator": "BETWEEN",
+        "expected_value": {
+          "min": 19,
+          "max": 39
+        },
+        "is_required": true,
+        "description": "만 19세 ~ 39세",
+        "group_no": 0,
+        "sort_order": 1
+      },
+      {
+        "attribute_key": "region_code",
+        "operator": "IN",
+        "expected_value": [
+          "12110",
+          "12130",
+          "12150",
+          "12170",
+          "12190",
+          "12210",
+          "12240",
+          "12270",
+          "12300",
+          "12330",
+          "12710",
+          "12720",
+          "12730",
+          "12740",
+          "12750",
+          "12760",
+          "12770",
+          "12780",
+          "12790",
+          "12800",
+          "12810",
+          "12820",
+          "12830",
+          "12840",
+          "12850",
+          "12860",
+          "12870"
+        ],
+        "is_required": true,
+        "description": "거주지역 조건",
+        "group_no": 0,
+        "sort_order": 2
+      }
+    ],
+    "policy_requirements": [],
+    "policy_benefit_rules": {
+      "calculator_type": "CUSTOM",
+      "params_json": {
+        "monthly_cap": null,
+        "duration_months": null
+      },
+      "description": "지원내용: 온라인 마케팅 전략, 자사몰 운영, 콜라보 브랜딩, 취업 준비 전략, 현직자 Q&A 등 교육/멘토링 프로그램 제공",
+      "confidence": 0.6
+    }
+  },
+  {
+    "policies": {
+      "external_id": "20260722005400213282",
+      "source": "YOUTH_CENTER",
+      "title": "2026년 완도군 청년 자격증 응시료 지원사업 ",
+      "category": "ETC",
+      "subcategory": "교육비지원",
+      "provider_name": "전남광주통합특별시",
+      "region_scope": "LOCAL",
+      "region_code": "12850",
+      "summary": "청년 구직활동의 경제적 부담 완화 및 취업 능력 개발 지원을 위해 자격증 응시료 지원",
+      "description": "어학·한국사, 국가자격증 응시료 실비 및 교재비 지원\n - 실제 결제한 응시료 및 교재비에 한하여 최대 10만원까지 지급\n - 연 10만원 한도 내에서 1인당 최대 2회까지 신청 가능\n - 지원분야\n   (어학8종) 토익(TOEIC), 토익스피킹, 토플(TOEFLE), 아이엘츠(IELTS), 오픽(OPIC), 텝스(TEPS), 지텔프(G-TELF), 플렉스(FLEX)\n   (한국사)  한국사능력검정시험\n   (국가, 민간자격) 국가기술자격증(국가기술자격법 시행규칙 별표 2), 국가전문자격증(개별법), 국가공인민간자격증(개별법)\n    한국산업인력공단(Q-net) 사이트를 통해 세부 종목 확인 가능\n   (www.q-net.or.kr→국가자격시험→자격정보→국가자격종목별상세정보)",
+      "application_start_date": null,
+      "application_end_date": null,
+      "is_ongoing": true,
+      "application_method": "온라인 접수(이메일 ruddnr0405@korea.kr) 제출 ※ 선착순 모집\n- 신청기간 : 2026. 1. ~ 12. / 매월 1일 ~ 10일 접수\n- 제출서류는 스캔 또는 선명하게 촬영 후 파일로 제출\n- 자세한 사항은 공고문 참고",
+      "application_url": "https://youth.gwangju.go.kr/www/51?siteId=www&plcyNo=20260702005400213247&url=%2Fwww%2Fpolicy%2FallYgPolicyView",
+      "contact": "청년정책담당자",
+      "original_text": "어학·한국사, 국가자격증 응시료 실비 및 교재비 지원\n - 실제 결제한 응시료 및 교재비에 한하여 최대 10만원까지 지급\n - 연 10만원 한도 내에서 1인당 최대 2회까지 신청 가능\n - 지원분야\n   (어학8종) 토익(TOEIC), 토익스피킹, 토플(TOEFLE), 아이엘츠(IELTS), 오픽(OPIC), 텝스(TEPS), 지텔프(G-TELF), 플렉스(FLEX)\n   (한국사)  한국사능력검정시험\n   (국가, 민간자격) 국가기술자격증(국가기술자격법 시행규칙 별표 2), 국가전문자격증(개별법), 국가공인민간자격증(개별법)\n    한국산업인력공단(Q-net) 사이트를 통해 세부 종목 확인 가능\n   (www.q-net.or.kr→국가자격시험→자격정보→국가자격종목별상세정보)",
+      "status": "ACTIVE",
+      "is_active": true
+    },
+    "policy_conditions": [
+      {
+        "attribute_key": "age",
+        "operator": "BETWEEN",
+        "expected_value": {
+          "min": 19,
+          "max": 49
+        },
+        "is_required": true,
+        "description": "만 19세 ~ 49세",
+        "group_no": 0,
+        "sort_order": 1
+      },
+      {
+        "attribute_key": "region_code",
+        "operator": "IN",
+        "expected_value": [
+          "12850"
+        ],
+        "is_required": true,
+        "description": "거주지역 조건",
+        "group_no": 0,
+        "sort_order": 2
+      }
+    ],
+    "policy_requirements": [
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "응시료 지원 신청서(개인정보동의서 포함)",
+        "description": "필수 제출 서류",
+        "is_required": true,
+        "sort_order": 1
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "응시사실 확인 증빙자료 및 교재사진",
+        "description": "필수 제출 서류",
+        "is_required": true,
+        "sort_order": 2
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "응시료 및 교재 결제 영수증",
+        "description": "필수 제출 서류",
+        "is_required": true,
+        "sort_order": 3
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "주민등록초본",
+        "description": "필수 제출 서류",
+        "is_required": true,
+        "sort_order": 4
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "건강보험 자격득실확인서",
+        "description": "필수 제출 서류",
+        "is_required": true,
+        "sort_order": 5
+      },
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "통장사본",
+        "description": "필수 제출 서류",
+        "is_required": true,
+        "sort_order": 6
+      }
+    ],
+    "policy_benefit_rules": {
+      "calculator_type": "FIXED_ONCE",
+      "params_json": {
+        "monthly_cap": null,
+        "duration_months": null
+      },
+      "description": "실제 결제한 응시료 및 교재비에 한하여 최대 10만원까지 지급. 연 10만원 한도 내에서 1인당 최대 2회까지 신청 가능",
+      "confidence": 0.9
+    }
+  },
+  {
+    "policies": {
+      "external_id": "20260722005400213281",
+      "source": "YOUTH_CENTER",
+      "title": "「광주청년 일경험드림 사업」 제20기 드림청년(참여청년) 모집",
+      "category": "EMPLOYMENT",
+      "subcategory": "취업",
+      "provider_name": "전남광주통합특별시",
+      "region_scope": "LOCAL",
+      "region_code": "12110",
+      "summary": "○ 지역 미취업 청년 대상 일경험 지원\r\n· 다양한 일경험을 통해 진로와 직업 비전을 찾을 수 있도록 지원\r\n· 매칭된 사업장에서 일경험 제공 및 근로에 따른 급여 지급\r\n· 직무교육과 연계활동 지원",
+      "description": "○ 자기주도형\r\n· 5개월, 주 25시간, 월 131시간\r\n· 직무 탐색과 자기 계발을 병행하여 개인의 성장 가능성을 확장하는 트랙\r\n\r\n○ 집중참여형\r\n· 3개월, 주 40시간, 월 209시간\r\n· 심화된 직무를 경험하며 실무 역량을 강화하는 트랙\r\n\r\n○ 급여\r\n· 2026년 광주광역시 생활임금 13,303원 적용\r\n※ 희망 사업장의 모집 트랙유형에 따라 지원 가능",
+      "application_start_date": "20260801",
+      "application_end_date": "20261231",
+      "is_ongoing": false,
+      "application_method": "○ 면접신청(온라인)\r\n· 광주청년 일경험드림 사업 누리집 회원가입(http://gjyouthdream.com)\r\n· 면접신청서(자기소개서) 작성\r\n· 구비서류 첨부\r\n\r\n○ 드림만남의 날(최종신청)\r\n· 시청 방문\r\n· 희망사업장 상담\r\n· 현장면접\r\n· 최종신청서 작성·제출",
+      "application_url": "http://gjyouthdream.com",
+      "contact": "청년정책담당자",
+      "original_text": "○ 자기주도형\r\n· 5개월, 주 25시간, 월 131시간\r\n· 직무 탐색과 자기 계발을 병행하여 개인의 성장 가능성을 확장하는 트랙\r\n\r\n○ 집중참여형\r\n· 3개월, 주 40시간, 월 209시간\r\n· 심화된 직무를 경험하며 실무 역량을 강화하는 트랙\r\n\r\n○ 급여\r\n· 2026년 광주광역시 생활임금 13,303원 적용\r\n※ 희망 사업장의 모집 트랙유형에 따라 지원 가능",
+      "status": "ACTIVE",
+      "is_active": true
+    },
+    "policy_conditions": [
+      {
+        "attribute_key": "age",
+        "operator": "BETWEEN",
+        "expected_value": {
+          "min": 19,
+          "max": 39
+        },
+        "is_required": true,
+        "description": "만 19세 ~ 39세",
+        "group_no": 0,
+        "sort_order": 1
+      },
+      {
+        "attribute_key": "region_code",
+        "operator": "IN",
+        "expected_value": [
+          "12110",
+          "12130",
+          "12150",
+          "12170",
+          "12190",
+          "12210",
+          "12240",
+          "12270",
+          "12300",
+          "12330",
+          "12710",
+          "12720",
+          "12730",
+          "12740",
+          "12750",
+          "12760",
+          "12770",
+          "12780",
+          "12790",
+          "12800",
+          "12810",
+          "12820",
+          "12830",
+          "12840",
+          "12850",
+          "12860",
+          "12870"
+        ],
+        "is_required": true,
+        "description": "거주지역 조건",
+        "group_no": 0,
+        "sort_order": 2
+      }
+    ],
+    "policy_requirements": [
+      {
+        "requirement_type": "DOCUMENT",
+        "title": "첨부파일 확인 필요",
+        "description": "정확한 제출 서류 목록은 정책 공고문 첨부파일에서 확인해야 합니다.",
+        "is_required": true,
+        "sort_order": 1
+      }
+    ],
+    "policy_benefit_rules": {
+      "calculator_type": "CUSTOM",
+      "params_json": {
+        "monthly_cap": null,
+        "duration_months": null
+      },
+      "description": "급여: 2026년 광주광역시 생활임금 13,303원 적용. 자기주도형(월 131시간) 및 집중참여형(월 209시간) 트랙별 근로시간에 따라 급여 산정",
+      "confidence": 0.6
+    }
+  }
+]
