@@ -15,7 +15,10 @@ import os
 from openai import OpenAI
 from dotenv import load_dotenv
 
-from prompt_templates import QA_SYSTEM_PROMPT
+try:
+    from .prompt_templates import QA_SYSTEM_PROMPT
+except ImportError:
+    from prompt_templates import QA_SYSTEM_PROMPT
 
 load_dotenv()
 

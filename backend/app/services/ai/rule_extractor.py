@@ -12,8 +12,13 @@
 import json
 from datetime import datetime
 
-from backend.app.services.ai.solar_client import client
-from prompt_templates import EXTRACTOR_SYSTEM_PROMPT
+try:
+    from .solar_client import client
+    from .prompt_templates import EXTRACTOR_SYSTEM_PROMPT
+except ImportError:
+    # 독립 실행(python rule_extractor.py)일 때는 상대 import가 안 되니 이쪽으로
+    from solar_client import client
+    from prompt_templates import EXTRACTOR_SYSTEM_PROMPT
 
 # ============================================================
 # 코드 레지스트리 (DB.pdf 4장 / 6장 기준)
@@ -40,6 +45,105 @@ INCOME_BAND_UPPER_BOUND = {  # 각 구간의 상한(%), ABOVE_150은 상한 없�
     "BELOW_50": 50, "BETWEEN_50_75": 75, "BETWEEN_75_100": 100,
     "BETWEEN_100_120": 120, "BETWEEN_120_150": 150, "ABOVE_150": None,
 }
+
+# ------------------------------------------------------------------
+# AI가 만든 condition_key는 신뢰하지 않고 여기서 한 번 더 검증합니다.
+# 실전 테스트에서 발견된 버그: (1) operator 값(MANUAL_CHECK)을 condition_key로 착각,
+# (2) "profile." 접두사 누락, (3) 코드값 전체를 나열해서 사실상 무의미한 조건 생성.
+# ------------------------------------------------------------------
+
+ALLOWED_CONDITION_KEYS = {
+    "profile.income_band_code", "profile.housing_type_code", "profile.household_type_code",
+    "profile.employment_status_code", "profile.household_size",
+    "employment.company_size", "employment.contract_type", "employment.tenure_months",
+    "employment.insurance_enrolled", "employment.job_field",
+}
+
+# 프로필 속성이 아니라, 자동판정 없이 체크박스로만 노출하는 특수 키
+# (참여제한/중복수혜 안내 등 - policy_documents와 같은 성격)
+CHECKBOX_ONLY_CONDITION_KEYS = {"participation_limit"}
+
+CODE_REGISTRY_VALUES = {
+    "housing_type_code": {"OWNED", "JEONSE", "MONTHLY_RENT", "PUBLIC_RENTAL", "DORMITORY", "WITH_FAMILY", "OTHER"},
+    "household_type_code": {"SINGLE", "COUPLE", "WITH_PARENTS", "SINGLE_PARENT", "MULTI_PERSON", "OTHER"},
+    "employment_status_code": {"EMPLOYED", "SELF_EMPLOYED", "UNEMPLOYED", "JOB_SEEKER", "STUDENT", "ON_LEAVE", "OTHER"},
+}
+
+
+NO_RESTRICTION_PHRASES = ["제한 없음", "모든", "무관", "관계없이", "누구나", "가능(모든"]
+ENUM_COVERAGE_DROP_THRESHOLD = 0.8  # 레지스트리의 80% 이상을 나열하면 "사실상 무제한"으로 간주
+
+# 이 condition_key는 설명에 아래 키워드가 하나라도 있어야 인정 (엉뚱한 내용 끼워넣기 방지)
+TOPIC_KEYWORDS = {
+    "employment.insurance_enrolled": ["보험"],
+}
+
+
+def _topic_mismatch(condition_key: str, description: str) -> bool:
+    keywords = TOPIC_KEYWORDS.get(condition_key)
+    if not keywords:
+        return False
+    return not any(kw in (description or "") for kw in keywords)
+
+
+def _normalize_expected_value(operator: str, expected_value):
+    """조건의 expected_value 형태를 항상 순수 값/리스트로 통일.
+    AI가 가끔 {"values": [...]} 또는 {"value": ...}로 감싸서 주는 경우가 있어 여기서 벗겨냅니다."""
+    if operator in ("IN", "NOT_IN") and isinstance(expected_value, dict) and "values" in expected_value:
+        return expected_value["values"]
+    if operator in ("EQ", "NE") and isinstance(expected_value, dict) and "value" in expected_value:
+        return expected_value["value"]
+    return expected_value
+
+
+def validate_conditions(raw_conditions: list) -> tuple:
+    """AI가 뽑은 조건 목록을 검증해서 (정상 목록, 걸러진 목록)을 반환.
+
+    같은 condition_key로 여러 조건이 쪼개져 들어온 경우, 그 값들을 전부 합쳐서
+    레지스트리의 80% 이상을 덮는지(=사실상 전체 나열) 같이 확인합니다."""
+    from collections import defaultdict
+
+    # 먼저 값 형태부터 통일
+    for c in raw_conditions:
+        c["expected_value"] = _normalize_expected_value(c.get("operator"), c.get("expected_value"))
+
+    grouped = defaultdict(list)
+    for c in raw_conditions:
+        grouped[c.get("condition_key")].append(c)
+
+    cleaned, dropped = [], []
+
+    for key, items in grouped.items():
+        if key not in ALLOWED_CONDITION_KEYS:
+            dropped += [{**c, "_drop_reason": f"허용되지 않은 condition_key: {key}"} for c in items]
+            continue
+
+        suffix = key.split(".")[-1]
+        registry = CODE_REGISTRY_VALUES.get(suffix)
+        if registry:
+            collected = set()
+            for c in items:
+                vals = c.get("expected_value")
+                if isinstance(vals, list):
+                    collected.update(vals)
+                elif isinstance(vals, str):
+                    collected.add(vals)
+            coverage = len(collected & registry) / len(registry)
+            if coverage >= ENUM_COVERAGE_DROP_THRESHOLD:
+                dropped += [{**c, "_drop_reason": f"코드값 {coverage:.0%} 나열 - 사실상 무제한"} for c in items]
+                continue
+
+        for c in items:
+            desc = c.get("description") or ""
+            if any(p in desc for p in NO_RESTRICTION_PHRASES):
+                dropped.append({**c, "_drop_reason": "설명상 제한 없음으로 판단됨"})
+                continue
+            if _topic_mismatch(key, desc):
+                dropped.append({**c, "_drop_reason": f"설명이 {key}의 의미와 안 맞음 (엉뚱한 키에 끼워넣은 것으로 추정)"})
+                continue
+            cleaned.append(c)
+
+    return cleaned, dropped
 
 
 def categorize_policy(lclsf_nm: str, mclsf_nm: str) -> list:
@@ -205,8 +309,9 @@ def process_policy(raw: dict) -> dict:
             "failure_message": "소득 조건은 정확한 확인이 필요합니다.",
         })
 
-    # AI가 자유텍스트에서 뽑은 조건들 - 전부 MANUAL
-    for c in ai_result.get("conditions", []):
+    # AI가 자유텍스트에서 뽑은 조건들 - 전부 MANUAL. 검증 통과한 것만 채택.
+    valid_ai_conditions, dropped_ai_conditions = validate_conditions(ai_result.get("conditions", []))
+    for c in valid_ai_conditions:
         conditions.append({
             "condition_key": c.get("condition_key"),
             "operator": c.get("operator", "MANUAL_CHECK"),
@@ -216,6 +321,21 @@ def process_policy(raw: dict) -> dict:
             "check_mode": "MANUAL",
             "description": c.get("description"),
             "failure_message": c.get("failure_message"),
+        })
+
+    # 참여제한/중복수혜 안내 - 판정 대상이 아니라 사용자가 스스로 체크하는 항목.
+    # condition_key="participation_limit"는 프로필 속성이 아니라 이 용도 전용 키.
+    # policy_documents(서류 체크리스트)와 같은 성격: 자동판정 없이 그냥 체크박스로 노출.
+    for note in ai_result.get("participation_notes", []):
+        conditions.append({
+            "condition_key": "participation_limit",
+            "operator": "MANUAL_CHECK",
+            "expected_value_json": None,
+            "condition_group_no": 0,
+            "is_required": False,
+            "check_mode": "MANUAL",
+            "description": note.get("summary"),
+            "failure_message": None,
         })
 
     for i, c in enumerate(conditions):
@@ -262,6 +382,7 @@ def process_policy(raw: dict) -> dict:
         "policy_benefits": policy_benefits,
         "policy_conditions": conditions,
         "policy_documents": policy_documents,
+        "_dropped_conditions": dropped_ai_conditions,  # DB 컬럼 아님, QA/디버깅용
     }
 
 
