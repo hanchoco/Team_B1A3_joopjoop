@@ -384,26 +384,3 @@ def process_policy(raw: dict) -> dict:
         "policy_documents": policy_documents,
         "_dropped_conditions": dropped_ai_conditions,  # DB 컬럼 아님, QA/디버깅용
     }
-
-
-if __name__ == "__main__":
-    sample_raw = {
-        "plcyNo": "20260724005400213303",
-        "plcyNm": "(검단구) 인천시 청년월세 지원사업",
-        "lclsfNm": "주거",
-        "mclsfNm": "전월세 및 주거급여 지원",
-        "operInstCdNm": "인천광역시 검단구",
-        "sprtTrgtMinAge": "19", "sprtTrgtMaxAge": "39", "sprtTrgtAgeLmtYn": "Y",
-        "zipCd": "28290",
-        "earnEtcCn": "소득 : (청년독립가구) 기준 중위소득 60%이하 (원가구) 기준 중위소득 100% 이하",
-        "addAplyQlfcCndCn": "무주택 월세 거주자만 신청 가능",
-        "ptcpPrpTrgtCn": "부모와 함께 거주하는 경우 신청 불가",
-        "plcySprtCn": "지원금액 : 1인 월 20만원씩, 최대 24개월 월세 지원",
-        "plcyAplyMthdCn": "복지로를 통한 온라인신청",
-        "sbmsnDcmntCn": "월세지원 신청서(필수)\n소득·재산 신고서(필수)\n신분증(방문신청시 필수지참)(선택)",
-        "aplyUrlAddr": "https://youth.incheon.go.kr/youthpolicy/youthPolicyInfoDetail.do?poly_seq=463",
-        "bizPrdBgngYmd": "20260330", "bizPrdEndYmd": "20260529", "bizPrdEtcCn": "",
-        "frstRegDt": "2026-07-24 14:51:16", "lastMdfcnDt": "2026-07-24 17:34:00",
-    }
-    result = process_policy(sample_raw)
-    print(json.dumps(result, ensure_ascii=False, indent=2))
