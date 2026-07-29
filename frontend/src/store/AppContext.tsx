@@ -37,6 +37,8 @@ export function AppProvider({ children }: PropsWithChildren) {
     threeDaysBefore: true,
     deadlineDay: true,
   })
+  const [accountId, setAccountId] = useState('nara@example.com')
+  const [optionalPrivacyConsent, setOptionalPrivacyConsent] = useState(true)
 
   function login() {
     setIsLoggedIn(true)
@@ -108,8 +110,20 @@ export function AppProvider({ children }: PropsWithChildren) {
       toggleFavorite,
       notificationSettings,
       updateNotificationSettings: setNotificationSettings,
+      accountId,
+      updateAccountId: setAccountId,
+      optionalPrivacyConsent,
+      updateOptionalPrivacyConsent: setOptionalPrivacyConsent,
     }),
-    [isLoggedIn, userProfile, preparedPolicies, favoritePolicies, notificationSettings],
+    [
+      isLoggedIn,
+      userProfile,
+      preparedPolicies,
+      favoritePolicies,
+      notificationSettings,
+      accountId,
+      optionalPrivacyConsent,
+    ],
   )
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>

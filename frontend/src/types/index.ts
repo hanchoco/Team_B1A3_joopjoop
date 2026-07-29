@@ -44,6 +44,7 @@ export interface PreparedPolicy {
   total: number
   completedIds?: number[]
   status?: 'preparing'
+  deadline?: number
 }
 
 export interface NotificationSettings {
@@ -66,6 +67,10 @@ export interface AppContextValue {
   toggleFavorite: (policy: FavoritePolicy) => void
   notificationSettings: NotificationSettings
   updateNotificationSettings: (settings: NotificationSettings) => void
+  accountId: string
+  updateAccountId: (accountId: string) => void
+  optionalPrivacyConsent: boolean
+  updateOptionalPrivacyConsent: (consented: boolean) => void
 }
 
 export interface ClassNameProps {

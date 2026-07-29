@@ -150,10 +150,10 @@ export default function Dashboard() {
             </div>{' '}
             <p className="mt-6 text-sm leading-7 text-gray-500">이번 달 마감되는 정책이 있어요.</p>{' '}
             <button
-              onClick={() => navigate('/policies')}
+              onClick={() => navigate('/mypage/policies?view=urgent&sort=deadline')}
               className="mt-4 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-bold transition hover:bg-slate-50"
             >
-              확인하기
+              신청이 임박한 정책 확인하기
             </button>{' '}
           </article>{' '}
         </div>

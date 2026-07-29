@@ -71,6 +71,7 @@ export default function Checklist() {
         completed: next.size,
         total: documents.length,
         completedIds: [...next],
+        deadline: 23,
       })
     } else {
       removePreparation(policyId)

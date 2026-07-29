@@ -1,5 +1,15 @@
-import { Bell, CalendarClock, ChevronRight, Mail, ShieldCheck, UserRound, X } from 'lucide-react'
+import {
+  Bell,
+  CalendarClock,
+  ChevronRight,
+  KeyRound,
+  Mail,
+  ShieldCheck,
+  UserRound,
+  X,
+} from 'lucide-react'
 import { useState } from 'react'
+import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../../store/useApp'
 
@@ -16,18 +26,10 @@ const detailContent = {
     title: '알림 설정',
     body: '관심 정책으로 저장한 전체 공고의 마감 일정을 알려드려요.',
   },
-  account: {
-    title: '회원 정보',
-    body: '김나라 님 · nara@example.com\n가입한 계정과 기본 회원 정보를 확인할 수 있어요.',
-  },
-  privacy: {
-    title: '개인정보 처리 안내',
-    body: '입력하신 정보는 맞춤 정책 추천과 신청 준비를 돕는 목적으로만 안전하게 사용해요.',
-  },
 }
 
 type DetailKey = keyof typeof detailContent
-type MenuId = DetailKey | 'logout' | 'withdraw'
+type MenuId = DetailKey | 'account' | 'privacy' | 'logout' | 'withdraw'
 type DetailContent = (typeof detailContent)[DetailKey]
 
 interface NotificationSwitchProps {
@@ -69,6 +71,9 @@ export default function Settings() {
   const { logout, notificationSettings, updateNotificationSettings } = useApp()
   const [detail, setDetail] = useState<DetailContent | null>(null)
   const [logoutOpen, setLogoutOpen] = useState(false)
+  const [passwordCheckOpen, setPasswordCheckOpen] = useState(false)
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [passwordError, setPasswordError] = useState('')
 
   function handleMenu(id: MenuId) {
     if (id === 'logout') {
@@ -79,7 +84,27 @@ export default function Settings() {
       navigate('/settings/withdraw')
       return
     }
+    if (id === 'account') {
+      setCurrentPassword('')
+      setPasswordError('')
+      setPasswordCheckOpen(true)
+      return
+    }
+    if (id === 'privacy') {
+      navigate('/settings/privacy')
+      return
+    }
     setDetail(detailContent[id])
+  }
+
+  function verifyPassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (currentPassword.length < 4) {
+      setPasswordError('현재 비밀번호를 정확히 입력해주세요.')
+      return
+    }
+    setPasswordCheckOpen(false)
+    navigate('/settings/account')
   }
 
   function toggleAllNotifications(enabled: boolean) {
@@ -119,6 +144,74 @@ export default function Settings() {
           </button>
         ))}
       </div>
+
+      {passwordCheckOpen && (
+        <div
+          className="fixed inset-0 z-50 grid place-items-center bg-gray-950/35 px-5"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="password-check-title"
+        >
+          <form
+            onSubmit={verifyPassword}
+            className="w-full max-w-sm rounded-xl border border-gray-200 bg-white p-6 shadow-xl"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <span className="grid h-11 w-11 place-items-center rounded-lg bg-blue-50 text-blue-600">
+                <KeyRound size={21} />
+              </span>
+              <button
+                type="button"
+                onClick={() => setPasswordCheckOpen(false)}
+                className="grid h-9 w-9 place-items-center rounded-lg text-gray-400 hover:bg-slate-100"
+                aria-label="닫기"
+              >
+                <X size={19} />
+              </button>
+            </div>
+            <h2 id="password-check-title" className="mt-5 text-xl font-black">
+              비밀번호 확인
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-gray-500">
+              회원 정보를 안전하게 보호하기 위해 현재 비밀번호를 입력해주세요.
+            </p>
+            <label className="mt-5 block text-sm font-bold">
+              현재 비밀번호
+              <input
+                autoFocus
+                required
+                type="password"
+                value={currentPassword}
+                onChange={(event) => {
+                  setCurrentPassword(event.target.value)
+                  setPasswordError('')
+                }}
+                autoComplete="current-password"
+                placeholder="비밀번호 입력"
+                className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3.5 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              />
+            </label>
+            {passwordError && (
+              <p className="mt-3 text-sm font-semibold text-rose-600">{passwordError}</p>
+            )}
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setPasswordCheckOpen(false)}
+                className="rounded-lg border border-gray-300 py-3 text-sm font-bold text-gray-700"
+              >
+                취소
+              </button>
+              <button
+                type="submit"
+                className="rounded-lg bg-blue-600 py-3 text-sm font-bold text-white"
+              >
+                확인
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {detail && (
         <div

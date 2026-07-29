@@ -14,6 +14,7 @@ interface DisplayPolicy {
   completed?: number
   total?: number
   completedAt?: string
+  state?: 'interest' | 'preparing'
 }
 
 const tabs: { id: PolicyTab; label: string; icon: typeof Bookmark }[] = [
@@ -24,7 +25,14 @@ const tabs: { id: PolicyTab; label: string; icon: typeof Bookmark }[] = [
 
 const mockPolicies = {
   preparing: [
-    { id: 'employment-support', title: '국민취업지원제도', progress: 40, completed: 2, total: 5 },
+    {
+      id: 'employment-support',
+      title: '국민취업지원제도',
+      progress: 40,
+      completed: 2,
+      total: 5,
+      deadline: 12,
+    },
   ],
   completed: [{ id: 'transport', title: '서울시 청년 교통비 지원', completedAt: '2026. 07. 18.' }],
 }
@@ -37,10 +45,28 @@ export default function MyPolicies() {
   const tab: PolicyTab =
     requestedTab === 'preparing' || requestedTab === 'completed' ? requestedTab : 'interest'
   const sort = searchParams.get('sort') || 'recent'
+  const isUrgentView = searchParams.get('view') === 'urgent'
 
   const policies = useMemo<DisplayPolicy[]>(() => {
+    if (isUrgentView) {
+      const combined = new Map<string, DisplayPolicy>()
+      Object.values(favoritePolicies).forEach((policy) => {
+        combined.set(policy.id, { ...policy, state: 'interest' })
+      })
+      mockPolicies.preparing.forEach((policy) => {
+        combined.set(policy.id, { ...policy, state: 'preparing' })
+      })
+      Object.values(preparedPolicies).forEach((policy) => {
+        combined.set(policy.id, { ...policy, state: 'preparing' })
+      })
+      return [...combined.values()].sort(
+        (a, b) => (a.deadline ?? Infinity) - (b.deadline ?? Infinity),
+      )
+    }
     if (tab === 'preparing') {
-      const merged = new Map(mockPolicies.preparing.map((policy) => [policy.id, policy]))
+      const merged = new Map<string, DisplayPolicy>(
+        mockPolicies.preparing.map((policy) => [policy.id, policy]),
+      )
       Object.values(preparedPolicies).forEach((policy) => merged.set(policy.id, policy))
       return [...merged.values()]
     }
@@ -50,7 +76,7 @@ export default function MyPolicies() {
       list.sort((a, b) => (a.deadline ?? Infinity) - (b.deadline ?? Infinity))
     }
     return list
-  }, [tab, sort, preparedPolicies, favoritePolicies])
+  }, [tab, sort, preparedPolicies, favoritePolicies, isUrgentView])
 
   function selectTab(nextTab: PolicyTab) {
     setSearchParams(nextTab === 'interest' ? { tab: nextTab, sort } : { tab: nextTab })
@@ -72,12 +98,24 @@ export default function MyPolicies() {
       <p className="text-sm font-semibold text-blue-600">마이페이지</p>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="mt-2 text-3xl font-black">내 정책 관리</h1>
+          <h1 className="mt-2 text-3xl font-black">
+            {isUrgentView ? '신청이 임박한 정책' : '내 정책 관리'}
+          </h1>
           <p className="mt-2 text-sm text-gray-500">
-            관심부터 신청 완료까지 진행 상태를 한곳에서 확인하세요.
+            {isUrgentView
+              ? '관심 정책과 준비 중 정책을 마감이 가까운 순서로 모았어요.'
+              : '관심부터 신청 완료까지 진행 상태를 한곳에서 확인하세요.'}
           </p>
         </div>
-        {tab === 'interest' && (
+        {isUrgentView ? (
+          <button
+            type="button"
+            onClick={() => setSearchParams({ tab: 'interest' })}
+            className="text-sm font-bold text-blue-600"
+          >
+            전체 내 정책 보기
+          </button>
+        ) : tab === 'interest' ? (
           <select
             value={sort}
             onChange={(event) => setSearchParams({ tab: 'interest', sort: event.target.value })}
@@ -86,22 +124,25 @@ export default function MyPolicies() {
             <option value="recent">최근 저장순</option>
             <option value="deadline">마감 임박순</option>
           </select>
-        )}
+        ) : null}
       </div>
-      <div className="mt-6 flex border-b border-gray-200">
-        {tabs.map(({ id, label }) => (
-          <button
-            key={id}
-            onClick={() => selectTab(id)}
-            className={`flex-1 px-5 py-4 text-sm font-bold ${tab === id ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      {!isUrgentView && (
+        <div className="mt-6 flex border-b border-gray-200">
+          {tabs.map(({ id, label }) => (
+            <button
+              key={id}
+              onClick={() => selectTab(id)}
+              className={`flex-1 px-5 py-4 text-sm font-bold ${tab === id ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="mt-5 space-y-3">
         {policies.map((policy) => {
-          const currentTab = tabs.find((item) => item.id === tab) || tabs[0]
+          const currentState = isUrgentView ? (policy.state ?? 'interest') : tab
+          const currentTab = tabs.find((item) => item.id === currentState) || tabs[0]
           const Icon = currentTab.icon
           const progress = policy.progress ?? 0
           const progressWidth =
@@ -126,11 +167,16 @@ export default function MyPolicies() {
               </span>
               <div className="min-w-0 flex-1">
                 <strong className="block">{policy.title}</strong>
-                {tab === 'interest' && (
+                {currentState === 'interest' && (
                   <span className="mt-1 block text-xs text-rose-600">마감 D-{policy.deadline}</span>
                 )}
-                {tab === 'preparing' && (
+                {currentState === 'preparing' && (
                   <>
+                    {isUrgentView && (
+                      <span className="mt-1 block text-xs font-semibold text-rose-600">
+                        마감 D-{policy.deadline}
+                      </span>
+                    )}
                     <span className="mt-1 block text-xs text-gray-500">
                       준비 항목 {policy.completed || 0}/{policy.total || 5} 완료 ·{' '}
                       {policy.progress || 0}%
@@ -140,13 +186,13 @@ export default function MyPolicies() {
                     </div>
                   </>
                 )}
-                {tab === 'completed' && (
+                {currentState === 'completed' && (
                   <span className="mt-1 block text-xs text-gray-500">
                     {policy.completedAt} 신청 완료
                   </span>
                 )}
               </div>
-              {tab === 'preparing' ? (
+              {currentState === 'preparing' ? (
                 <button
                   onClick={() => navigate(`/policies/${policy.id}/prepare`)}
                   className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-bold text-white"
@@ -155,7 +201,7 @@ export default function MyPolicies() {
                 </button>
               ) : (
                 <div className="flex items-center gap-4">
-                  {tab === 'interest' && (
+                  {currentState === 'interest' && (
                     <button
                       onClick={() => removeFavorite(policy)}
                       className="text-xs font-semibold text-gray-500 hover:text-rose-600"

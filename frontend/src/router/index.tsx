@@ -17,6 +17,8 @@ import PolicyList from '../pages/PolicyList/PolicyList'
 import ImpactView from '../pages/Simulator/ImpactView'
 import Simulator from '../pages/Simulator/Simulator'
 import Settings from '../pages/Settings/Settings'
+import AccountSettings from '../pages/Settings/AccountSettings'
+import PrivacySettings from '../pages/Settings/PrivacySettings'
 import Withdraw from '../pages/Settings/Withdraw'
 import { useApp } from '../store/useApp'
 
@@ -26,7 +28,7 @@ function AppLayout() {
   const menu = [
     ['홈', '/'],
     ['카테고리', '/categories'],
-    ['맞춤 정책', '/policies?filter=POSSIBILITY_HIGH'],
+    ['맞춤 정책', '/policies?filter=ALL'],
     ['마이페이지', '/mypage'],
   ]
   return (
@@ -98,6 +100,8 @@ function AppLayout() {
           <Route path="/mypage/policies" element={<MyPolicies />} />
           <Route path="/mypage/profile" element={<EditProfile />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/settings/account" element={<AccountSettings />} />
+          <Route path="/settings/privacy" element={<PrivacySettings />} />
           <Route path="/settings/withdraw" element={<Withdraw />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
