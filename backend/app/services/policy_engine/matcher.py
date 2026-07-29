@@ -235,29 +235,32 @@ def evaluate_policy(
     *,
     reference_date: date | None = None,
 ) -> PolicyEvaluation:
-    """Aggregate condition evaluations into the two-state policy card status.
-
-    ``LIKELY_ELIGIBLE`` is returned only when at least one condition exists and
-    every condition is ``SATISFIED``.  An empty condition set is not sufficient
-    evidence of eligibility and therefore remains ``NEEDS_REVIEW``.
-    """
-
+    condition_list = list(conditions)  # is_required를 나중에 다시 봐야 해서 미리 리스트로 고정
     results = tuple(
-        evaluate_condition(
-            condition,
-            context,
-            reference_date=reference_date,
-        )
-        for condition in conditions
+        evaluate_condition(condition, context, reference_date=reference_date)
+        for condition in condition_list
     )
-    satisfied_count = sum(result.status is ConditionStatus.SATISFIED for result in results)
-    review_count = sum(result.status is ConditionStatus.NEEDS_REVIEW for result in results)
-    unsatisfied_count = sum(result.status is ConditionStatus.UNSATISFIED for result in results)
+    satisfied_count = sum(r.status is ConditionStatus.SATISFIED for r in results)
+    review_count = sum(r.status is ConditionStatus.NEEDS_REVIEW for r in results)
+    unsatisfied_count = sum(r.status is ConditionStatus.UNSATISFIED for r in results)
 
-    all_satisfied = bool(results) and satisfied_count == len(results)
-    card_status = (
-        PolicyCardStatus.LIKELY_ELIGIBLE if all_satisfied else PolicyCardStatus.NEEDS_REVIEW
-    )
+    # 필수 조건만 골라서 카드 레벨 판정에 반영
+    required_statuses = [
+        result.status
+        for condition, result in zip(condition_list, results)
+        if _field(condition, ("is_required",), default=True)
+    ]
+
+    if not required_statuses:
+        # 필수 조건이 하나도 없으면(조건 자체가 없거나 전부 선택 조건) 판단 근거 부족 → 확인 필요
+        card_status = PolicyCardStatus.NEEDS_REVIEW
+    elif ConditionStatus.UNSATISFIED in required_statuses:
+        card_status = PolicyCardStatus.INELIGIBLE
+    elif ConditionStatus.NEEDS_REVIEW in required_statuses:
+        card_status = PolicyCardStatus.NEEDS_REVIEW
+    else:
+        card_status = PolicyCardStatus.LIKELY_ELIGIBLE
+
     return PolicyEvaluation(
         status=card_status,
         condition_results=results,

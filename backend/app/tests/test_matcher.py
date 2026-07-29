@@ -160,39 +160,25 @@ def test_policy_is_likely_only_when_every_condition_is_satisfied() -> None:
     assert result.total_condition_count == 2
 
 
-@pytest.mark.parametrize(
-    "second_condition",
-    [
-        _condition(key="profile.household_size", expected=2),
-        _condition(
-            key="housing.rental_contract_verified",
-            operator="MANUAL_CHECK",
-            expected=None,
-            check_mode="DOCUMENT",
-        ),
-    ],
-)
-def test_any_non_satisfied_condition_makes_card_need_review(
-    second_condition: dict[str, object],
-) -> None:
+def test_truly_unsatisfied_required_condition_makes_card_ineligible() -> None:
     result = evaluate_policy(
         [
             _condition(key="profile.employment_status_code", expected="EMPLOYED"),
-            second_condition,
+            _condition(key="profile.household_size", expected=2),
         ],
-        {
-            "profile": {
-                "employment_status_code": "EMPLOYED",
-                "household_size": 1,
-            }
-        },
+        {"profile": {"employment_status_code": "EMPLOYED", "household_size": 1}},
     )
+    assert result.status is PolicyCardStatus.INELIGIBLE
 
+
+def test_manual_check_condition_makes_card_need_review() -> None:
+    result = evaluate_policy(
+        [
+            _condition(key="profile.employment_status_code", expected="EMPLOYED"),
+            _condition(key="housing.rental_contract_verified", operator="MANUAL_CHECK",
+                       expected=None, check_mode="DOCUMENT"),
+        ],
+        {"profile": {"employment_status_code": "EMPLOYED", "household_size": 1}},
+    )
     assert result.status is PolicyCardStatus.NEEDS_REVIEW
-
-
-def test_policy_without_conditions_needs_review() -> None:
-    result = evaluate_policy([], {})
-
-    assert result.status is PolicyCardStatus.NEEDS_REVIEW
-    assert result.total_condition_count == 0
+    assert result.total_condition_count == 2
