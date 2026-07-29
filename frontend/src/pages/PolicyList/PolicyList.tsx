@@ -235,13 +235,22 @@ export default function PolicyList() {
           <label className="text-sm font-semibold">
             카테고리
             <select
-              defaultValue={selectedCategory || '전체'}
+              value={selectedCategory || '전체'}
+              onChange={(event) => {
+                const nextParams = new URLSearchParams(searchParams)
+                if (event.target.value === '전체') nextParams.delete('category')
+                else nextParams.set('category', event.target.value)
+                setSearchParams(nextParams)
+              }}
               className="mt-2 w-full rounded-lg border border-gray-300 p-3 font-normal"
             >
               <option>전체</option>
               <option>주거</option>
               <option>금융</option>
               <option>교통</option>
+              <option>세금</option>
+              <option>고용</option>
+              <option>복지</option>
             </select>
           </label>
           <label className="text-sm font-semibold">
@@ -297,9 +306,9 @@ export default function PolicyList() {
                 </div>
               </header>
 
-              <div className="mt-4 grid flex-1 grid-cols-[56px_minmax(0,1fr)] gap-4">
-                <span className="grid h-14 w-14 place-items-center rounded-lg bg-slate-100 text-gray-500">
-                  <CategoryIcon size={27} strokeWidth={1.7} />
+              <div className="mt-4 grid flex-1 grid-cols-[80px_minmax(0,1fr)] gap-4 sm:grid-cols-[112px_minmax(0,1fr)] sm:gap-5">
+                <span className="grid h-full min-h-[150px] w-20 place-items-center rounded-lg bg-slate-100 text-gray-500 sm:w-28">
+                  <CategoryIcon className="h-9 w-9 sm:h-12 sm:w-12" strokeWidth={1.5} />
                 </span>
                 <div className="flex min-w-0 flex-col">
                   <div className="flex flex-1 flex-col gap-3">
@@ -310,7 +319,13 @@ export default function PolicyList() {
 
                   <footer className="mt-auto flex flex-col gap-3 pt-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex flex-wrap items-center gap-3 text-sm">
-                      <span className="font-semibold text-rose-500">마감 D-{deadline}</span>
+                      <span
+                        className={`font-semibold ${
+                          deadline < 7 ? 'text-rose-600' : 'text-gray-950'
+                        }`}
+                      >
+                        마감 D-{deadline}
+                      </span>
                       <span className="h-3 w-px bg-gray-200" />
                       <span className="text-gray-500">{condition}</span>
                     </div>
