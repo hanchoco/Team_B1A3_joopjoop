@@ -57,7 +57,7 @@ Backend가 이미 판정한 조건별 상태(충족/불충족/확인필요)를 �
 {
   "condition_checklist": [
     {
-      "attribute_key": "household_monthly_income",
+      "condition_key": "profile.income_band_code",
       "status": "불충족",
       "explanation": "...",
       "possible_exception": "..." 또는 null,
@@ -82,8 +82,8 @@ def generate_application_checklist(
     policy: {"id": str, "name": str}
     condition_results: Backend가 계산한 "전체" 조건 결과 (충족/불충족/확인필요 다 포함, 일부만 X)
         예: [
-          {"attribute_key": "age", "title": "나이", "status": "충족", "user_value": 25, "expected": "19~34세"},
-          {"attribute_key": "household_monthly_income", "title": "소득", "status": "불충족",
+          {"condition_key": "profile.age", "title": "나이", "status": "충족", "user_value": 25, "expected": "19~34세"},
+          {"condition_key": "profile.income_band_code", "title": "소득", "status": "불충족",
            "user_value": 3200000, "expected": "3000000 이하"}
         ]
     requirements: policy_requirements 테이블 목록 그대로
@@ -126,8 +126,8 @@ if __name__ == "__main__":
     demo1 = generate_application_checklist(
         policy=policy,
         condition_results=[
-            {"attribute_key": "age", "title": "나이", "status": "충족", "user_value": 25, "expected": "19~34세"},
-            {"attribute_key": "region_code", "title": "거주지역", "status": "충족", "user_value": "검단구", "expected": "검단구"},
+            {"condition_key": "profile.age", "title": "나이", "status": "충족", "user_value": 25, "expected": "19~34세"},
+            {"condition_key": "profile.region_code", "title": "거주지역", "status": "충족", "user_value": "검단구", "expected": "검단구"},
         ],
         requirements=requirements,
         ai_interpreted=ai_interpreted,
@@ -138,8 +138,8 @@ if __name__ == "__main__":
     demo2 = generate_application_checklist(
         policy=policy,
         condition_results=[
-            {"attribute_key": "age", "title": "나이", "status": "충족", "user_value": 25, "expected": "19~34세"},
-            {"attribute_key": "household_monthly_income", "title": "소득", "status": "불충족",
+            {"condition_key": "profile.age", "title": "나이", "status": "충족", "user_value": 25, "expected": "19~34세"},
+            {"condition_key": "profile.income_band_code", "title": "소득", "status": "불충족",
              "user_value": "30세 미만 미혼, 부모와 별도 생계", "expected": "중위소득 60% 이하"},
         ],
         requirements=requirements,
@@ -151,7 +151,7 @@ if __name__ == "__main__":
     demo3 = generate_application_checklist(
         policy=policy,
         condition_results=[
-            {"attribute_key": "age", "title": "나이", "status": "불충족", "user_value": 41, "expected": "19~34세"},
+            {"condition_key": "profile.age", "title": "나이", "status": "불충족", "user_value": 41, "expected": "19~34세"},
         ],
         requirements=requirements,
         ai_interpreted=ai_interpreted,
