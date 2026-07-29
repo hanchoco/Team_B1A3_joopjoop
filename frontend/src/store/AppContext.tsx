@@ -1,6 +1,12 @@
 import { useMemo, useState } from 'react'
 import type { PropsWithChildren } from 'react'
-import type { FavoritePolicy, PreparedPolicy, UserProfile, UserProfileUpdate } from '../types'
+import type {
+  FavoritePolicy,
+  NotificationSettings,
+  PreparedPolicy,
+  UserProfile,
+  UserProfileUpdate,
+} from '../types'
 import mockData from '../utils/mockData.json'
 import { AppContext } from './context'
 
@@ -24,6 +30,12 @@ export function AppProvider({ children }: PropsWithChildren) {
       deadline: 23,
     },
     'youth-account': { id: 'youth-account', title: '청년도약계좌', category: '금융', deadline: 51 },
+  })
+  const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
+    enabled: true,
+    sevenDaysBefore: true,
+    threeDaysBefore: true,
+    deadlineDay: true,
   })
 
   function login() {
@@ -94,8 +106,10 @@ export function AppProvider({ children }: PropsWithChildren) {
       removePreparation,
       favoritePolicies,
       toggleFavorite,
+      notificationSettings,
+      updateNotificationSettings: setNotificationSettings,
     }),
-    [isLoggedIn, userProfile, preparedPolicies, favoritePolicies],
+    [isLoggedIn, userProfile, preparedPolicies, favoritePolicies, notificationSettings],
   )
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>

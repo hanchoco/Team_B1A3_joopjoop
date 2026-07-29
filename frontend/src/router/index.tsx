@@ -1,4 +1,4 @@
-import { Bell, CircleUserRound, Menu, Settings as SettingsIcon } from 'lucide-react'
+import { CircleUserRound, Menu, Settings as SettingsIcon } from 'lucide-react'
 import { BrowserRouter, NavLink, Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import BrandLogo from '../components/common/BrandLogo'
 import Chatbot from '../pages/Chatbot/Chatbot'
@@ -53,9 +53,6 @@ function AppLayout() {
           <div className="ml-6 flex items-center gap-4 text-gray-500">
             {isLoggedIn ? (
               <>
-                <button aria-label="알림">
-                  <Bell size={19} />
-                </button>
                 <button onClick={() => navigate('/settings')} aria-label="설정">
                   <SettingsIcon size={19} />
                 </button>

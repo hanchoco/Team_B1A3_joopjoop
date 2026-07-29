@@ -1,4 +1,4 @@
-import { Bell, ChevronRight, ShieldCheck, UserRound, X } from 'lucide-react'
+import { Bell, CalendarClock, ChevronRight, Mail, ShieldCheck, UserRound, X } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../../store/useApp'
@@ -14,7 +14,7 @@ const menuItems = [
 const detailContent = {
   notifications: {
     title: '알림 설정',
-    body: '중요한 정책 마감일과 신청 진행 상황을 놓치지 않도록 알려드릴게요.',
+    body: '관심 정책으로 저장한 전체 공고의 마감 일정을 알려드려요.',
   },
   account: {
     title: '회원 정보',
@@ -30,9 +30,43 @@ type DetailKey = keyof typeof detailContent
 type MenuId = DetailKey | 'logout' | 'withdraw'
 type DetailContent = (typeof detailContent)[DetailKey]
 
+interface NotificationSwitchProps {
+  checked: boolean
+  disabled?: boolean
+  label: string
+  onChange: (checked: boolean) => void
+}
+
+function NotificationSwitch({
+  checked,
+  disabled = false,
+  label,
+  onChange,
+}: NotificationSwitchProps) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      disabled={disabled}
+      onClick={() => onChange(!checked)}
+      className={`relative h-7 w-12 shrink-0 rounded-full transition ${
+        checked ? 'bg-blue-600' : 'bg-gray-300'
+      } disabled:cursor-not-allowed disabled:opacity-45`}
+    >
+      <span
+        className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow-sm transition ${
+          checked ? 'left-6' : 'left-1'
+        }`}
+      />
+    </button>
+  )
+}
+
 export default function Settings() {
   const navigate = useNavigate()
-  const { logout } = useApp()
+  const { logout, notificationSettings, updateNotificationSettings } = useApp()
   const [detail, setDetail] = useState<DetailContent | null>(null)
   const [logoutOpen, setLogoutOpen] = useState(false)
 
@@ -46,6 +80,23 @@ export default function Settings() {
       return
     }
     setDetail(detailContent[id])
+  }
+
+  function toggleAllNotifications(enabled: boolean) {
+    updateNotificationSettings({
+      ...notificationSettings,
+      enabled,
+    })
+  }
+
+  function toggleSchedule(
+    schedule: 'sevenDaysBefore' | 'threeDaysBefore' | 'deadlineDay',
+    checked: boolean,
+  ) {
+    updateNotificationSettings({
+      ...notificationSettings,
+      [schedule]: checked,
+    })
   }
 
   return (
@@ -76,7 +127,7 @@ export default function Settings() {
           aria-modal="true"
           aria-labelledby="detail-title"
         >
-          <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-6 shadow-xl">
+          <div className="max-h-[calc(100vh-2rem)] w-full max-w-lg overflow-y-auto rounded-xl border border-gray-200 bg-white p-6 shadow-xl">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs font-semibold text-blue-600">설정 안내</p>
@@ -97,10 +148,67 @@ export default function Settings() {
               {detail.body}
             </p>
             {detail.title === '알림 설정' && (
-              <label className="mt-5 flex items-center justify-between rounded-lg bg-slate-50 p-4 text-sm font-semibold">
-                정책 마감 알림
-                <input type="checkbox" defaultChecked className="h-5 w-5 accent-blue-600" />
-              </label>
+              <>
+                <div className="mt-5 flex items-center justify-between border-y border-gray-200 py-5">
+                  <div>
+                    <p className="font-bold text-gray-950">전체 마감 알림</p>
+                    <p className="mt-1 text-xs leading-5 text-gray-500">
+                      관심 정책 전체의 마감 알림을 한 번에 관리해요.
+                    </p>
+                  </div>
+                  <NotificationSwitch
+                    checked={notificationSettings.enabled}
+                    label="전체 마감 알림"
+                    onChange={toggleAllNotifications}
+                  />
+                </div>
+
+                <div className="mt-5 flex items-center gap-3 rounded-lg bg-slate-50 px-4 py-3">
+                  <Mail size={18} className="text-blue-600" />
+                  <div>
+                    <p className="text-sm font-semibold text-gray-950">이메일로 알려드려요</p>
+                    <p className="mt-0.5 text-xs text-gray-500">
+                      등록된 계정 이메일로 마감 알림을 보내드려요.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-6">
+                  <div className="flex items-center gap-2">
+                    <CalendarClock size={18} className="text-blue-600" />
+                    <h3 className="text-sm font-bold text-gray-950">알림 시점</h3>
+                  </div>
+                  <div className="mt-3 divide-y divide-gray-100 rounded-lg border border-gray-200">
+                    {[
+                      {
+                        key: 'sevenDaysBefore' as const,
+                        label: '마감 7일 전',
+                      },
+                      {
+                        key: 'threeDaysBefore' as const,
+                        label: '마감 3일 전',
+                      },
+                      {
+                        key: 'deadlineDay' as const,
+                        label: '마감 당일',
+                      },
+                    ].map(({ key, label }) => (
+                      <div key={key} className="flex items-center gap-3 px-4 py-3.5">
+                        <span className="flex-1 text-sm font-semibold">{label}</span>
+                        <NotificationSwitch
+                          checked={notificationSettings[key]}
+                          disabled={!notificationSettings.enabled}
+                          label={`${label} 이메일 알림`}
+                          onChange={(checked) => toggleSchedule(key, checked)}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <p className="mt-3 text-xs leading-5 text-gray-500">
+                    전체 알림을 켠 뒤 이메일을 받을 시점을 선택할 수 있어요.
+                  </p>
+                </div>
+              </>
             )}
             <button
               type="button"

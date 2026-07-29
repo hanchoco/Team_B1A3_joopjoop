@@ -46,6 +46,13 @@ export interface PreparedPolicy {
   status?: 'preparing'
 }
 
+export interface NotificationSettings {
+  enabled: boolean
+  sevenDaysBefore: boolean
+  threeDaysBefore: boolean
+  deadlineDay: boolean
+}
+
 export interface AppContextValue {
   isLoggedIn: boolean
   login: () => void
@@ -57,6 +64,8 @@ export interface AppContextValue {
   removePreparation: (policyId: string) => void
   favoritePolicies: Record<string, FavoritePolicy>
   toggleFavorite: (policy: FavoritePolicy) => void
+  notificationSettings: NotificationSettings
+  updateNotificationSettings: (settings: NotificationSettings) => void
 }
 
 export interface ClassNameProps {
