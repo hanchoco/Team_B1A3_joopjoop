@@ -182,3 +182,18 @@ def test_manual_check_condition_makes_card_need_review() -> None:
     )
     assert result.status is PolicyCardStatus.NEEDS_REVIEW
     assert result.total_condition_count == 2
+
+
+def test_alternate_eligibility_paths_use_or_across_groups() -> None:
+    """그룹1: 서울거주 AND 재직자 / 그룹2: 서울거주 AND 구직자 — 하나만 맞아도 통과"""
+    conditions = [
+        _condition(key="profile.region_code", expected="11", condition_group_no=1),
+        _condition(key="profile.employment_status_code", expected="EMPLOYED", condition_group_no=1),
+        _condition(key="profile.region_code", expected="11", condition_group_no=2),
+        _condition(key="profile.employment_status_code", expected="JOB_SEEKER", condition_group_no=2),
+    ]
+    context = {"profile": {"region_code": "11", "employment_status_code": "JOB_SEEKER"}}
+
+    result = evaluate_policy(conditions, context)
+
+    assert result.status is PolicyCardStatus.LIKELY_ELIGIBLE
