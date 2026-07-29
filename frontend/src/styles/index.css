@@ -1,0 +1,56 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Pretendard', 'Noto Sans KR', ui-sans-serif, system-ui, sans-serif;
+}
+
+:root {
+  font-family: var(--font-sans);
+  color: #111827;
+  background: #f8fafc;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.012em;
+  line-height: 1.65;
+}
+
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  letter-spacing: -0.006em;
+}
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+button {
+  cursor: pointer;
+}
+h1,
+h2,
+h3,
+p {
+  margin-block-start: 0;
+  margin-block-end: 0;
+}
+h1 {
+  line-height: 1.35;
+}
+p {
+  line-height: 1.75;
+}
+:focus-visible {
+  outline: 3px solid rgb(191 219 254);
+  outline-offset: 2px;
+}
