@@ -7,8 +7,9 @@ Codex, Claude Code 등 모든 AI 코딩 에이전트가 공통으로 준수하�
 
 - 서비스명: joopjoop (줍줍)
 - 목적: 청년 맞춤형 정책 추천, 예상 혜택 시뮬레이션, AI 정책 Q&A
-- 스택: Frontend(React) + Backend(FastAPI) 모노레포, MySQL, Docker (컨테이너 2개: backend, frontend + db)
-- AI 기능(Q&A, 자격조건 추출, 체크리스트 생성)은 별도 컨테이너로 분리하지 않고 backend 안에 모듈로 통합한다
+- 스택: Frontend(React) + Backend(FastAPI) 모노레포, MySQL, Docker
+- 컨테이너는 `frontend` / `backend` / `db` 3개로 각각 독립 실행 (frontend·backend는 원래부터 항상 별도 컨테이너, 각자 자기 Dockerfile 사용)
+- AI 기능(Q&A, 자격조건 추출, 체크리스트 생성)만 별도 컨테이너로 분리하지 않고 backend 컨테이너 안에 모듈로 통합한다 (프론트/백엔드 분리와는 무관한 결정)
 - 기획 문서 우선순위: 목업 이미지와 본문 텍스트가 불일치할 경우 **본문 텍스트가 항상 우선**
 
 ## 2. Git 규칙
@@ -22,8 +23,8 @@ Codex, Claude Code 등 모든 AI 코딩 에이전트가 공통으로 준수하�
 
 ## 3. 프로젝트 구조
 
-- `/frontend` : React 기반 SPA (Vite)
-- `/backend` : FastAPI 기반 REST API (AI 기능 포함, 단일 컨테이너)
+- `/frontend` : React 기반 SPA (Vite), 자체 `Dockerfile`로 독립 컨테이너 빌드
+- `/backend` : FastAPI 기반 REST API (AI 기능 포함), 자체 `Dockerfile`로 독립 컨테이너 빌드
 - 기능별 담당 경로:
   - Core API(회원/마이페이지): `backend/app/api/v1/users.py`, `backend/app/crud/`
   - Policy Engine(매칭/시뮬레이션): `backend/app/services/policy_engine/`
