@@ -11,6 +11,7 @@ import mockData from '../utils/mockData.json'
 import { AppContext } from './context'
 
 export function AppProvider({ children }: PropsWithChildren) {
+  const savedAvatarUrl = localStorage.getItem('joopjoop-profile-avatar') || undefined
   const initialProfile: UserProfile = {
     ...mockData.userProfile,
     regionName: mockData.userProfile.region.city.replace('특별시', ''),
@@ -18,8 +19,12 @@ export function AppProvider({ children }: PropsWithChildren) {
     employment: '구직 중',
     housingType: mockData.userProfile.housing.type,
     concern: '',
+    birthYear: new Date().getFullYear() - mockData.userProfile.age,
+    incomeBracket: '월 201~300만 원',
+    householdType: '1인 가구',
+    avatarUrl: savedAvatarUrl,
   }
-  const [isLoggedIn, setIsLoggedIn] = useState(true)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [userProfile, setUserProfile] = useState(initialProfile)
   const [preparedPolicies, setPreparedPolicies] = useState<Record<string, PreparedPolicy>>({})
   const [favoritePolicies, setFavoritePolicies] = useState<Record<string, FavoritePolicy>>({
@@ -49,6 +54,10 @@ export function AppProvider({ children }: PropsWithChildren) {
   }
 
   function updateUserProfile(profile: UserProfileUpdate) {
+    if ('avatarUrl' in profile) {
+      if (profile.avatarUrl) localStorage.setItem('joopjoop-profile-avatar', profile.avatarUrl)
+      else localStorage.removeItem('joopjoop-profile-avatar')
+    }
     setUserProfile((current) => ({
       ...current,
       ...profile,
@@ -63,6 +72,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       annualIncome: profile.monthlyIncome
         ? Number(profile.monthlyIncome) * 12 * 10000
         : current.annualIncome,
+      age: profile.birthYear ? new Date().getFullYear() - profile.birthYear : current.age,
     }))
   }
 

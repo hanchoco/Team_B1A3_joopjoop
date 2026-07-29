@@ -12,6 +12,7 @@ import {
 import { useNavigate } from 'react-router-dom'
 import BrandLogo from '../../components/common/BrandLogo'
 import BenefitCoins from '../../components/common/BenefitCoins'
+import { useApp } from '../../store/useApp'
 
 const categories = [
   { id: 'housing', name: '주거', icon: House },
@@ -24,6 +25,7 @@ const categories = [
 
 export default function Dashboard() {
   const navigate = useNavigate()
+  const { isLoggedIn, userProfile } = useApp()
   return (
     <section className="space-y-8">
       {' '}
@@ -31,7 +33,9 @@ export default function Dashboard() {
         {' '}
         <div className="rounded-xl border border-gray-200 bg-white p-6 sm:p-8">
           {' '}
-          <p className="text-sm font-semibold text-blue-600">김나라 님을 위한 정책 탐색</p>{' '}
+          <p className="text-sm font-semibold text-blue-600">
+            {isLoggedIn ? `${userProfile.name} 님을 위한 정책 탐색` : '청년 정책을 한곳에서'}
+          </p>{' '}
           <h1 className="mt-3 text-3xl font-black tracking-tight text-gray-950">
             지금 나에게 필요한 정책,
           </h1>{' '}
@@ -55,35 +59,57 @@ export default function Dashboard() {
           </label>{' '}
         </div>{' '}
         <aside className="rounded-xl border border-gray-200 bg-white p-6">
-          {' '}
-          <div className="flex items-center justify-between">
-            <h2 className="font-bold">내 정보 요약</h2>
-            <button
-              onClick={() => navigate('/mypage/profile')}
-              className="text-xs font-semibold text-blue-600"
-            >
-              수정
-            </button>
-          </div>{' '}
-          <dl className="mt-5 space-y-3 text-sm">
-            {[
-              ['나이', '27세'],
-              ['거주지역', '서울특별시'],
-              ['주거형태', '월세'],
-              ['월 소득', '220만 원'],
-            ].map(([k, v]) => (
-              <div key={k} className="flex justify-between">
-                <dt className="text-gray-500">{k}</dt>
-                <dd className="font-semibold">{v}</dd>
+          {isLoggedIn ? (
+            <>
+              <div className="flex items-center justify-between">
+                <h2 className="font-bold">내 정보 요약</h2>
+                <button
+                  onClick={() => navigate('/mypage/profile')}
+                  className="text-xs font-semibold text-blue-600"
+                >
+                  수정
+                </button>
               </div>
-            ))}
-          </dl>{' '}
-          <button
-            onClick={() => navigate('/profile')}
-            className="mt-6 w-full rounded-lg border border-blue-600 py-2.5 text-sm font-semibold text-blue-600"
-          >
-            정보 다시 확인하기
-          </button>{' '}
+              <dl className="mt-5 space-y-3 text-sm">
+                {[
+                  ['출생연도', `${userProfile.birthYear}년`],
+                  ['거주지역', userProfile.regionName],
+                  ['취업상태', userProfile.employment],
+                  ['주거형태', userProfile.housingType],
+                ].map(([key, value]) => (
+                  <div key={key} className="flex justify-between gap-3">
+                    <dt className="text-gray-500">{key}</dt>
+                    <dd className="text-right font-semibold">{value}</dd>
+                  </div>
+                ))}
+              </dl>
+              <button
+                onClick={() => navigate('/profile')}
+                className="mt-6 w-full rounded-lg border border-blue-600 py-2.5 text-sm font-semibold text-blue-600"
+              >
+                정보 다시 확인하기
+              </button>
+            </>
+          ) : (
+            <div className="flex h-full min-h-52 flex-col justify-center">
+              <h2 className="font-bold">내게 맞는 정책을 찾아보세요</h2>
+              <p className="mt-2 text-sm leading-6 text-gray-500">
+                로그인하면 저장한 기본 정보를 바탕으로 맞춤 정책을 추천해드려요.
+              </p>
+              <button
+                onClick={() => navigate('/login')}
+                className="mt-5 w-full rounded-lg bg-blue-600 py-2.5 text-sm font-bold text-white"
+              >
+                로그인
+              </button>
+              <button
+                onClick={() => navigate('/signup')}
+                className="mt-2 w-full rounded-lg border border-blue-600 py-2.5 text-sm font-bold text-blue-600"
+              >
+                회원가입
+              </button>
+            </div>
+          )}
         </aside>{' '}
       </div>{' '}
       <div>

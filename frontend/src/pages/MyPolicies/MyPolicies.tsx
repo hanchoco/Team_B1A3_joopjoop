@@ -1,4 +1,4 @@
-import { ArrowRight, Bookmark, CheckCircle2, ClipboardList } from 'lucide-react'
+import { ArrowRight, Bookmark, CheckCircle2, ClipboardList, Star } from 'lucide-react'
 import { useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useApp } from '../../store/useApp'
@@ -203,10 +203,13 @@ export default function MyPolicies() {
                 <div className="flex items-center gap-4">
                   {currentState === 'interest' && (
                     <button
+                      type="button"
                       onClick={() => removeFavorite(policy)}
-                      className="text-xs font-semibold text-gray-500 hover:text-rose-600"
+                      className="grid h-9 w-9 place-items-center rounded-lg transition hover:bg-amber-50"
+                      aria-label={`${policy.title} 관심 정책 해제`}
+                      aria-pressed="true"
                     >
-                      관심 해제
+                      <Star size={21} className="fill-amber-400 text-amber-400" />
                     </button>
                   )}
                   <button

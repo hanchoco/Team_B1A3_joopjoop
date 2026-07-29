@@ -4,7 +4,7 @@ import { useApp } from '../../store/useApp'
 
 export default function MyPage() {
   const navigate = useNavigate()
-  const { preparedPolicies, favoritePolicies } = useApp()
+  const { preparedPolicies, favoritePolicies, userProfile } = useApp()
   const preparing = Object.values(preparedPolicies)
   const summaries = [
     { id: 'interest', label: '관심', count: Object.keys(favoritePolicies).length, icon: Bookmark },
@@ -28,10 +28,18 @@ export default function MyPage() {
     <section>
       <div className="grid gap-5 lg:grid-cols-[340px_1fr]">
         <aside className="rounded-xl border border-gray-200 bg-white p-6">
-          <span className="grid h-16 w-16 place-items-center rounded-full bg-slate-100 text-gray-400">
-            <UserRound size={32} />
+          <span className="grid h-16 w-16 place-items-center overflow-hidden rounded-full bg-slate-100 text-gray-400">
+            {userProfile.avatarUrl ? (
+              <img
+                src={userProfile.avatarUrl}
+                alt={`${userProfile.name} 프로필`}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <UserRound size={32} />
+            )}
           </span>
-          <h1 className="mt-4 text-2xl font-black">김나라 님</h1>
+          <h1 className="mt-4 text-2xl font-black">{userProfile.name} 님</h1>
           <p className="mt-1 text-sm text-gray-500">안녕하세요! 오늘도 놓치지 않게 도와드릴게요.</p>
           <button
             onClick={() => navigate('/mypage/profile')}
@@ -84,7 +92,7 @@ export default function MyPage() {
           <div className="mt-5 rounded-xl border border-gray-200 bg-white p-6">
             <div className="flex justify-between">
               <div>
-                <h3 className="font-bold">새로운 맞춤 정책 3개</h3>
+                <h3 className="font-bold">새로운 맞춤 정책</h3>
                 <p className="mt-1 text-sm text-gray-500">업데이트된 조건에 맞는 정책이에요.</p>
               </div>
               <button

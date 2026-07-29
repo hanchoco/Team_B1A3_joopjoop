@@ -20,12 +20,25 @@ export interface UserProfile {
   employment: string
   housingType: string
   concern: string
+  birthYear: number
+  incomeBracket: string
+  householdType: string
+  avatarUrl?: string
 }
 
 export type UserProfileUpdate = Partial<
   Pick<
     UserProfile,
-    'age' | 'regionName' | 'monthlyIncome' | 'employment' | 'housingType' | 'concern'
+    | 'age'
+    | 'regionName'
+    | 'monthlyIncome'
+    | 'employment'
+    | 'housingType'
+    | 'concern'
+    | 'birthYear'
+    | 'incomeBracket'
+    | 'householdType'
+    | 'avatarUrl'
   >
 >
 

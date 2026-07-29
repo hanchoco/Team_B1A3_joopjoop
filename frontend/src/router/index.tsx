@@ -7,6 +7,7 @@ import CategoryQuestions from '../pages/CategorySelect/CategoryQuestions'
 import CategorySelect from '../pages/CategorySelect/CategorySelect'
 import Dashboard from '../pages/Dashboard/Dashboard'
 import Login from '../pages/Login/Login'
+import Signup from '../pages/Signup/Signup'
 import EditProfile from '../pages/MyPage/EditProfile'
 import MyPage from '../pages/MyPage/MyPage'
 import MyPolicies from '../pages/MyPolicies/MyPolicies'
@@ -84,6 +85,7 @@ function AppLayout() {
       <main className="mx-auto w-full max-w-6xl px-5 py-8 sm:px-8 sm:py-10">
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
           <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/profile" element={<UserProfile />} />
           <Route path="/" element={<Dashboard />} />

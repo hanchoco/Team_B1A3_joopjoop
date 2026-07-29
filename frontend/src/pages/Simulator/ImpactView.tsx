@@ -4,11 +4,9 @@ import type { FormEvent } from 'react'
 import mockData from '../../utils/mockData.json'
 import { useApp } from '../../store/useApp'
 
-const recommendedQuestions = ['왜 제가 대상자인가요?', '필요한 서류가 무엇인가요?']
+const recommendedQuestions = ['필요한 서류가 무엇인가요?']
 
 const mockAnswers: Record<string, string> = {
-  '왜 제가 대상자인가요?':
-    '김나라 님은 만 25세이고 마포구에서 월세로 거주 중이며, 입력하신 연 소득이 청년 월세 지원 기준에 가까워 추천드렸어요.',
   '필요한 서류가 무엇인가요?':
     '임대차계약서 사본, 최근 월세 이체 내역, 가족관계증명서를 먼저 준비하면 좋아요. 신청 전 최신 공고도 함께 확인해드릴게요.',
 }

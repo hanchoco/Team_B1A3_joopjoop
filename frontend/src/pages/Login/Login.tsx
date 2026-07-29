@@ -1,42 +1,90 @@
-import { MessageCircle, ShieldCheck } from 'lucide-react'
+import { ArrowRight, LockKeyhole, UserRound } from 'lucide-react'
+import { useState } from 'react'
+import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import BrandLogo from '../../components/common/BrandLogo'
 import { useApp } from '../../store/useApp'
 
 export default function Login() {
   const navigate = useNavigate()
-  const { login } = useApp()
-  function handleLogin() {
+  const { accountId, login } = useApp()
+  const [loginId, setLoginId] = useState(accountId)
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!loginId.trim() || password.length < 4) {
+      setError('아이디와 비밀번호를 확인해주세요.')
+      return
+    }
     login()
-    navigate('/onboarding')
+    navigate('/')
   }
+
   return (
-    <section className="mx-auto max-w-md pt-10">
-      <div className="rounded-xl border border-gray-200 bg-white p-7 text-center">
-        <BrandLogo className="mx-auto h-16 w-[230px] object-contain" />
-        <p className="mt-5 text-sm leading-7 text-gray-500">
-          내게 맞는 청년 정책을 찾고
-          <br />
-          실제 받을 혜택까지 확인해보세요.
-        </p>
-        <div className="mt-8 space-y-3">
-          <button
-            onClick={handleLogin}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#FEE500] py-3.5 font-bold text-[#191919]"
-          >
-            <MessageCircle size={18} /> 카카오로 시작하기
-          </button>
-          <button
-            onClick={handleLogin}
-            className="w-full rounded-lg border border-gray-300 py-3.5 font-bold"
-          >
-            Google로 계속하기
-          </button>
-        </div>
-        <p className="mt-6 inline-flex items-center gap-1 text-xs text-gray-400">
-          <ShieldCheck size={14} /> 개인정보는 안전하게 보호해요.
-        </p>
+    <section className="mx-auto max-w-md py-8">
+      <div className="text-center">
+        <BrandLogo className="mx-auto h-14 w-[205px] object-contain" />
+        <h1 className="mt-6 text-2xl font-black">다시 만나서 반가워요</h1>
+        <p className="mt-2 text-sm text-gray-500">로그인하고 저장한 맞춤 정책을 확인하세요.</p>
       </div>
+
+      <form onSubmit={submit} className="mt-7 rounded-xl border border-gray-200 bg-white p-7">
+        <label className="block text-sm font-bold">
+          아이디
+          <span className="relative mt-2 block">
+            <UserRound
+              size={18}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+            />
+            <input
+              required
+              type="email"
+              value={loginId}
+              onChange={(event) => setLoginId(event.target.value)}
+              autoComplete="username"
+              placeholder="이메일 아이디"
+              className="w-full rounded-lg border border-gray-300 py-3.5 pl-11 pr-4 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </span>
+        </label>
+        <label className="mt-5 block text-sm font-bold">
+          비밀번호
+          <span className="relative mt-2 block">
+            <LockKeyhole
+              size={18}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+            />
+            <input
+              required
+              type="password"
+              value={password}
+              onChange={(event) => {
+                setPassword(event.target.value)
+                setError('')
+              }}
+              autoComplete="current-password"
+              placeholder="비밀번호 입력"
+              className="w-full rounded-lg border border-gray-300 py-3.5 pl-11 pr-4 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </span>
+        </label>
+        {error && <p className="mt-3 text-sm font-semibold text-rose-600">{error}</p>}
+        <button
+          type="submit"
+          className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 py-3.5 font-bold text-white"
+        >
+          로그인 <ArrowRight size={18} />
+        </button>
+      </form>
+
+      <p className="mt-5 text-center text-sm text-gray-500">
+        아직 계정이 없나요?{' '}
+        <button onClick={() => navigate('/signup')} className="font-bold text-blue-600">
+          회원가입
+        </button>
+      </p>
     </section>
   )
 }

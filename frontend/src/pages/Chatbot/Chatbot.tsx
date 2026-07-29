@@ -5,15 +5,12 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useApp } from '../../store/useApp'
 
 const recommendedQuestions = [
-  '왜 제가 대상자인가요?',
   '신청 자격이 조금 궁금해요.',
   '필요한 서류가 무엇인가요?',
   '신청 결과는 언제 나오나요?',
 ]
 
 const answerMap: Record<string, string> = {
-  '왜 제가 대상자인가요?':
-    '김나라 님은 만 25세이고 마포구에서 월세로 거주하고 계세요. 저장된 소득 정보도 청년 월세 지원 기준에 가까워 지원 가능성이 높은 것으로 확인돼요.',
   '신청 자격이 조금 궁금해요.':
     '연령, 소득, 주거 조건을 중심으로 확인해요. 현재 입력하신 정보로는 주요 조건을 충족하지만, 최종 자격은 신청 기관의 심사를 통해 확정돼요.',
   '필요한 서류가 무엇인가요?':
