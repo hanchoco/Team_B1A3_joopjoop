@@ -11,6 +11,7 @@ Backend/Policy Engine이 이미 계산해서 넘겨준 matching_result의 eligib
 절대 뒤집지 않고, 그 외에는 정책 원문+일반 상식을 활용해 자유롭게 설명합니다.
 """
 
+import json
 import os
 from dataclasses import dataclass
 from openai import OpenAI, AsyncOpenAI
@@ -26,14 +27,10 @@ load_dotenv()
 _API_KEY = os.environ["UPSTAGE_API_KEY"]
 _BASE_URL = os.environ.get("UPSTAGE_BASE_URL", "https://api.upstage.ai/v1")
 
-# 다른 ai/ 모듈(rule_extractor.py, checklist_generator.py)이
-# `from solar_client import client, SOLAR_MODEL`로 그대로 가져다 씁니다. (동기 호출용)
+# 동기(sync) 컨텍스트에서 쓰는 공용 클라이언트/모델명.
+# checklist_generator.py의 generate_application_checklist()(S10 실시간 화면용,
+# 동기 함수)가 이걸 가져다 씁니다. 나머지(A02 파이프라인)는 아래 SolarClient(비동기)를 씁니다.
 client = OpenAI(api_key=_API_KEY, base_url=_BASE_URL)
-
-# chatbot_service.py가 await로 부르므로 비동기 호출은 별도 클라이언트 사용.
-_async_client = AsyncOpenAI(api_key=_API_KEY, base_url=_BASE_URL)
-
-# .env의 UPSTAGE_SOLAR_MODEL을 읽음. 값이 없으면 solar-pro2로 안전하게 fallback.
 SOLAR_MODEL = os.environ.get("UPSTAGE_SOLAR_MODEL", "solar-pro2")
 
 
@@ -42,61 +39,6 @@ class SolarClientError(Exception):
     ExternalServiceError로 다시 감쌉니다."""
     pass
 
-
-async def answer_policy_question(question: str, context: dict) -> str:
-    """
-    question: 사용자가 입력한 자유 질문
-    context: chatbot_service.py가 만들어서 넘기는 dict. 예:
-        {
-          "title": "청년 월세 지원", "summary": "...", "description": "...",
-          "support_target_text": "...", "support_content_text": "...",
-          "application_method": "...", "application_start_date": "2026-03-30",
-          "application_end_date": "2026-05-29", "is_ongoing": False,
-          "provider_name": "...", "application_url": "...", "contact": "...",
-          "original_text": "...",
-          "conditions": [
-            {"condition_key": "profile.age", "operator": "BETWEEN",
-             "expected_value_json": {"min":19,"max":34}, "check_mode": "AUTO",
-             "description": "만 19세~34세"}, ...
-          ]
-        }
-        주의: 사용자별 충족/불충족 판정(matching_result)은 여기 없습니다.
-        이 함수는 정책·조건 "정의"만 보고 설명합니다.
-
-    반환: 답변 문자열 (dict 아님)
-    """
-    prompt_context = f"""
-[정책명] {context.get('title')}
-[요약] {context.get('summary')}
-[상세 설명] {context.get('description')}
-[지원 대상] {context.get('support_target_text')}
-[지원 내용] {context.get('support_content_text')}
-[신청 방법] {context.get('application_method')}
-[신청 기간] {context.get('application_start_date')} ~ {context.get('application_end_date')}
-[상시 모집 여부] {context.get('is_ongoing')}
-[주관 기관] {context.get('provider_name')}
-[신청 URL] {context.get('application_url')}
-[문의처] {context.get('contact')}
-[정책 원문] {context.get('original_text')}
-[자격 조건 정의] {context.get('conditions')}
-[질문] {question}
-"""
-    try:
-        response = await _async_client.chat.completions.create(
-            model=SOLAR_MODEL,
-            messages=[
-                {"role": "system", "content": QA_SYSTEM_PROMPT},
-                {"role": "user", "content": prompt_context},
-            ],
-        )
-        return response.choices[0].message.content
-    except Exception as exc:
-        raise SolarClientError(f"Solar API 호출 실패: {exc}") from exc
-
-
-# ============================================================
-# 호환 레이어
-# ============================================================
 
 @dataclass
 class SolarClientConfig:
@@ -115,16 +57,83 @@ class SolarClientConfig:
 
 
 class SolarClient:
-    """OpenAI 클라이언트를 감싸는 얇은 래퍼. 클래스 형태가 필요한 호출부용."""
+    """비동기 Solar 클라이언트. seed_policy_data.py가 `SolarClient()`로 인자 없이
+    생성하고, extract_conditions()/generate_checklist()에 client=로 넘깁니다."""
 
     def __init__(self, config: SolarClientConfig | None = None):
         self.config = config or SolarClientConfig.from_env()
-        self._client = OpenAI(api_key=self.config.api_key, base_url=self.config.base_url)
+        self._client = AsyncOpenAI(api_key=self.config.api_key, base_url=self.config.base_url)
 
-    def chat(self, messages: list, **kwargs) -> str:
-        kwargs.setdefault("model", self.config.model)
+    async def complete_json(self, system_prompt: str, user_content: str) -> dict:
+        """system_prompt/user_content로 Solar를 JSON 모드로 호출해서 dict로 반환."""
         try:
-            response = self._client.chat.completions.create(messages=messages, **kwargs)
+            response = await self._client.chat.completions.create(
+                model=self.config.model,
+                temperature=0,
+                response_format={"type": "json_object"},
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_content},
+                ],
+            )
+            return json.loads(response.choices[0].message.content)
+        except Exception as exc:
+            raise SolarClientError(f"Solar API 호출 실패: {exc}") from exc
+
+    async def complete_text(self, system_prompt: str, user_content: str) -> str:
+        """일반 텍스트 응답이 필요할 때(예: Q&A) 사용."""
+        try:
+            response = await self._client.chat.completions.create(
+                model=self.config.model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_content},
+                ],
+            )
             return response.choices[0].message.content
         except Exception as exc:
             raise SolarClientError(f"Solar API 호출 실패: {exc}") from exc
+
+    async def close(self) -> None:
+        await self._client.close()
+
+
+# ============================================================
+# S07. 정책 Q&A - chatbot_service.py가 직접 호출 (client 없이, 내부 기본 클라이언트 사용)
+# ============================================================
+
+_default_client: SolarClient | None = None
+
+
+def _get_default_client() -> SolarClient:
+    global _default_client
+    if _default_client is None:
+        _default_client = SolarClient()
+    return _default_client
+
+
+async def answer_policy_question(question: str, context: dict) -> str:
+    """
+    question: 사용자가 입력한 자유 질문
+    context: chatbot_service.py가 만들어서 넘기는 dict (policies 필드 + conditions 정의).
+             사용자별 충족/불충족 판정은 여기 없습니다 - 정책·조건 "정의"만 보고 설명합니다.
+    반환: 답변 문자열
+    """
+    prompt_context = f"""
+[정책명] {context.get('title')}
+[요약] {context.get('summary')}
+[상세 설명] {context.get('description')}
+[지원 대상] {context.get('support_target_text')}
+[지원 내용] {context.get('support_content_text')}
+[신청 방법] {context.get('application_method')}
+[신청 기간] {context.get('application_start_date')} ~ {context.get('application_end_date')}
+[상시 모집 여부] {context.get('is_ongoing')}
+[주관 기관] {context.get('provider_name')}
+[신청 URL] {context.get('application_url')}
+[문의처] {context.get('contact')}
+[정책 원문] {context.get('original_text')}
+[자격 조건 정의] {context.get('conditions')}
+[질문] {question}
+"""
+    client = _get_default_client()
+    return await client.complete_text(QA_SYSTEM_PROMPT, prompt_context)

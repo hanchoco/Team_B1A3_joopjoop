@@ -16,14 +16,99 @@
 """
 
 import json
+from dataclasses import dataclass, asdict
 
 try:
-    from .solar_client import client, SOLAR_MODEL
-    from .prompt_templates import CHECKLIST_SYSTEM_PROMPT
+    from .solar_client import SolarClient, client as _default_sync_client, SOLAR_MODEL as _DEFAULT_MODEL
+    from .prompt_templates import DOCUMENT_SYSTEM_PROMPT, CHECKLIST_SYSTEM_PROMPT
 except ImportError:
-    from solar_client import client, SOLAR_MODEL
-    from prompt_templates import CHECKLIST_SYSTEM_PROMPT
+    from solar_client import SolarClient
+    from prompt_templates import DOCUMENT_SYSTEM_PROMPT, CHECKLIST_SYSTEM_PROMPT
 
+
+# ============================================================
+# 타입
+# ============================================================
+
+@dataclass
+class GeneratedDocument:
+    """policy_documents 한 행을 담는 타입."""
+    document_code: str
+    document_name: str
+    required_reason: str = None
+    issuing_organization: str = None
+    issuing_method: str = None
+    issuing_url: str = None
+    submission_format: str = None
+    is_required: bool = True
+    display_order: int = 0
+
+    def to_dict(self) -> dict:
+        return asdict(self)
+
+
+# ============================================================
+# 1. A02 파이프라인용 - 서류 목록만 생성 (실제 seed_policy_data.py가 호출)
+# ============================================================
+
+async def generate_checklist(policy_payload: dict, *, client: SolarClient) -> list[GeneratedDocument]:
+    """
+    policy_payload: youth_policy_api.py가 만든 정규화된 정책 dict.
+    client: SolarClient 인스턴스 (seed_policy_data.py가 생성해서 넘겨줌)
+    반환: GeneratedDocument 리스트 (제출서류 초안)
+    """
+    raw = policy_payload.get("raw_payload") or policy_payload
+    user_input = f"""
+[정책명] {raw.get('plcyNm') or policy_payload.get('title')}
+[제출서류] {raw.get('sbmsnDcmntCn', '') or '(없음)'}
+"""
+    ai_result = await client.complete_json(DOCUMENT_SYSTEM_PROMPT, user_input)
+
+    return [
+        GeneratedDocument(
+            document_code=f"DOC-{i + 1:02d}",
+            document_name=d.get("document_name"),
+            required_reason=d.get("required_reason"),
+            issuing_organization=d.get("issuing_organization"),
+            issuing_method=d.get("issuing_method"),
+            issuing_url=d.get("issuing_url"),
+            submission_format=d.get("submission_format"),
+            is_required=d.get("is_required", True),
+            display_order=i + 1,
+        )
+        for i, d in enumerate(ai_result.get("documents", []))
+    ]
+
+
+def create_checklist_draft(document: GeneratedDocument) -> dict:
+    """GeneratedDocument -> DB INSERT용 dict."""
+    return document.to_dict()
+
+
+def validate_checklist_payload(payload: dict) -> list[GeneratedDocument]:
+    """저장된 초안 JSON에서 다시 읽어들인 서류 목록을 검증하고
+    GeneratedDocument 객체 리스트로 복원합니다.
+    payload: {"documents": [{...dict...}, ...]}
+    """
+    items = payload.get("documents")
+    if not isinstance(items, list):
+        raise ValueError("documents must be a list")
+
+    valid_fields = GeneratedDocument.__dataclass_fields__.keys()
+    result = []
+    for item in items:
+        if not isinstance(item, dict):
+            raise ValueError("each document must be an object")
+        if not item.get("document_name"):
+            raise ValueError("document missing document_name")
+        result.append(GeneratedDocument(**{k: v for k, v in item.items() if k in valid_fields}))
+    return result
+
+
+# ============================================================
+# 2. S10 실시간 화면용 - 조건+예외+참여제한+서류 통합 체크리스트
+#    (seed 파이프라인과 무관, 별도 API 엔드포인트에서 사용될 함수)
+# ============================================================
 
 def generate_application_checklist(
     policy: dict,
@@ -33,16 +118,14 @@ def generate_application_checklist(
 ) -> dict:
     """
     policy: {"id": str, "name": str}
-    condition_results: Backend가 계산한 "전체" 조건 결과 (충족/불충족/확인필요 다 포함, 일부만 X)
-        예: [
-          {"condition_key": "profile.age", "title": "나이", "status": "충족", "user_value": 25, "expected": "19~34세"},
-          {"condition_key": "profile.income_band_code", "title": "소득", "status": "불충족",
-           "user_value": 3200000, "expected": "3000000 이하"}
-        ]
+    condition_results: Backend가 계산한 "전체" 조건 결과 (충족/불충족/확인필요 다 포함)
     requirements: policy_documents 테이블 목록 그대로
-    ai_interpreted: A02의 결과 (income_note 등 예외조항/추가조건 원문 포함)
+    ai_interpreted: income_note 등 예외조항/추가조건 원문 포함
 
     반환: {"checklist": [ {"type": "condition|exception|participation_limit|document", ...}, ... ]}
+
+    주의: 이 함수는 동기(sync) 함수이고 기존 전역 client를 씁니다.
+    generate_checklist()(위 1번)와는 별개의 함수이니 혼동하지 마세요.
     """
     context = f"""
 [정책명] {policy.get('name')}
@@ -50,8 +133,8 @@ def generate_application_checklist(
 [필요서류 원본] {requirements}
 [예외조항 정보] {ai_interpreted}
 """
-    response = client.chat.completions.create(
-        model=SOLAR_MODEL,
+    response = _default_sync_client.chat.completions.create(
+        model=_DEFAULT_MODEL,
         temperature=0,
         response_format={"type": "json_object"},
         messages=[
@@ -61,47 +144,9 @@ def generate_application_checklist(
     )
     result = json.loads(response.choices[0].message.content)
 
-    # 안전장치: type="exception"인데 condition_results에 실제로 없던 condition_key가
-    # 들어있으면(=AI가 ai_interpreted만 보고 없는 조건을 지어낸 것) 강제로 제거.
     real_keys = {c.get("condition_key") for c in condition_results}
     result["checklist"] = [
         item for item in result.get("checklist", [])
         if item.get("type") != "exception" or item.get("condition_key") in real_keys
     ]
-
     return result
-
-
-# ============================================================
-# 호환 레이어 (app/services/ai/__init__.py가 기대하는 이름들)
-# 주의: 실제 호출부가 이 이름들을 정확히 어떻게 쓰는지 확인 전까지는
-# "최선의 추측" 구현입니다. generate_application_checklist()가 실제 로직이고,
-# 아래는 그 결과를 다른 이름/형태로 감싼 것뿐입니다.
-# ============================================================
-
-from dataclasses import dataclass, asdict
-
-
-@dataclass
-class GeneratedDocument:
-    """checklist 안의 서류(type="document") 한 항목을 담는 타입."""
-    title: str
-    is_required: bool = True
-    explanation: str = None
-    tip: str = None
-    link: str = None
-
-
-def generate_checklist(policy: dict, condition_results: list, requirements: list, ai_interpreted: dict) -> dict:
-    """generate_application_checklist()의 별칭. 이름만 다르고 로직은 동일합니다."""
-    return generate_application_checklist(policy, condition_results, requirements, ai_interpreted)
-
-
-def create_checklist_draft(document: GeneratedDocument) -> dict:
-    """GeneratedDocument -> DB INSERT용 dict."""
-    return asdict(document)
-
-
-def validate_checklist_payload(payload: dict) -> bool:
-    """checklist 항목 최소 검증: type과 title이 있는지만 확인."""
-    return bool(payload.get("type")) and bool(payload.get("title"))
