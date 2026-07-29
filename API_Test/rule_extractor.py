@@ -1,26 +1,28 @@
 """
-정책 원문 -> 팀이 정한 DB 스키마에 맞춘 Rule 초안 추출
+A02. 정책 원문 -> 팀 DB 설계서(DB.pdf) 기준 Rule 초안 추출
 
-팀 DB 설계서 기준으로 데이터 생성
+이 파일은 process_policy(raw)를 호출하면 아래 5개 테이블에 각각 들어갈
+row(들)를 만들어 반환합니다. 그대로 INSERT하면 됩니다.
 
-원칙:
-  - 숫자로 이미 구조화된 조건(나이, 지역)은 AI 없이 그대로 매핑.
-  - AI(Solar)는 자유 텍스트만 다룹니다: 서류 목록 파싱, 소득/추가조건 요약, 혜택 계산규칙 추정.
-  - AI가 만든 결과는 전부 초안입니다.
+  - policies          (정책 기본정보 1행)
+  - policy_categories (다대다, 여러 행)
+  - policy_benefits   (혜택 계산용, 0~1행)
+  - policy_conditions (자격조건, 여러 행)
+  - policy_documents  (필요서류, 여러 행)
+
+핵심 원칙 (그대로 유지):
+  - 숫자로 이미 구조화된 조건(나이, 지역)은 AI 없이 직접 매핑하고 check_mode="AUTO"
+  - 그 외 모든 조건(소득구간, 주거형태, 고용형태 등)은 AI가 자유텍스트에서 추출한
+    "초안"이며 check_mode="MANUAL"로 표시해 A03에서 사람이 최종 확인하게 합니다.
+  - 온통청년 API가 안 주는 policies 컬럼은 생략하지 않고 None으로 채웁니다.
+  - status는 기본값 "DRAFT"입니다. A03 승인 후 Backend가 "ACTIVE"로 바꿉니다.
 """
 
-import os
 import json
 from datetime import datetime
-from openai import OpenAI
-from dotenv import load_dotenv
 
-load_dotenv()
-
-client = OpenAI(
-    api_key=os.environ["UPSTAGE_API_KEY"],
-    base_url="https://api.upstage.ai/v1",
-)
+from solar_client import client
+from prompt_templates import EXTRACTOR_SYSTEM_PROMPT
 
 # ============================================================
 # 코드 레지스트리 (DB.pdf 4장 / 6장 기준)
@@ -48,6 +50,103 @@ INCOME_BAND_UPPER_BOUND = {  # 각 구간의 상한(%), ABOVE_150은 상한 없�
     "BETWEEN_100_120": 120, "BETWEEN_120_150": 150, "ABOVE_150": None,
 }
 
+# ------------------------------------------------------------------
+# AI가 만든 condition_key는 신뢰하지 않고 여기서 한 번 더 검증합니다.
+# 실전 테스트에서 발견된 버그: (1) operator 값(MANUAL_CHECK)을 condition_key로 착각,
+# (2) "profile." 접두사 누락, (3) 코드값 전체를 나열해서 사실상 무의미한 조건 생성.
+# ------------------------------------------------------------------
+
+ALLOWED_CONDITION_KEYS = {
+    "profile.income_band_code", "profile.housing_type_code", "profile.household_type_code",
+    "profile.employment_status_code", "profile.household_size",
+    "employment.company_size", "employment.contract_type", "employment.tenure_months",
+    "employment.insurance_enrolled", "employment.job_field",
+}
+
+# 프로필 속성이 아니라, 자동판정 없이 체크박스로만 노출하는 특수 키
+# (참여제한/중복수혜 안내 등 - policy_documents와 같은 성격)
+CHECKBOX_ONLY_CONDITION_KEYS = {"participation_limit"}
+
+CODE_REGISTRY_VALUES = {
+    "housing_type_code": {"OWNED", "JEONSE", "MONTHLY_RENT", "PUBLIC_RENTAL", "DORMITORY", "WITH_FAMILY", "OTHER"},
+    "household_type_code": {"SINGLE", "COUPLE", "WITH_PARENTS", "SINGLE_PARENT", "MULTI_PERSON", "OTHER"},
+    "employment_status_code": {"EMPLOYED", "SELF_EMPLOYED", "UNEMPLOYED", "JOB_SEEKER", "STUDENT", "ON_LEAVE", "OTHER"},
+}
+
+
+NO_RESTRICTION_PHRASES = ["제한 없음", "모든", "무관", "관계없이", "누구나", "가능(모든"]
+ENUM_COVERAGE_DROP_THRESHOLD = 0.8  # 레지스트리의 80% 이상을 나열하면 "사실상 무제한"으로 간주
+
+# 이 condition_key는 설명에 아래 키워드가 하나라도 있어야 인정 (엉뚱한 내용 끼워넣기 방지)
+TOPIC_KEYWORDS = {
+    "employment.insurance_enrolled": ["보험"],
+}
+
+
+def _topic_mismatch(condition_key: str, description: str) -> bool:
+    keywords = TOPIC_KEYWORDS.get(condition_key)
+    if not keywords:
+        return False
+    return not any(kw in (description or "") for kw in keywords)
+
+
+def _normalize_expected_value(operator: str, expected_value):
+    """IN/NOT_IN 조건의 expected_value 형태를 항상 bare list로 통일.
+    AI가 가끔 {"values": [...]}로 감싸서 주는 경우가 있어 여기서 벗겨냅니다."""
+    if operator in ("IN", "NOT_IN") and isinstance(expected_value, dict) and "values" in expected_value:
+        return expected_value["values"]
+    return expected_value
+
+
+def validate_conditions(raw_conditions: list) -> tuple:
+    """AI가 뽑은 조건 목록을 검증해서 (정상 목록, 걸러진 목록)을 반환.
+
+    같은 condition_key로 여러 조건이 쪼개져 들어온 경우, 그 값들을 전부 합쳐서
+    레지스트리의 80% 이상을 덮는지(=사실상 전체 나열) 같이 확인합니다."""
+    from collections import defaultdict
+
+    # 먼저 값 형태부터 통일
+    for c in raw_conditions:
+        c["expected_value"] = _normalize_expected_value(c.get("operator"), c.get("expected_value"))
+
+    grouped = defaultdict(list)
+    for c in raw_conditions:
+        grouped[c.get("condition_key")].append(c)
+
+    cleaned, dropped = [], []
+
+    for key, items in grouped.items():
+        if key not in ALLOWED_CONDITION_KEYS:
+            dropped += [{**c, "_drop_reason": f"허용되지 않은 condition_key: {key}"} for c in items]
+            continue
+
+        suffix = key.split(".")[-1]
+        registry = CODE_REGISTRY_VALUES.get(suffix)
+        if registry:
+            collected = set()
+            for c in items:
+                vals = c.get("expected_value")
+                if isinstance(vals, list):
+                    collected.update(vals)
+                elif isinstance(vals, str):
+                    collected.add(vals)
+            coverage = len(collected & registry) / len(registry)
+            if coverage >= ENUM_COVERAGE_DROP_THRESHOLD:
+                dropped += [{**c, "_drop_reason": f"코드값 {coverage:.0%} 나열 - 사실상 무제한"} for c in items]
+                continue
+
+        for c in items:
+            desc = c.get("description") or ""
+            if any(p in desc for p in NO_RESTRICTION_PHRASES):
+                dropped.append({**c, "_drop_reason": "설명상 제한 없음으로 판단됨"})
+                continue
+            if _topic_mismatch(key, desc):
+                dropped.append({**c, "_drop_reason": f"설명이 {key}의 의미와 안 맞음 (엉뚱한 키에 끼워넣은 것으로 추정)"})
+                continue
+            cleaned.append(c)
+
+    return cleaned, dropped
+
 
 def categorize_policy(lclsf_nm: str, mclsf_nm: str) -> list:
     """lclsfNm/mclsfNm 텍스트를 category_code 리스트로 변환. 못 찾으면 ETC."""
@@ -65,67 +164,9 @@ def income_threshold_to_bands(percent: float) -> list:
 
 
 # ============================================================
-# AI 프롬프트 (자유텍스트 -> 구조화 초안)
+# AI 추출 (자유텍스트 -> 구조화 초안). 프롬프트는 prompt_templates.py의
+# EXTRACTOR_SYSTEM_PROMPT를 사용합니다.
 # ============================================================
-
-AI_SYSTEM_PROMPT = """당신은 한국 청년 정책 데이터를 팀 DB 스키마에 맞춰 정리하는 도우미입니다.
-반드시 JSON으로만 답하세요. 없는 내용은 만들어내지 말고 null/빈 배열로 두세요.
-
-[조건 추출 - conditions]
-아래 condition_key 레지스트리에서만 골라서 쓰세요. 목록에 없는 조건은 만들지 마세요.
-  profile.income_band_code, profile.housing_type_code, profile.household_type_code,
-  profile.employment_status_code, profile.household_size,
-  employment.company_size, employment.contract_type, employment.tenure_months,
-  employment.insurance_enrolled, employment.job_field
-
-각 조건: {"condition_key": "...", "operator": "...", "expected_value": {...},
-          "is_required": true/false, "description": "화면 표시용 조건 설명",
-          "failure_message": "불충족 시 보여줄 문구", "evidence": "원문 근거 문장"}
-
-operator는 다음 중 하나: EQ, NE, IN, NOT_IN, GT, GTE, LT, LTE, BETWEEN, CONTAINS, EXISTS, MANUAL_CHECK
-코드값 레지스트리:
-  housing_type_code: OWNED, JEONSE, MONTHLY_RENT, PUBLIC_RENTAL, DORMITORY, WITH_FAMILY, OTHER
-  household_type_code: SINGLE, COUPLE, WITH_PARENTS, SINGLE_PARENT, MULTI_PERSON, OTHER
-  employment_status_code: EMPLOYED, SELF_EMPLOYED, UNEMPLOYED, JOB_SEEKER, STUDENT, ON_LEAVE, OTHER
-
-소득 조건은 이 함수에서 별도 처리하니 income_band_code 조건은 만들지 마세요 (제외).
-
-[서류 - documents]
-제출서류 텍스트를 항목별로 분리하세요. 이름만 있고 발급기관/방법 정보가 없으면
-일반적으로 알려진 한국 행정 상식(정부24, 홈택스, 국민건강보험공단 등)으로 채우되,
-확실하지 않으면 "정확한 발급처는 신청 사이트에서 확인 필요"로 안내하세요.
-서류 정보 자체가 전혀 없으면(예: "붙임파일 확인") 안내용 항목 하나만 만드세요.
-각 항목: {"document_name": "...", "required_reason": "...", "issuing_organization": "...",
-          "issuing_method": "...", "issuing_url": "..." 또는 null,
-          "submission_format": "PDF/사본 등", "is_required": true/false}
-
-[혜택 - benefit]
-{"benefit_type": "CASH|DISCOUNT|LOAN|SAVINGS|TAX_REDUCTION|SERVICE|OTHER",
- "amount_type": "지원금 계산 방식 짧은 설명",
- "min_amount": 숫자 또는 null, "max_amount": 숫자 또는 null,
- "payment_cycle": "ONCE|MONTHLY|YEARLY|MATURITY|VARIABLE",
- "duration_months": 숫자 또는 null, "max_total_amount": 숫자 또는 null,
- "display_text": "화면에 보여줄 한 줄 요약", "confidence": 0~1, "evidence": "근거 문장"}
-
-[소득 조건 원문 - income_note]
-{"has_income_condition": true/false, "percent_threshold": 숫자 또는 null(예: 60),
- "summary": "소득조건 원문 요약", "evidence": "근거 문장"}
-percent_threshold는 "중위소득 OO% 이하"에서 OO 숫자만 뽑으세요. 여러 기준(청년독립가구/원가구)이
-있으면 더 엄격한(작은) 쪽 숫자를 쓰고 summary에 전체 내용을 설명하세요.
-
-[사업기간 - period_hint]
-{"start_date": "YYYY-MM-DD" 또는 null, "end_date": "YYYY-MM-DD" 또는 null, "evidence": "..."}
-
-출력 형식:
-{
-  "conditions": [...],
-  "documents": [...],
-  "benefit": {...},
-  "income_note": {...},
-  "period_hint": {...}
-}
-"""
-
 
 def ai_extract(raw: dict) -> dict:
     user_input = f"""
@@ -142,7 +183,7 @@ def ai_extract(raw: dict) -> dict:
         temperature=0,
         response_format={"type": "json_object"},
         messages=[
-            {"role": "system", "content": AI_SYSTEM_PROMPT},
+            {"role": "system", "content": EXTRACTOR_SYSTEM_PROMPT},
             {"role": "user", "content": user_input},
         ],
     )
@@ -270,8 +311,9 @@ def process_policy(raw: dict) -> dict:
             "failure_message": "소득 조건은 정확한 확인이 필요합니다.",
         })
 
-    # AI가 자유텍스트에서 뽑은 조건들 - 전부 MANUAL
-    for c in ai_result.get("conditions", []):
+    # AI가 자유텍스트에서 뽑은 조건들 - 전부 MANUAL. 검증 통과한 것만 채택.
+    valid_ai_conditions, dropped_ai_conditions = validate_conditions(ai_result.get("conditions", []))
+    for c in valid_ai_conditions:
         conditions.append({
             "condition_key": c.get("condition_key"),
             "operator": c.get("operator", "MANUAL_CHECK"),
@@ -281,6 +323,21 @@ def process_policy(raw: dict) -> dict:
             "check_mode": "MANUAL",
             "description": c.get("description"),
             "failure_message": c.get("failure_message"),
+        })
+
+    # 참여제한/중복수혜 안내 - 판정 대상이 아니라 사용자가 스스로 체크하는 항목.
+    # condition_key="participation_limit"는 프로필 속성이 아니라 이 용도 전용 키.
+    # policy_documents(서류 체크리스트)와 같은 성격: 자동판정 없이 그냥 체크박스로 노출.
+    for note in ai_result.get("participation_notes", []):
+        conditions.append({
+            "condition_key": "participation_limit",
+            "operator": "MANUAL_CHECK",
+            "expected_value_json": None,
+            "condition_group_no": 0,
+            "is_required": False,
+            "check_mode": "MANUAL",
+            "description": note.get("summary"),
+            "failure_message": None,
         })
 
     for i, c in enumerate(conditions):
@@ -327,6 +384,7 @@ def process_policy(raw: dict) -> dict:
         "policy_benefits": policy_benefits,
         "policy_conditions": conditions,
         "policy_documents": policy_documents,
+        "_dropped_conditions": dropped_ai_conditions,  # DB 컬럼 아님, QA/디버깅용
     }
 
 
