@@ -86,7 +86,9 @@ class Settings:
     upstage_api_key: str | None = field(
         default_factory=lambda: os.getenv("UPSTAGE_API_KEY") or os.getenv("SOLAR_API_KEY") or None
     )
-    solar_model: str = field(default_factory=lambda: os.getenv("SOLAR_MODEL", "solar-pro2"))
+    solar_model: str = field(
+        default_factory=lambda: os.getenv("UPSTAGE_SOLAR_MODEL", "solar-pro2")
+    )
     youth_policy_api_key: str | None = field(
         default_factory=lambda: os.getenv("YOUTH_POLICY_API_KEY") or None
     )
