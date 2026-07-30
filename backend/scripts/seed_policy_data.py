@@ -29,11 +29,14 @@ if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))
 
 from app.integrations.youth_policy_api import YouthPolicyClient
+from app.models.user_category_profile import CategoryCode
+from app.services.ai.benefit_extractor import extract_benefits, validate_benefit_payload
 from app.services.ai.checklist_generator import (
     generate_checklist,
     validate_checklist_payload,
 )
 from app.services.ai.rule_extractor import (
+    categorize_policy,
     extract_conditions,
     validate_condition_payload,
 )
@@ -69,6 +72,7 @@ _POLICY_DATE_FIELDS = (
 )
 _ALLOWED_SOURCES = frozenset({"ONTONG_YOUTH", "MANUAL"})
 _ALLOWED_STATUSES = frozenset({"DRAFT", "ACTIVE", "CLOSED", "ARCHIVED"})
+_ALLOWED_CATEGORY_CODES = frozenset(code.value for code in CategoryCode)
 _MAX_DRAFT_BYTES = 50 * 1024 * 1024
 
 
@@ -210,6 +214,20 @@ def _validate_policy(policy: object) -> dict[str, object]:
     return validated
 
 
+def _validate_category_codes(raw_bundle: Mapping[str, object]) -> list[str]:
+    raw_codes = raw_bundle.get("category_codes")
+    if not isinstance(raw_codes, Sequence) or isinstance(raw_codes, (str, bytes, bytearray)):
+        raise SeedDraftError("category_codes must be an array")
+    if not raw_codes:
+        raise SeedDraftError("category_codes must not be empty")
+    codes: list[str] = []
+    for code in raw_codes:
+        if not isinstance(code, str) or code not in _ALLOWED_CATEGORY_CODES:
+            raise SeedDraftError(f"unsupported category_code: {code!r}")
+        codes.append(code)
+    return codes
+
+
 def _validated_bundles(
     payload: Mapping[str, object],
 ) -> list[dict[str, object]]:
@@ -239,9 +257,13 @@ def _validated_bundles(
         seen.add(identity)
         conditions = validate_condition_payload({"conditions": raw_bundle.get("conditions")})
         documents = validate_checklist_payload({"documents": raw_bundle.get("documents")})
+        benefits = validate_benefit_payload({"benefits": raw_bundle.get("benefits")})
+        category_codes = _validate_category_codes(raw_bundle)
         bundle = dict(policy)
         bundle["conditions"] = [condition.to_dict() for condition in conditions]
         bundle["documents"] = [document.to_dict() for document in documents]
+        bundle["benefits"] = [benefit.to_dict() for benefit in benefits]
+        bundle["category_codes"] = category_codes
         bundles.append(bundle)
     return bundles
 
@@ -361,6 +383,7 @@ async def create_seed_draft(
         bundles: list[dict[str, object]] = []
         for policy in policies:
             policy_payload = policy.to_dict()
+            raw = policy_payload.get("raw_payload") or policy_payload
             conditions = await extract_conditions(
                 policy_payload,
                 client=ai_client,
@@ -369,11 +392,18 @@ async def create_seed_draft(
                 policy_payload,
                 client=ai_client,
             )
+            benefits = await extract_benefits(
+                policy_payload,
+                client=ai_client,
+            )
+            category_codes = categorize_policy(raw.get("lclsfNm", ""), raw.get("mclsfNm", ""))
             bundles.append(
                 {
                     "policy": policy_payload,
                     "conditions": [condition.to_dict() for condition in conditions],
                     "documents": [document.to_dict() for document in documents],
+                    "benefits": [benefit.to_dict() for benefit in benefits],
+                    "category_codes": category_codes,
                 }
             )
     finally:
