@@ -554,14 +554,23 @@ class YouthPolicyClient:
         max_pages: int = 100,
         limit: int | None = None,
         filters: Mapping[str, str] | None = None,
+        exclude_external_ids: Sequence[str] | None = None,
     ) -> list[NormalizedPolicy]:
-        """Collect and normalize policy pages with explicit safety bounds."""
+        """Collect and normalize policy pages with explicit safety bounds.
+
+        ``exclude_external_ids`` skips records already known to the caller
+        (e.g. policies already persisted), so a repeated collection run
+        pages past prior results instead of returning the same first page
+        every time.
+        """
 
         if max_pages < 1:
             raise ValueError("max_pages must be positive")
         if limit is not None and limit < 1:
             raise ValueError("limit must be positive")
+        excluded = set(exclude_external_ids) if exclude_external_ids else set()
         collected: list[NormalizedPolicy] = []
+        records_seen = 0
         observed_at = datetime.now(timezone.utc)
         for page_index in range(1, max_pages + 1):
             records, total = await self.fetch_page(
@@ -569,13 +578,17 @@ class YouthPolicyClient:
                 page_size=page_size,
                 filters=filters,
             )
+            records_seen += len(records)
             for record in records:
-                collected.append(normalize_policy(record, fetched_at=observed_at))
+                normalized = normalize_policy(record, fetched_at=observed_at)
+                if normalized.external_id in excluded:
+                    continue
+                collected.append(normalized)
                 if limit is not None and len(collected) >= limit:
                     return collected
             if not records or len(records) < page_size:
                 break
-            if total is not None and len(collected) >= total:
+            if total is not None and records_seen >= total:
                 break
         return collected
 

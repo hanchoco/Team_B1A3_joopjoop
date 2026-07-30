@@ -303,6 +303,34 @@ def _default_persistence_dependencies() -> tuple[SessionFactory, UpsertFunction]
     )
 
 
+def _known_external_ids(source: str) -> set[str]:
+    """Look up already-persisted external_ids so collection can skip them.
+
+    This is a read-only query (no writes), used only so repeated collection
+    runs page past prior results instead of returning the same first page.
+    """
+
+    try:
+        session_module = importlib.import_module("app.db.session")
+        crud_module = importlib.import_module("app.crud.policies")
+    except ImportError as exc:
+        raise RuntimeError("collection requires app.db.session and app.crud.policies") from exc
+    session_factory = getattr(session_module, "SessionLocal", None)
+    list_external_ids = getattr(crud_module, "list_external_ids", None)
+    if not callable(session_factory):
+        raise RuntimeError("app.db.session.SessionLocal is not callable")
+    if not callable(list_external_ids):
+        raise RuntimeError("app.crud.policies.list_external_ids is not callable")
+
+    session = session_factory()
+    try:
+        return cast(set[str], list_external_ids(session, source=source))
+    finally:
+        close_method = getattr(session, "close", None)
+        if callable(close_method):
+            close_method()
+
+
 async def _call_upsert(
     upsert_function: UpsertFunction,
     session: object,
@@ -364,22 +392,36 @@ async def create_seed_draft(
     filters: Mapping[str, str] | None = None,
     youth_client: YouthPolicyClient | None = None,
     solar_client: SolarClient | None = None,
+    known_external_ids: set[str] | None = None,
 ) -> Path:
-    """Run collect -> extract -> checklist and write a pending review batch."""
+    """Run collect -> extract -> checklist and write a pending review batch.
+
+    Policies already persisted (matched by source + external_id) are skipped
+    before any AI call is made, so repeated runs page past what was already
+    seeded instead of re-fetching the same first page every time. Pass
+    ``known_external_ids`` explicitly (e.g. an empty set) to opt out, such as
+    in tests that never touch a real database.
+    """
 
     owns_youth_client = youth_client is None
     owns_solar_client = solar_client is None
     policy_client = youth_client or YouthPolicyClient()
     ai_client = solar_client or SolarClient()
+    if known_external_ids is None:
+        known_external_ids = _known_external_ids("ONTONG_YOUTH")
     try:
         policies = await policy_client.collect(
             page_size=page_size,
             max_pages=max_pages,
             limit=limit,
             filters=filters,
+            exclude_external_ids=known_external_ids,
         )
         if not policies:
-            raise SeedDraftError("the youth policy API returned no policies")
+            raise SeedDraftError(
+                "the youth policy API returned no new policies "
+                "(everything matched was already seeded, or there were no results)"
+            )
         bundles: list[dict[str, object]] = []
         for policy in policies:
             policy_payload = policy.to_dict()
