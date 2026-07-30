@@ -32,7 +32,7 @@ export default function Login() {
       if (response.user.nickname) {
         updateUserProfile({ name: response.user.nickname })
       }
-      login()
+      await login()
       navigate('/')
     } catch (requestError: unknown) {
       setError(

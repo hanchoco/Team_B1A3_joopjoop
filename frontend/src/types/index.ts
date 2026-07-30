@@ -1,3 +1,5 @@
+import type { EligibilityStatus } from './policy'
+
 export interface Region {
   city: string
   district: string
@@ -43,7 +45,10 @@ export type UserProfileUpdate = Partial<
   >
 >
 
-export type EligibilityStatus = 'ELIGIBLE' | 'NEEDS_REVIEW' | 'INELIGIBLE'
+export type {
+  BackendEligibilityStatus,
+  EligibilityStatus,
+} from './policy'
 
 export interface Policy {
   id: number
@@ -95,7 +100,7 @@ export interface NotificationSettings {
 export interface AppContextValue {
   isLoggedIn: boolean
   isAuthLoading: boolean
-  login: () => void
+  login: () => Promise<void>
   logout: () => void
   userProfile: UserProfile
   updateUserProfile: (profile: UserProfileUpdate) => void

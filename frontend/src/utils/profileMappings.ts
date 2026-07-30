@@ -15,6 +15,7 @@ const employmentToCode: Record<string, EmploymentStatusCode> = {
   '구직 중': 'JOB_SEEKER',
   학생: 'STUDENT',
   휴직: 'ON_LEAVE',
+  '휴직 중': 'ON_LEAVE',
   기타: 'OTHER',
 }
 
@@ -22,6 +23,7 @@ const householdToCode: Record<string, HouseholdTypeCode> = {
   '1인 가구': 'SINGLE',
   '부부 가구': 'COUPLE',
   '부모와 거주': 'WITH_PARENTS',
+  '한부모 가구': 'SINGLE_PARENT',
   '자녀가 있는 가구': 'MULTI_PERSON',
   기타: 'OTHER',
 }
@@ -40,7 +42,10 @@ const incomeToCode: Record<string, IncomeBandCode> = {
   '월 100만 원 이하': 'BELOW_50',
   '월 101~200만 원': 'BETWEEN_50_75',
   '월 201~300만 원': 'BETWEEN_75_100',
+  '중위소득 100~120%': 'BETWEEN_100_120',
+  '중위소득 120~150%': 'BETWEEN_120_150',
   '월 301만 원 이상': 'ABOVE_150',
+  '소득 미확인': 'UNKNOWN',
 }
 
 function reverseMap<T extends string>(mapping: Record<string, T>): Record<T, string> {
@@ -53,6 +58,9 @@ const employmentFromCode = reverseMap(employmentToCode)
 const householdFromCode = reverseMap(householdToCode)
 const housingFromCode = reverseMap(housingToCode)
 const incomeFromCode = reverseMap(incomeToCode)
+
+// 여러 UI 라벨이 같은 Enum을 가리키는 경우에는 화면에서 사용할 대표 라벨을 고정한다.
+employmentFromCode.ON_LEAVE = '휴직 중'
 
 export function toUserProfilePatch(
   profile: UserProfileUpdate,

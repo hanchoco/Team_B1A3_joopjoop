@@ -1,8 +1,8 @@
-import type { EligibilityStatus } from '../types'
+import type { BackendEligibilityStatus, EligibilityStatus } from '../types/policy'
+import { toEligibilityStatus } from '../types/policy'
 import apiClient from './client'
 
 export type PolicySort = 'recommendation' | 'latest' | 'deadline'
-type BackendPolicyCardStatus = '가능성 높음' | '추가 확인 필요' | '불충족'
 
 export interface PolicyCategory {
   id: number
@@ -117,17 +117,14 @@ export interface PolicyBookmarkResponse {
   bookmarked_at: string | null
 }
 
-function normalizeCardStatus(
-  status: EligibilityStatus | BackendPolicyCardStatus | null,
-): EligibilityStatus | null {
-  if (status === '가능성 높음') return 'ELIGIBLE'
-  if (status === '추가 확인 필요') return 'NEEDS_REVIEW'
-  if (status === '불충족') return 'INELIGIBLE'
-  return status
+type PolicySummaryApiResponse = Omit<PolicySummary, 'card_status'> & {
+  card_status: EligibilityStatus | BackendEligibilityStatus | null
 }
 
-function normalizePolicySummary<T extends PolicySummary>(policy: T): T {
-  return { ...policy, card_status: normalizeCardStatus(policy.card_status) }
+function normalizePolicySummary<T extends PolicySummaryApiResponse>(
+  policy: T,
+): Omit<T, 'card_status'> & Pick<PolicySummary, 'card_status'> {
+  return { ...policy, card_status: toEligibilityStatus(policy.card_status) }
 }
 
 export async function getRecommendedPolicies(
@@ -137,9 +134,9 @@ export async function getRecommendedPolicies(
     params.eligibility_status === 'INELIGIBLE'
       ? { ...params, eligibility_status: undefined }
       : params
-  const { data } = await apiClient.get<PolicyListResponse>('/api/v1/policies', {
-    params: requestParams,
-  })
+  const { data } = await apiClient.get<Omit<PolicyListResponse, 'items'> & {
+    items: PolicySummaryApiResponse[]
+  }>('/api/v1/policies', { params: requestParams })
   const items = data.items.map(normalizePolicySummary)
   if (params.eligibility_status !== 'INELIGIBLE') return { ...data, items }
 
@@ -148,8 +145,12 @@ export async function getRecommendedPolicies(
 }
 
 export async function getPolicyDetail(policyId: number): Promise<PolicyDetail> {
-  const { data } = await apiClient.get<PolicyDetail>(`/api/v1/policies/${policyId}`)
-  return normalizePolicySummary(data)
+  const { data } = await apiClient.get<
+    Omit<PolicyDetail, 'card_status'> & {
+      card_status: EligibilityStatus | BackendEligibilityStatus | null
+    }
+  >(`/api/v1/policies/${policyId}`)
+  return normalizePolicySummary(data) as PolicyDetail
 }
 
 export async function addPolicyBookmark(policyId: number): Promise<PolicyBookmarkResponse> {

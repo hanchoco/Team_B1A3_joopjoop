@@ -20,14 +20,15 @@ import {
 } from '../../api/policies'
 import { useApp } from '../../store/useApp'
 import type { EligibilityStatus } from '../../types'
+import { eligibilityStatusLabels } from '../../types/policy'
 
 type PossibilityFilter = EligibilityStatus | 'ALL'
 type PolicySort = 'recommended' | 'deadline'
 
 const possibilityFilters = [
-  { value: 'ELIGIBLE', label: '가능성 높음' },
-  { value: 'NEEDS_REVIEW', label: '추가 확인 필요' },
-  { value: 'INELIGIBLE', label: '불충족' },
+  { value: 'ELIGIBLE', label: eligibilityStatusLabels.ELIGIBLE },
+  { value: 'NEEDS_REVIEW', label: eligibilityStatusLabels.NEEDS_REVIEW },
+  { value: 'INELIGIBLE', label: eligibilityStatusLabels.INELIGIBLE },
   { value: 'ALL', label: '전체' },
 ]
 
@@ -47,12 +48,6 @@ const categoryCodes: Record<string, string> = {
   세금: 'TAX',
   고용: 'EMPLOYMENT',
   복지: 'WELFARE',
-}
-
-const statusLabels: Record<EligibilityStatus, string> = {
-  ELIGIBLE: '가능성 높음',
-  NEEDS_REVIEW: '추가 확인 필요',
-  INELIGIBLE: '불충족',
 }
 
 function formatBenefit(amount: PolicySummary['max_benefit_amount']): string {
@@ -255,7 +250,9 @@ export default function PolicyList() {
           policies.map((policy) => {
             const { id, title } = policy
             const category = policy.categories.find((item) => item.is_primary)?.name ?? '기타'
-            const chance = policy.card_status ? statusLabels[policy.card_status] : '판정 준비 중'
+            const chance = policy.card_status
+              ? eligibilityStatusLabels[policy.card_status]
+              : '판정 준비 중'
             const deadline = policy.days_until_deadline
             const favorite = policy.is_bookmarked
             const CategoryIcon = categoryIcons[category] ?? ReceiptText

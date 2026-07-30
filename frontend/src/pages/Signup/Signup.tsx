@@ -59,7 +59,7 @@ export default function Signup() {
       updateAccountId(response.user.email)
       updateUserProfile({ name: response.user.nickname ?? name.trim() })
       resetPolicyState()
-      login()
+      await login()
       navigate('/onboarding')
     } catch (requestError: unknown) {
       setError(

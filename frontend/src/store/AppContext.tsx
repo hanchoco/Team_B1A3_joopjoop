@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import type { PropsWithChildren } from 'react'
 import { clearAccessToken } from '../api/auth'
 import { ACCESS_TOKEN_STORAGE_KEY } from '../api/client'
@@ -56,9 +56,10 @@ function mergeLocalProfile(current: UserProfile, profile: UserProfileUpdate): Us
 }
 
 export function AppProvider({ children }: PropsWithChildren) {
-  const hasStoredToken = Boolean(localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY))
   const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [isAuthLoading, setIsAuthLoading] = useState(hasStoredToken)
+  const [isAuthLoading, setIsAuthLoading] = useState(
+    Boolean(localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY)),
+  )
   const [userProfile, setUserProfile] = useState(createInitialProfile)
   const [preparedPolicies, setPreparedPolicies] = useState<Record<number, PreparedPolicy>>({})
   const [favoritePolicies, setFavoritePolicies] = useState<Record<number, FavoritePolicy>>({})
@@ -73,8 +74,20 @@ export function AppProvider({ children }: PropsWithChildren) {
   const [accountId, setAccountId] = useState('')
   const [optionalPrivacyConsent, setOptionalPrivacyConsent] = useState(true)
 
+  const restoreAuthenticatedUser = useCallback(async (): Promise<void> => {
+    const [user, profile] = await Promise.all([getCurrentUser(), getCurrentUserProfile()])
+    setAccountId(user.email)
+    setUserProfile((current) =>
+      fromUserProfileResponse(profile, {
+        ...current,
+        name: user.nickname ?? user.email.split('@')[0],
+      }),
+    )
+    setIsLoggedIn(true)
+  }, [])
+
   useEffect(() => {
-    if (!hasStoredToken) return
+    if (!localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY)) return
     let isCurrent = true
 
     Promise.all([getCurrentUser(), getCurrentUserProfile()])
@@ -101,10 +114,10 @@ export function AppProvider({ children }: PropsWithChildren) {
     return () => {
       isCurrent = false
     }
-  }, [hasStoredToken])
+  }, [])
 
-  function login() {
-    setIsLoggedIn(true)
+  async function login(): Promise<void> {
+    await restoreAuthenticatedUser()
   }
 
   function logout() {
