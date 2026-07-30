@@ -9,11 +9,12 @@ const fieldClass =
 
 export default function EditProfile() {
   const navigate = useNavigate()
-  const { userProfile, updateUserProfile } = useApp()
+  const { saveUserProfile, userProfile, updateUserProfile } = useApp()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [avatarUrl, setAvatarUrl] = useState(userProfile.avatarUrl)
   const [avatarError, setAvatarError] = useState('')
   const [formError, setFormError] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
   const [form, setForm] = useState({
     name: userProfile.name,
     birthYear: String(userProfile.birthYear),
@@ -24,19 +25,26 @@ export default function EditProfile() {
     housingType: userProfile.housingType,
   })
 
-  function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!form.name.trim()) {
       setFormError('이름을 입력해 주세요.')
       return
     }
-    updateUserProfile({
-      ...form,
-      name: form.name.trim(),
-      birthYear: Number(form.birthYear),
-      avatarUrl,
-    })
-    navigate('/mypage')
+    setIsSaving(true)
+    setFormError('')
+    try {
+      await saveUserProfile({
+        ...form,
+        birthYear: Number(form.birthYear),
+      })
+      updateUserProfile({ name: form.name.trim(), avatarUrl })
+      navigate('/mypage')
+    } catch {
+      setFormError('정보를 저장하지 못했어요. 잠시 후 다시 시도해 주세요.')
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   function changeAvatar(event: ChangeEvent<HTMLInputElement>) {
@@ -211,8 +219,11 @@ export default function EditProfile() {
         {formError && (
           <p className="text-sm font-semibold text-rose-600 sm:col-span-2">{formError}</p>
         )}
-        <button className="w-full rounded-lg bg-blue-600 py-3.5 font-bold text-white sm:col-span-2">
-          저장하기
+        <button
+          disabled={isSaving}
+          className="w-full rounded-lg bg-blue-600 py-3.5 font-bold text-white disabled:cursor-not-allowed disabled:bg-blue-300 sm:col-span-2"
+        >
+          {isSaving ? '저장하고 있어요...' : '저장하기'}
         </button>
       </form>
     </section>

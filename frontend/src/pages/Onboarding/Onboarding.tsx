@@ -61,8 +61,10 @@ const incomeValues: Record<string, number> = {
 
 export default function Onboarding() {
   const navigate = useNavigate()
-  const { updateUserProfile } = useApp()
+  const { saveUserProfile, updateUserProfile } = useApp()
   const [step, setStep] = useState(0)
+  const [isSaving, setIsSaving] = useState(false)
+  const [error, setError] = useState('')
   const [answers, setAnswers] = useState<Record<ProfileQuestionKey, string>>({
     birthYear: '',
     regionName: '',
@@ -84,10 +86,34 @@ export default function Onboarding() {
     updateUserProfile(update)
   }
 
-  function next() {
+  async function next() {
     if (!selectedValue) return
-    if (isLast) navigate('/')
-    else setStep((current) => current + 1)
+    if (!isLast) {
+      setStep((current) => current + 1)
+      return
+    }
+
+    setIsSaving(true)
+    setError('')
+    try {
+      await saveUserProfile(
+        {
+          birthYear: Number(answers.birthYear),
+          regionName: answers.regionName,
+          incomeBracket: answers.incomeBracket,
+          monthlyIncome: incomeValues[answers.incomeBracket],
+          employment: answers.employment,
+          householdType: answers.householdType,
+          housingType: answers.housingType,
+        },
+        true,
+      )
+      navigate('/')
+    } catch {
+      setError('정보를 저장하지 못했어요. 잠시 후 다시 시도해 주세요.')
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   return (
@@ -146,8 +172,9 @@ export default function Onboarding() {
         )}
 
         <p className="mt-6 text-xs leading-5 text-gray-400">
-          선택한 정보는 즉시 기본 정보로 저장되며 마이페이지에서 변경할 수 있어요.
+          입력을 완료하면 안전하게 저장되며 마이페이지에서 변경할 수 있어요.
         </p>
+        {error && <p className="mt-3 text-sm font-semibold text-rose-600">{error}</p>}
         <div className="mt-8 flex justify-between">
           <button
             type="button"
@@ -159,11 +186,12 @@ export default function Onboarding() {
           </button>
           <button
             type="button"
-            disabled={!selectedValue}
-            onClick={next}
+            disabled={!selectedValue || isSaving}
+            onClick={() => void next()}
             className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-sm font-bold text-white disabled:opacity-40"
           >
-            {isLast ? '입력 완료' : '다음'} <ArrowRight size={17} />
+            {isSaving ? '저장하고 있어요...' : isLast ? '입력 완료' : '다음'}{' '}
+            <ArrowRight size={17} />
           </button>
         </div>
       </div>

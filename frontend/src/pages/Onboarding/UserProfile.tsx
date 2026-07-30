@@ -9,7 +9,9 @@ const fieldClass =
 
 export default function UserProfile() {
   const navigate = useNavigate()
-  const { userProfile, updateUserProfile } = useApp()
+  const { saveUserProfile, userProfile } = useApp()
+  const [isSaving, setIsSaving] = useState(false)
+  const [error, setError] = useState('')
   const [form, setForm] = useState({
     age: String(userProfile.age),
     regionName: userProfile.regionName,
@@ -25,16 +27,28 @@ export default function UserProfile() {
     setForm((current) => ({ ...current, [name]: value }))
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    updateUserProfile({
-      ...form,
-      age: Number(form.age),
-      monthlyIncome: Number(form.monthlyIncome),
-    })
-    navigate('/policies?filter=ELIGIBLE', {
-      state: { profileSaved: true },
-    })
+    setIsSaving(true)
+    setError('')
+    try {
+      await saveUserProfile(
+        {
+          ...form,
+          age: Number(form.age),
+          birthYear: new Date().getFullYear() - Number(form.age),
+          monthlyIncome: Number(form.monthlyIncome),
+        },
+        true,
+      )
+      navigate('/policies?filter=ELIGIBLE', {
+        state: { profileSaved: true },
+      })
+    } catch {
+      setError('정보를 저장하지 못했어요. 잠시 후 다시 시도해 주세요.')
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   return (
@@ -132,6 +146,7 @@ export default function UserProfile() {
             />
           </div>
         </label>
+        {error && <p className="mt-4 text-sm font-semibold text-rose-600">{error}</p>}
         <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
           <button
             type="button"
@@ -142,9 +157,10 @@ export default function UserProfile() {
           </button>
           <button
             type="submit"
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-3.5 font-bold text-white hover:bg-blue-700"
+            disabled={isSaving}
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-3.5 font-bold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
           >
-            다음으로 · 맞춤 정책 보기 <ArrowRight size={18} />
+            {isSaving ? '저장하고 있어요...' : '다음으로 · 맞춤 정책 보기'} <ArrowRight size={18} />
           </button>
         </div>
       </form>

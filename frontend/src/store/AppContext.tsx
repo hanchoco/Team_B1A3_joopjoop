@@ -1,5 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { PropsWithChildren } from 'react'
+import { clearAccessToken } from '../api/auth'
+import { ACCESS_TOKEN_STORAGE_KEY } from '../api/client'
+import { getCurrentUser, getCurrentUserProfile, updateCurrentUserProfile } from '../api/users'
 import type {
   FavoritePolicy,
   NotificationSettings,
@@ -7,25 +10,56 @@ import type {
   UserProfile,
   UserProfileUpdate,
 } from '../types'
-import mockData from '../utils/mockData.json'
+import { fromUserProfileResponse, toUserProfilePatch } from '../utils/profileMappings'
 import { AppContext } from './context'
 
-export function AppProvider({ children }: PropsWithChildren) {
+function createInitialProfile(): UserProfile {
   const savedAvatarUrl = localStorage.getItem('joopjoop-profile-avatar') || undefined
-  const initialProfile: UserProfile = {
-    ...mockData.userProfile,
-    regionName: mockData.userProfile.region.city.replace('특별시', ''),
-    monthlyIncome: Math.round(mockData.userProfile.annualIncome / 12 / 10000),
+  return {
+    id: '',
+    name: '사용자',
+    age: 0,
+    region: { city: '', district: '' },
+    housing: { type: '월세', monthlyRent: 0 },
+    annualIncome: 0,
+    regionName: '',
+    monthlyIncome: 0,
     employment: '구직 중',
-    housingType: mockData.userProfile.housing.type,
+    housingType: '월세',
     concern: '',
-    birthYear: new Date().getFullYear() - mockData.userProfile.age,
+    birthYear: 2000,
     incomeBracket: '월 201~300만 원',
     householdType: '1인 가구',
     avatarUrl: savedAvatarUrl,
   }
+}
+
+function mergeLocalProfile(current: UserProfile, profile: UserProfileUpdate): UserProfile {
+  return {
+    ...current,
+    ...profile,
+    region: {
+      ...current.region,
+      city: profile.regionName ?? current.region.city,
+    },
+    housing: {
+      ...current.housing,
+      type: profile.housingType ?? current.housing.type,
+    },
+    annualIncome:
+      profile.monthlyIncome !== undefined
+        ? Number(profile.monthlyIncome) * 12 * 10000
+        : current.annualIncome,
+    age:
+      profile.birthYear !== undefined ? new Date().getFullYear() - profile.birthYear : current.age,
+  }
+}
+
+export function AppProvider({ children }: PropsWithChildren) {
+  const hasStoredToken = Boolean(localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY))
   const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [userProfile, setUserProfile] = useState(initialProfile)
+  const [isAuthLoading, setIsAuthLoading] = useState(hasStoredToken)
+  const [userProfile, setUserProfile] = useState(createInitialProfile)
   const [preparedPolicies, setPreparedPolicies] = useState<Record<number, PreparedPolicy>>({})
   const [favoritePolicies, setFavoritePolicies] = useState<Record<number, FavoritePolicy>>({})
   const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
@@ -34,15 +68,50 @@ export function AppProvider({ children }: PropsWithChildren) {
     threeDaysBefore: true,
     deadlineDay: true,
   })
-  const [accountId, setAccountId] = useState('nara@example.com')
+  const [accountId, setAccountId] = useState('')
   const [optionalPrivacyConsent, setOptionalPrivacyConsent] = useState(true)
+
+  useEffect(() => {
+    if (!hasStoredToken) return
+    let isCurrent = true
+
+    Promise.all([getCurrentUser(), getCurrentUserProfile()])
+      .then(([user, profile]) => {
+        if (!isCurrent) return
+        setAccountId(user.email)
+        setUserProfile((current) =>
+          fromUserProfileResponse(profile, {
+            ...current,
+            name: user.nickname ?? user.email.split('@')[0],
+          }),
+        )
+        setIsLoggedIn(true)
+      })
+      .catch(() => {
+        if (!isCurrent) return
+        clearAccessToken()
+        setIsLoggedIn(false)
+      })
+      .finally(() => {
+        if (isCurrent) setIsAuthLoading(false)
+      })
+
+    return () => {
+      isCurrent = false
+    }
+  }, [hasStoredToken])
 
   function login() {
     setIsLoggedIn(true)
   }
 
   function logout() {
+    clearAccessToken()
     setIsLoggedIn(false)
+    setUserProfile(createInitialProfile())
+    setAccountId('')
+    setPreparedPolicies({})
+    setFavoritePolicies({})
   }
 
   function updateUserProfile(profile: UserProfileUpdate) {
@@ -50,22 +119,17 @@ export function AppProvider({ children }: PropsWithChildren) {
       if (profile.avatarUrl) localStorage.setItem('joopjoop-profile-avatar', profile.avatarUrl)
       else localStorage.removeItem('joopjoop-profile-avatar')
     }
-    setUserProfile((current) => ({
-      ...current,
-      ...profile,
-      region: {
-        ...current.region,
-        city: profile.regionName ? `${profile.regionName}특별시` : current.region.city,
-      },
-      housing: {
-        ...current.housing,
-        type: profile.housingType || current.housing.type,
-      },
-      annualIncome: profile.monthlyIncome
-        ? Number(profile.monthlyIncome) * 12 * 10000
-        : current.annualIncome,
-      age: profile.birthYear ? new Date().getFullYear() - profile.birthYear : current.age,
-    }))
+    setUserProfile((current) => mergeLocalProfile(current, profile))
+  }
+
+  async function saveUserProfile(
+    profile: UserProfileUpdate,
+    onboardingCompleted?: boolean,
+  ): Promise<void> {
+    const payload = toUserProfilePatch(profile, onboardingCompleted)
+    const response = await updateCurrentUserProfile(payload)
+    updateUserProfile(profile)
+    setUserProfile((current) => fromUserProfileResponse(response, current))
   }
 
   function updatePreparation(policy: PreparedPolicy) {
@@ -103,36 +167,40 @@ export function AppProvider({ children }: PropsWithChildren) {
     setFavoritePolicies({})
   }
 
-  const value = useMemo(
-    () => ({
-      isLoggedIn,
-      login,
-      logout,
-      userProfile,
-      updateUserProfile,
-      preparedPolicies,
-      updatePreparation,
-      removePreparation,
-      favoritePolicies,
-      toggleFavorite,
-      resetPolicyState,
-      notificationSettings,
-      updateNotificationSettings: setNotificationSettings,
-      accountId,
-      updateAccountId: setAccountId,
-      optionalPrivacyConsent,
-      updateOptionalPrivacyConsent: setOptionalPrivacyConsent,
-    }),
-    [
-      isLoggedIn,
-      userProfile,
-      preparedPolicies,
-      favoritePolicies,
-      notificationSettings,
-      accountId,
-      optionalPrivacyConsent,
-    ],
-  )
+  const value = {
+    isLoggedIn,
+    isAuthLoading,
+    login,
+    logout,
+    userProfile,
+    updateUserProfile,
+    saveUserProfile,
+    preparedPolicies,
+    updatePreparation,
+    removePreparation,
+    favoritePolicies,
+    toggleFavorite,
+    resetPolicyState,
+    notificationSettings,
+    updateNotificationSettings: setNotificationSettings,
+    accountId,
+    updateAccountId: setAccountId,
+    optionalPrivacyConsent,
+    updateOptionalPrivacyConsent: setOptionalPrivacyConsent,
+  }
+
+  if (isAuthLoading) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-amber-50/50">
+        <div className="text-center">
+          <span className="mx-auto block h-10 w-10 animate-spin rounded-full border-4 border-amber-200 border-t-amber-500" />
+          <p className="mt-4 text-sm font-semibold text-amber-900">
+            로그인 정보를 안전하게 확인하고 있어요.
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>
 }

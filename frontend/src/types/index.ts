@@ -92,10 +92,12 @@ export interface NotificationSettings {
 
 export interface AppContextValue {
   isLoggedIn: boolean
+  isAuthLoading: boolean
   login: () => void
   logout: () => void
   userProfile: UserProfile
   updateUserProfile: (profile: UserProfileUpdate) => void
+  saveUserProfile: (profile: UserProfileUpdate, onboardingCompleted?: boolean) => Promise<void>
   preparedPolicies: Record<number, PreparedPolicy>
   updatePreparation: (policy: PreparedPolicy) => void
   removePreparation: (policyId: number) => void

@@ -51,6 +51,10 @@ function saveAccessToken(response: AuthResponse): AuthResponse {
   return response
 }
 
+export function clearAccessToken(): void {
+  localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY)
+}
+
 export async function login(payload: LoginRequest): Promise<AuthResponse> {
   const { data } = await apiClient.post<AuthResponse>('/api/v1/auth/login', payload)
   return saveAccessToken(data)

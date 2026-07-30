@@ -2,6 +2,7 @@ import type { EligibilityStatus } from '../types'
 import apiClient from './client'
 
 export type PolicySort = 'recommendation' | 'latest' | 'deadline'
+type BackendPolicyCardStatus = '가능성 높음' | '추가 확인 필요' | '불충족'
 
 export interface PolicyCategory {
   id: number
@@ -110,14 +111,54 @@ export interface PolicyListParams {
   keyword?: string
 }
 
+export interface PolicyBookmarkResponse {
+  policy_id: number
+  is_bookmarked: boolean
+  bookmarked_at: string | null
+}
+
+function normalizeCardStatus(
+  status: EligibilityStatus | BackendPolicyCardStatus | null,
+): EligibilityStatus | null {
+  if (status === '가능성 높음') return 'ELIGIBLE'
+  if (status === '추가 확인 필요') return 'NEEDS_REVIEW'
+  if (status === '불충족') return 'INELIGIBLE'
+  return status
+}
+
+function normalizePolicySummary<T extends PolicySummary>(policy: T): T {
+  return { ...policy, card_status: normalizeCardStatus(policy.card_status) }
+}
+
 export async function getRecommendedPolicies(
   params: PolicyListParams = {},
 ): Promise<PolicyListResponse> {
-  const { data } = await apiClient.get<PolicyListResponse>('/api/v1/policies', { params })
-  return data
+  const requestParams =
+    params.eligibility_status === 'INELIGIBLE'
+      ? { ...params, eligibility_status: undefined }
+      : params
+  const { data } = await apiClient.get<PolicyListResponse>('/api/v1/policies', {
+    params: requestParams,
+  })
+  const items = data.items.map(normalizePolicySummary)
+  if (params.eligibility_status !== 'INELIGIBLE') return { ...data, items }
+
+  const ineligibleItems = items.filter((policy) => policy.card_status === 'INELIGIBLE')
+  return { ...data, items: ineligibleItems, total: ineligibleItems.length }
 }
 
 export async function getPolicyDetail(policyId: number): Promise<PolicyDetail> {
   const { data } = await apiClient.get<PolicyDetail>(`/api/v1/policies/${policyId}`)
+  return normalizePolicySummary(data)
+}
+
+export async function addPolicyBookmark(policyId: number): Promise<PolicyBookmarkResponse> {
+  const { data } = await apiClient.post<PolicyBookmarkResponse>(
+    `/api/v1/policies/${policyId}/bookmark`,
+  )
   return data
+}
+
+export async function removePolicyBookmark(policyId: number): Promise<void> {
+  await apiClient.delete(`/api/v1/policies/${policyId}/bookmark`)
 }
