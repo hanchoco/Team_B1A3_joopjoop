@@ -98,6 +98,14 @@ class Settings:
     youth_policy_api_key: str | None = field(
         default_factory=lambda: os.getenv("YOUTH_POLICY_API_KEY") or None
     )
+    smtp_host: str | None = field(default_factory=lambda: os.getenv("SMTP_HOST") or None)
+    smtp_port: int = field(default_factory=lambda: _read_int("SMTP_PORT", 587))
+    smtp_username: str | None = field(default_factory=lambda: os.getenv("SMTP_USERNAME") or None)
+    smtp_password: str | None = field(default_factory=lambda: os.getenv("SMTP_PASSWORD") or None)
+    smtp_from_email: str | None = field(
+        default_factory=lambda: os.getenv("SMTP_FROM_EMAIL") or None
+    )
+    smtp_use_tls: bool = field(default_factory=lambda: _read_bool("SMTP_USE_TLS", True))
 
     def __post_init__(self) -> None:
         """Validate settings that must always have meaningful values."""

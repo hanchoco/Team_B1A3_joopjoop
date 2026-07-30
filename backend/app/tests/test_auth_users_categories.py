@@ -5,9 +5,8 @@ from __future__ import annotations
 from datetime import datetime
 
 from fastapi.testclient import TestClient
-from sqlalchemy import func, select
+from sqlalchemy import select
 
-from app.crud.categories import ensure_default_categories, ensure_default_category_questions
 from app.db.session import SessionLocal
 from app.models.user import AccountStatus, User
 from app.models.user_category_profile import (
@@ -461,7 +460,7 @@ def test_categories_questions_and_answer_upsert(client: TestClient) -> None:
         assert category is not None
         question = CategoryQuestion(
             category_id=category.id,
-            question_key="employment.insurance_enrolled",
+            question_key="employment.test_probe_question",
             label="고용보험 가입 여부",
             description="현재 고용보험 가입 상태를 선택하세요.",
             answer_type=AnswerType.SINGLE_SELECT,
@@ -469,7 +468,7 @@ def test_categories_questions_and_answer_upsert(client: TestClient) -> None:
             unit=None,
             is_required=True,
             is_used_for_matching=True,
-            display_order=1,
+            display_order=99,
             is_active=True,
         )
         db.add(question)
@@ -512,22 +511,24 @@ def test_categories_questions_and_answer_upsert(client: TestClient) -> None:
 
     questions_response = client.get(f"/api/v1/categories/{category_id}/questions")
     assert questions_response.status_code == 200, questions_response.text
-    assert questions_response.json() == [
-        {
-            "id": question_id,
-            "category_id": category_id,
-            "question_key": "employment.insurance_enrolled",
-            "label": "고용보험 가입 여부",
-            "description": "현재 고용보험 가입 상태를 선택하세요.",
-            "answer_type": "SINGLE_SELECT",
-            "options_json": options,
-            "unit": None,
-            "is_required": True,
-            "is_used_for_matching": True,
-            "display_order": 1,
-            "is_active": True,
-        }
-    ]
+    questions_payload = questions_response.json()
+    # 5 seeded EMPLOYMENT default questions + the manually created probe question above.
+    assert len(questions_payload) == 6
+    manual_question = next(item for item in questions_payload if item["id"] == question_id)
+    assert manual_question == {
+        "id": question_id,
+        "category_id": category_id,
+        "question_key": "employment.test_probe_question",
+        "label": "고용보험 가입 여부",
+        "description": "현재 고용보험 가입 상태를 선택하세요.",
+        "answer_type": "SINGLE_SELECT",
+        "options_json": options,
+        "unit": None,
+        "is_required": True,
+        "is_used_for_matching": True,
+        "display_order": 99,
+        "is_active": True,
+    }
 
     missing_category_response = client.get("/api/v1/categories/999999/questions")
     assert missing_category_response.status_code == 404
@@ -629,47 +630,25 @@ def test_categories_questions_and_answer_upsert(client: TestClient) -> None:
         assert stored_answers[0].answer_json == {"value": "NOT_ENROLLED"}
 
 
-def test_ensure_default_category_questions_seeds_employment_only(
-    client: TestClient,
-) -> None:
-    """Seeding creates the five employment.* questions and is idempotent."""
+def test_default_category_questions_are_seeded(client: TestClient) -> None:
+    """ensure_default_category_questions() seeds one onboarding question set per category."""
 
-    del client  # only used to trigger the autouse reset_database fixture
+    categories_response = client.get("/api/v1/categories")
+    assert categories_response.status_code == 200, categories_response.text
+    categories_by_code = {item["code"]: item["id"] for item in categories_response.json()}
 
-    with SessionLocal() as db:
-        ensure_default_categories(db)
-        first_pass = ensure_default_category_questions(db)
-        second_pass = ensure_default_category_questions(db)
-
-    assert len(first_pass) == 5
-    assert len(second_pass) == 5
-
-    with SessionLocal() as db:
-        employment = db.scalar(select(Category).where(Category.code == CategoryCode.EMPLOYMENT))
-        assert employment is not None
-        employment_questions = list(
-            db.scalars(
-                select(CategoryQuestion)
-                .where(CategoryQuestion.category_id == employment.id)
-                .order_by(CategoryQuestion.display_order.asc())
-            ).all()
-        )
-        assert [question.question_key for question in employment_questions] == [
-            "employment.company_size",
-            "employment.contract_type",
-            "employment.tenure_months",
-            "employment.insurance_enrolled",
-            "employment.job_field",
-        ]
-        assert all(question.is_used_for_matching for question in employment_questions)
-
-        other_categories = db.scalars(
-            select(Category).where(Category.code != CategoryCode.EMPLOYMENT)
-        ).all()
-        for category in other_categories:
-            count = db.scalar(
-                select(func.count(CategoryQuestion.id)).where(
-                    CategoryQuestion.category_id == category.id
-                )
-            )
-            assert count == 0
+    expected_counts = {
+        "EMPLOYMENT": 5,
+        "HOUSING": 5,
+        "FINANCE": 5,
+        "WELFARE": 2,
+    }
+    for code, expected_count in expected_counts.items():
+        category_id = categories_by_code[code]
+        questions_response = client.get(f"/api/v1/categories/{category_id}/questions")
+        assert questions_response.status_code == 200, questions_response.text
+        questions = questions_response.json()
+        assert len(questions) == expected_count, code
+        assert all(question["is_required"] is False for question in questions)
+        assert all(question["is_used_for_matching"] is True for question in questions)
+        assert all(question["is_active"] is True for question in questions)

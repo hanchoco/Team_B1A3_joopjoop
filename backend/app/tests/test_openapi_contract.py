@@ -24,6 +24,7 @@ _EXPECTED_SUCCESS_STATUS: dict[tuple[str, str], str] = {
     ("PUT", "/api/v1/categories/{category_id}/answers"): "200",
     ("GET", "/api/v1/policies"): "200",
     ("GET", "/api/v1/users/me/recommendations"): "200",
+    ("GET", "/api/v1/users/me/dashboard-summary"): "200",
     ("GET", "/api/v1/policies/{policy_id}"): "200",
     ("GET", "/api/v1/policies/{policy_id}/match"): "200",
     ("POST", "/api/v1/policies/{policy_id}/bookmark"): "201",
@@ -45,6 +46,7 @@ _EXPECTED_SUCCESS_STATUS: dict[tuple[str, str], str] = {
     ("PATCH", "/api/v1/users/me/notification-settings"): "200",
     ("GET", "/api/v1/users/me/notifications"): "200",
     ("PATCH", "/api/v1/notifications/{notification_id}/read"): "200",
+    ("POST", "/api/v1/users/me/notifications/run-deadline-check"): "200",
     ("POST", "/api/v1/simulator/housing"): "200",
     ("POST", "/api/v1/simulator/transport"): "200",
     ("POST", "/api/v1/simulator/finance"): "200",
@@ -89,7 +91,7 @@ def test_openapi_enumerates_every_business_operation() -> None:
     schema = app.openapi()
     operations = _business_operations(schema)
 
-    assert len(operations) == 37
+    assert len(operations) == 39
     assert set(operations) == set(_EXPECTED_SUCCESS_STATUS)
     operation_ids = [operation.get("operationId") for operation in operations.values()]
     assert all(isinstance(operation_id, str) for operation_id in operation_ids)

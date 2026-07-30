@@ -17,6 +17,7 @@ from app.crud import user_policies as state_crud
 from app.crud import users as user_crud
 from app.models.policy import Policy
 from app.models.user_policy import EligibilityStatus, UserPolicyMatch
+from app.schemas.dashboard import DashboardSummaryResponse, DashboardUpcomingPolicy
 from app.services.errors import NotFoundError
 from app.services.policy_engine.matcher import PolicyEvaluation, evaluate_policy
 
@@ -208,6 +209,53 @@ def list_recommendations(
         size=limit or 100,
     )
     return page.items[:limit] if limit is not None else page.items
+
+
+def get_dashboard_summary(
+    db: Session,
+    *,
+    user_id: int,
+    upcoming_within_days: int = 30,
+) -> DashboardSummaryResponse:
+    """Aggregate the home dashboard: nearest deadline and missed ELIGIBLE benefits."""
+
+    states = state_crud.list_upcoming_deadline_states(
+        db,
+        user_id=user_id,
+        within_days=upcoming_within_days,
+    )
+    nearest = None
+    if states:
+        top_policy = states[0].policy
+        nearest = DashboardUpcomingPolicy(
+            policy_id=top_policy.id,
+            title=top_policy.title,
+            summary=top_policy.summary,
+            application_end_date=top_policy.application_end_date,
+            days_until_deadline=(top_policy.application_end_date - date.today()).days,
+        )
+
+    eligible_page = list_evaluated_policies(
+        db,
+        user_id=user_id,
+        category_code=None,
+        eligibility_status="ELIGIBLE",
+        sort="latest",
+        keyword=None,
+        page=1,
+        size=500,
+    )
+    total_amount = sum(
+        (item.estimated_benefit_amount for item in eligible_page.items),
+        Decimal("0"),
+    )
+
+    return DashboardSummaryResponse(
+        upcoming_deadline_policy=nearest,
+        upcoming_deadline_count=len(states),
+        missed_benefit_total_amount=total_amount,
+        missed_benefit_policy_count=len(eligible_page.items),
+    )
 
 
 def get_policy_entity(db: Session, policy_id: int) -> Policy:

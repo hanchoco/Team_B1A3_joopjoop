@@ -8,6 +8,7 @@ from fastapi import APIRouter, Query, Response, status
 from app.api.deps import CurrentUser, DbSession
 from app.crud import categories as category_crud
 from app.crud import user_policies as state_crud
+from app.schemas.dashboard import DashboardSummaryResponse
 from app.schemas.policy import (
     PolicyBenefitResponse,
     PolicyBookmarkResponse,
@@ -148,6 +149,24 @@ def list_recommendations(
             limit=limit,
         )
     ]
+
+
+@router.get(
+    "/users/me/dashboard-summary",
+    response_model=DashboardSummaryResponse,
+)
+def get_dashboard_summary(
+    db: DbSession,
+    current_user: CurrentUser,
+    upcoming_within_days: int = Query(default=30, ge=1, le=365),
+) -> DashboardSummaryResponse:
+    """Return home dashboard aggregate: nearest deadline and missed benefit totals."""
+
+    return policy_service.get_dashboard_summary(
+        db,
+        user_id=current_user.id,
+        upcoming_within_days=upcoming_within_days,
+    )
 
 
 @router.get(

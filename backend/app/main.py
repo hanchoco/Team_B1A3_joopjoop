@@ -3,6 +3,7 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -14,6 +15,9 @@ from app.core.database import Base, engine
 from app.crud.categories import ensure_default_categories, ensure_default_category_questions
 from app.db.session import SessionLocal
 from app.services.errors import ServiceError
+from app.services.notification_service import run_scheduled_deadline_notification_job
+
+scheduler = AsyncIOScheduler()
 
 
 @asynccontextmanager
@@ -25,7 +29,16 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         with SessionLocal() as db:
             ensure_default_categories(db)
             ensure_default_category_questions(db)
+    scheduler.add_job(
+        run_scheduled_deadline_notification_job,
+        trigger="cron",
+        minute=0,
+        id="deadline_notifications",
+        replace_existing=True,
+    )
+    scheduler.start()
     yield
+    scheduler.shutdown(wait=False)
 
 
 app = FastAPI(

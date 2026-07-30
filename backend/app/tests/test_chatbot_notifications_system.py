@@ -8,12 +8,15 @@ from datetime import UTC, date, datetime, timedelta
 import pytest
 from fastapi.testclient import TestClient
 
+from app import main
 from app.db.session import SessionLocal
 from app.models.policy import Policy
 from app.models.policy_condition import PolicyCondition
 from app.models.user_policy import UserPolicyState
 from app.services.ai.prompt_templates import QA_SYSTEM_PROMPT
+from app.services import notification_service
 from app.services.ai.solar_client import SolarClient, SolarClientError
+from app.services.notification.scheduler import KST
 from app.services.notification_service import create_due_deadline_notifications
 
 _PASSWORD = "safe-password-123"
@@ -155,6 +158,30 @@ def _bookmark_policy(*, user_id: int, policy_id: int, bookmarked: bool) -> None:
 
 def _enum_value(value: object) -> str:
     return str(getattr(value, "value", value))
+
+
+class _RecordingEmailAdapter:
+    """Fake EmailAdapter that records calls instead of sending real mail."""
+
+    def __init__(self) -> None:
+        self.calls: list[dict[str, str]] = []
+
+    async def send_email(
+        self,
+        *,
+        recipient: str,
+        title: str,
+        body: str,
+        dedup_key: str,
+    ) -> None:
+        self.calls.append(
+            {
+                "recipient": recipient,
+                "title": title,
+                "body": body,
+                "dedup_key": dedup_key,
+            }
+        )
 
 
 def test_chatbot_uses_mocked_solar_and_only_selected_policy(
@@ -394,10 +421,8 @@ def test_deadline_generation_feed_dedup_and_read_flow(
         created = create_due_deadline_notifications(db, as_of=fixed_now)
         assert len(created) == 3
         assert {_enum_value(item.notification_type) for item in created} == set(expected)
-        assert all(
-            item.scheduled_at == datetime(2026, 7, 29, 9, 0, tzinfo=UTC).replace(tzinfo=None)
-            for item in created
-        )
+        # KST 9시를 의미하는 naive 값 — 이 fixture는 자정 경계가 아니라 리터럴 값 자체는 그대로다.
+        assert all(item.scheduled_at == datetime(2026, 7, 29, 9, 0) for item in created)
         assert all(_enum_value(item.send_status) == "PENDING" for item in created)
 
     with SessionLocal() as db:
@@ -468,6 +493,79 @@ def test_deadline_generation_feed_dedup_and_read_flow(
     assert all(item["read_at"] is None for item in unread)
 
 
+def test_deadline_day_boundary_uses_kst_not_utc(client: TestClient) -> None:
+    """UTC 오후 8시(=KST 다음날 새벽 5시)에도 KST 기준 날짜로 D-day가 잡혀야 한다.
+
+    예전 UTC 기준 코드였다면 current.date()가 07-29로 계산되어 D-1로 어긋났을 케이스.
+    """
+
+    as_of = datetime(2026, 7, 29, 20, 0, tzinfo=UTC)  # KST로는 2026-07-30 05:00
+    token, user_id = _signup(client, email="deadline-boundary-user@example.com")
+    headers = _headers(token)
+    settings_response = client.get(
+        "/api/v1/users/me/notification-settings",
+        headers=headers,
+    )
+    assert settings_response.status_code == 200, settings_response.text
+
+    policy_id = _seed_policy(
+        external_id="deadline-boundary-dday",
+        title="자정 경계 D-day 정책",
+        application_end_date=date(2026, 7, 30),
+    )
+    _bookmark_policy(user_id=user_id, policy_id=policy_id, bookmarked=True)
+
+    with SessionLocal() as db:
+        created = create_due_deadline_notifications(db, as_of=as_of)
+        assert len(created) == 1
+        assert _enum_value(created[0].notification_type) == "DEADLINE_D0"
+        assert created[0].scheduled_at == datetime(2026, 7, 30, 9, 0)
+
+
+def test_deadline_notification_job_is_registered(client: TestClient) -> None:
+    """main.py의 lifespan이 등록하는 APScheduler cron 잡이 실제로 존재하는지 확인한다."""
+
+    job_ids = {job.id for job in main.scheduler.get_jobs()}
+    assert "deadline_notifications" in job_ids
+
+
+def test_run_deadline_check_endpoint_creates_and_dedups(client: TestClient) -> None:
+    """POST .../run-deadline-check는 그날 마감 알림을 한 번만 만들고 재호출 시 dedup된다."""
+
+    today = datetime.now(KST).date()
+    token, user_id = _signup(client, email="deadline-endpoint-user@example.com")
+    headers = _headers(token)
+    settings_response = client.get(
+        "/api/v1/users/me/notification-settings",
+        headers=headers,
+    )
+    assert settings_response.status_code == 200, settings_response.text
+
+    policy_id = _seed_policy(
+        external_id="deadline-endpoint-dday",
+        title="엔드포인트 마감 정책",
+        application_end_date=today,
+    )
+    _bookmark_policy(user_id=user_id, policy_id=policy_id, bookmarked=True)
+
+    first_response = client.post(
+        "/api/v1/users/me/notifications/run-deadline-check",
+        headers=headers,
+    )
+    assert first_response.status_code == 200, first_response.text
+    first_result = first_response.json()
+    assert len(first_result) == 1
+    assert first_result[0]["policy_id"] == policy_id
+    assert first_result[0]["notification_type"] == "DEADLINE_D0"
+
+    second_response = client.post(
+        "/api/v1/users/me/notifications/run-deadline-check",
+        headers=headers,
+    )
+    assert second_response.status_code == 200, second_response.text
+    assert second_response.json() == []
+
+
 @pytest.mark.parametrize(
     ("settings_patch", "days_left"),
     [
@@ -512,6 +610,107 @@ def test_deadline_generation_respects_notification_toggles(
     )
     assert feed_response.status_code == 200, feed_response.text
     assert feed_response.json() == []
+
+
+def test_deadline_notification_stays_pending_without_smtp_configured(
+    client: TestClient,
+) -> None:
+    """SMTP 미설정(기본 상태)에서는 기존과 동일하게 PENDING으로 남아야 한다(회귀)."""
+
+    fixed_now = datetime(2026, 7, 29, 12, 30, tzinfo=UTC)
+    email = "no-smtp-user@example.com"
+    token, user_id = _signup(client, email=email)
+    settings_response = client.get(
+        "/api/v1/users/me/notification-settings",
+        headers=_headers(token),
+    )
+    assert settings_response.status_code == 200, settings_response.text
+    policy_id = _seed_policy(
+        external_id="no-smtp-dday",
+        title="SMTP 미설정 정책",
+        application_end_date=fixed_now.date(),
+    )
+    _bookmark_policy(user_id=user_id, policy_id=policy_id, bookmarked=True)
+
+    with SessionLocal() as db:
+        created = create_due_deadline_notifications(db, as_of=fixed_now)
+
+    assert len(created) == 1
+    assert created[0].sent_at is None
+    assert _enum_value(created[0].send_status) == "PENDING"
+
+
+def test_deadline_notification_sends_email_when_adapter_configured(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """어댑터가 있으면 실제로 send_email이 호출되고 SENT/sent_at이 채워져야 한다."""
+
+    fake_adapter = _RecordingEmailAdapter()
+    monkeypatch.setattr(notification_service, "get_email_adapter", lambda: fake_adapter)
+
+    fixed_now = datetime(2026, 7, 29, 12, 30, tzinfo=UTC)
+    email = "smtp-configured-user@example.com"
+    token, user_id = _signup(client, email=email)
+    settings_response = client.get(
+        "/api/v1/users/me/notification-settings",
+        headers=_headers(token),
+    )
+    assert settings_response.status_code == 200, settings_response.text
+    title = "SMTP 발송 대상 정책"
+    policy_id = _seed_policy(
+        external_id="smtp-configured-dday",
+        title=title,
+        application_end_date=fixed_now.date(),
+    )
+    _bookmark_policy(user_id=user_id, policy_id=policy_id, bookmarked=True)
+
+    with SessionLocal() as db:
+        created = create_due_deadline_notifications(db, as_of=fixed_now)
+
+    assert len(created) == 1
+    assert len(fake_adapter.calls) == 1
+    call = fake_adapter.calls[0]
+    assert call["recipient"] == email
+    assert call["title"] == f"[마감일] {title}"
+    assert call["body"] == f"관심 정책 '{title}'의 신청 마감일입니다."
+    assert created[0].sent_at is not None
+    assert _enum_value(created[0].send_status) == "SENT"
+
+
+def test_deadline_notification_skips_email_when_channel_disabled(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """email_enabled=False면 어댑터가 있어도 send_email이 호출되지 않아야 한다."""
+
+    fake_adapter = _RecordingEmailAdapter()
+    monkeypatch.setattr(notification_service, "get_email_adapter", lambda: fake_adapter)
+
+    fixed_now = datetime(2026, 7, 29, 12, 30, tzinfo=UTC)
+    token, user_id = _signup(client, email="email-disabled-user@example.com")
+    headers = _headers(token)
+    settings_response = client.patch(
+        "/api/v1/users/me/notification-settings",
+        headers=headers,
+        json={"email_enabled": False},
+    )
+    assert settings_response.status_code == 200, settings_response.text
+
+    policy_id = _seed_policy(
+        external_id="email-disabled-dday",
+        title="이메일 비활성 정책",
+        application_end_date=fixed_now.date(),
+    )
+    _bookmark_policy(user_id=user_id, policy_id=policy_id, bookmarked=True)
+
+    with SessionLocal() as db:
+        created = create_due_deadline_notifications(db, as_of=fixed_now)
+
+    assert len(created) == 1
+    assert fake_adapter.calls == []
+    assert created[0].sent_at is None
+    assert _enum_value(created[0].send_status) == "PENDING"
 
 
 @pytest.mark.parametrize(

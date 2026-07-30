@@ -154,7 +154,7 @@ def _seed_policy_dataset() -> SeededPolicyIds:
                 ),
                 PolicyCondition(
                     policy_id=review.id,
-                    condition_key="housing.rental_contract_verified",
+                    condition_key="housing.has_lease_contract",
                     operator="MANUAL_CHECK",
                     expected_value_json=None,
                     condition_group_no=1,
@@ -416,6 +416,51 @@ def test_policy_discovery_match_and_bookmark_lifecycle(
     )
     assert deleted_bookmark_state["is_bookmarked"] is False
     assert deleted_bookmark_state["preparation_status"] == "NOT_STARTED"
+
+
+def test_dashboard_summary_upcoming_deadline_and_missed_benefits(
+    client: TestClient,
+) -> None:
+    """Dashboard aggregates the nearest bookmarked deadline and ELIGIBLE benefit totals."""
+
+    headers = _authenticated_headers(client, email="dashboard-http@example.com")
+    seeded = _seed_policy_dataset()
+
+    policy_list = client.get(
+        "/api/v1/policies",
+        params={"sort": "latest", "page": 1, "size": 10},
+        headers=headers,
+    )
+    assert policy_list.status_code == 200, policy_list.text
+
+    bookmark = client.post(
+        f"/api/v1/policies/{seeded.eligible_policy_id}/bookmark",
+        headers=headers,
+    )
+    assert bookmark.status_code == 201, bookmark.text
+
+    summary = client.get("/api/v1/users/me/dashboard-summary", headers=headers)
+    assert summary.status_code == 200, summary.text
+    body = summary.json()
+    assert body["upcoming_deadline_count"] == 1
+    upcoming = body["upcoming_deadline_policy"]
+    assert upcoming is not None
+    assert upcoming["policy_id"] == seeded.eligible_policy_id
+    assert upcoming["title"] == "Alpha 청년 주거 지원"
+    assert upcoming["days_until_deadline"] == 30
+    assert _as_decimal(body["missed_benefit_total_amount"]) == Decimal("2400000.00")
+    assert body["missed_benefit_policy_count"] == 1
+
+    narrow = client.get(
+        "/api/v1/users/me/dashboard-summary",
+        params={"upcoming_within_days": 5},
+        headers=headers,
+    )
+    assert narrow.status_code == 200, narrow.text
+    narrow_body = narrow.json()
+    assert narrow_body["upcoming_deadline_count"] == 0
+    assert narrow_body["upcoming_deadline_policy"] is None
+    assert _as_decimal(narrow_body["missed_benefit_total_amount"]) == Decimal("2400000.00")
 
 
 def test_checklist_application_and_missing_resource_responses(
