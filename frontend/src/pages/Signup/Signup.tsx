@@ -2,20 +2,22 @@ import { ArrowRight } from 'lucide-react'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { extractErrorMessage } from '../../api/client'
 import BrandLogo from '../../components/common/BrandLogo'
 import { useApp } from '../../store/useApp'
 
 export default function Signup() {
   const navigate = useNavigate()
-  const { login, updateAccountId } = useApp()
+  const { signup } = useApp()
   const [name, setName] = useState('')
   const [loginId, setLoginId] = useState('')
   const [password, setPassword] = useState('')
   const [confirmation, setConfirmation] = useState('')
   const [agreed, setAgreed] = useState(false)
   const [error, setError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (password.length < 8) {
       setError('비밀번호는 8자 이상 입력해주세요.')
@@ -29,9 +31,24 @@ export default function Signup() {
       setError('필수 약관에 동의해주세요.')
       return
     }
-    updateAccountId(loginId.trim())
-    login()
-    navigate('/onboarding')
+    setError('')
+    setIsSubmitting(true)
+    try {
+      await signup({
+        email: loginId.trim(),
+        password,
+        nickname: name.trim(),
+        consents: [
+          { consent_type: 'TERMS_REQUIRED', consent_version: '1.0', is_agreed: true },
+          { consent_type: 'PRIVACY_REQUIRED', consent_version: '1.0', is_agreed: true },
+        ],
+      })
+      navigate('/onboarding')
+    } catch (err) {
+      setError(extractErrorMessage(err))
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -109,9 +126,10 @@ export default function Signup() {
         {error && <p className="text-sm font-semibold text-rose-600">{error}</p>}
         <button
           type="submit"
-          className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 py-3.5 font-bold text-white"
+          disabled={isSubmitting}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 py-3.5 font-bold text-white disabled:opacity-60"
         >
-          회원가입 완료 <ArrowRight size={18} />
+          {isSubmitting ? '가입 중...' : '회원가입 완료'} <ArrowRight size={18} />
         </button>
       </form>
       <p className="mt-5 text-center text-sm text-gray-500">

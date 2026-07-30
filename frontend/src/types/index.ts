@@ -1,3 +1,5 @@
+import type { SignupRequest, UserResponse } from './api'
+
 export interface Region {
   city: string
   district: string
@@ -69,7 +71,10 @@ export interface NotificationSettings {
 
 export interface AppContextValue {
   isLoggedIn: boolean
-  login: () => void
+  token: string | null
+  currentUser: UserResponse | null
+  login: (email: string, password: string) => Promise<void>
+  signup: (payload: SignupRequest) => Promise<void>
   logout: () => void
   userProfile: UserProfile
   updateUserProfile: (profile: UserProfileUpdate) => void

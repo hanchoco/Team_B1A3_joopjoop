@@ -1,5 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { PropsWithChildren } from 'react'
+import { login as apiLogin, signup as apiSignup } from '../api/auth'
+import { clearToken, getToken, setToken as persistToken } from '../api/client'
+import { getCurrentUser } from '../api/users'
 import type {
   FavoritePolicy,
   NotificationSettings,
@@ -7,6 +10,7 @@ import type {
   UserProfile,
   UserProfileUpdate,
 } from '../types'
+import type { SignupRequest, UserResponse } from '../types/api'
 import mockData from '../utils/mockData.json'
 import { AppContext } from './context'
 
@@ -24,7 +28,10 @@ export function AppProvider({ children }: PropsWithChildren) {
     householdType: '1인 가구',
     avatarUrl: savedAvatarUrl,
   }
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [token, setToken] = useState<string | null>(() => getToken())
+  const [currentUser, setCurrentUser] = useState<UserResponse | null>(null)
+  const isLoggedIn = token !== null
+  // TODO(다음 라운드): userProfile 이하는 아직 mock 기반. 실제 프로필 스키마로 교체 예정.
   const [userProfile, setUserProfile] = useState(initialProfile)
   const [preparedPolicies, setPreparedPolicies] = useState<Record<string, PreparedPolicy>>({})
   const [favoritePolicies, setFavoritePolicies] = useState<Record<string, FavoritePolicy>>({
@@ -45,12 +52,43 @@ export function AppProvider({ children }: PropsWithChildren) {
   const [accountId, setAccountId] = useState('nara@example.com')
   const [optionalPrivacyConsent, setOptionalPrivacyConsent] = useState(true)
 
-  function login() {
-    setIsLoggedIn(true)
+  useEffect(() => {
+    if (!token) return
+    let cancelled = false
+    getCurrentUser()
+      .then((user) => {
+        if (!cancelled) setCurrentUser(user)
+      })
+      .catch(() => {
+        if (!cancelled) {
+          clearToken()
+          setToken(null)
+          setCurrentUser(null)
+        }
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [token])
+
+  async function login(email: string, password: string) {
+    const result = await apiLogin({ email, password })
+    persistToken(result.access_token)
+    setToken(result.access_token)
+    setCurrentUser(result.user)
+  }
+
+  async function signup(payload: SignupRequest) {
+    const result = await apiSignup(payload)
+    persistToken(result.access_token)
+    setToken(result.access_token)
+    setCurrentUser(result.user)
   }
 
   function logout() {
-    setIsLoggedIn(false)
+    clearToken()
+    setToken(null)
+    setCurrentUser(null)
   }
 
   function updateUserProfile(profile: UserProfileUpdate) {
@@ -109,7 +147,10 @@ export function AppProvider({ children }: PropsWithChildren) {
   const value = useMemo(
     () => ({
       isLoggedIn,
+      token,
+      currentUser,
       login,
+      signup,
       logout,
       userProfile,
       updateUserProfile,
@@ -127,6 +168,8 @@ export function AppProvider({ children }: PropsWithChildren) {
     }),
     [
       isLoggedIn,
+      token,
+      currentUser,
       userProfile,
       preparedPolicies,
       favoritePolicies,

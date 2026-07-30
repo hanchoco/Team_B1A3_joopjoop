@@ -22,6 +22,7 @@ import AccountSettings from '../pages/Settings/AccountSettings'
 import PrivacySettings from '../pages/Settings/PrivacySettings'
 import Withdraw from '../pages/Settings/Withdraw'
 import { useApp } from '../store/useApp'
+import RequireAuth from './RequireAuth'
 
 function AppLayout() {
   const navigate = useNavigate()
@@ -86,25 +87,109 @@ function AppLayout() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/onboarding" element={<Onboarding />} />
-          <Route path="/profile" element={<UserProfile />} />
+          <Route
+            path="/onboarding"
+            element={
+              <RequireAuth>
+                <Onboarding />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <RequireAuth>
+                <UserProfile />
+              </RequireAuth>
+            }
+          />
           <Route path="/" element={<Dashboard />} />
           <Route path="/categories" element={<CategorySelect />} />
-          <Route path="/categories/:categoryId/questions" element={<CategoryQuestions />} />
+          <Route
+            path="/categories/:categoryId/questions"
+            element={
+              <RequireAuth>
+                <CategoryQuestions />
+              </RequireAuth>
+            }
+          />
           <Route path="/policies" element={<PolicyList />} />
           <Route path="/policies/:id" element={<PolicyDetail />} />
           <Route path="/policies/:id/simulation" element={<Simulator />} />
           <Route path="/policies/:id/impact" element={<ImpactView />} />
           <Route path="/impact" element={<ImpactView />} />
-          <Route path="/policies/:id/prepare" element={<Checklist />} />
-          <Route path="/policies/:id/ai-chat" element={<Chatbot />} />
-          <Route path="/mypage" element={<MyPage />} />
-          <Route path="/mypage/policies" element={<MyPolicies />} />
-          <Route path="/mypage/profile" element={<EditProfile />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/settings/account" element={<AccountSettings />} />
-          <Route path="/settings/privacy" element={<PrivacySettings />} />
-          <Route path="/settings/withdraw" element={<Withdraw />} />
+          <Route
+            path="/policies/:id/prepare"
+            element={
+              <RequireAuth>
+                <Checklist />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/policies/:id/ai-chat"
+            element={
+              <RequireAuth>
+                <Chatbot />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/mypage"
+            element={
+              <RequireAuth>
+                <MyPage />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/mypage/policies"
+            element={
+              <RequireAuth>
+                <MyPolicies />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/mypage/profile"
+            element={
+              <RequireAuth>
+                <EditProfile />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <RequireAuth>
+                <Settings />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/settings/account"
+            element={
+              <RequireAuth>
+                <AccountSettings />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/settings/privacy"
+            element={
+              <RequireAuth>
+                <PrivacySettings />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/settings/withdraw"
+            element={
+              <RequireAuth>
+                <Withdraw />
+              </RequireAuth>
+            }
+          />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

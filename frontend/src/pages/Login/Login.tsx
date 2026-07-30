@@ -2,6 +2,7 @@ import { ArrowRight, LockKeyhole, UserRound } from 'lucide-react'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { extractErrorMessage } from '../../api/client'
 import BrandLogo from '../../components/common/BrandLogo'
 import { useApp } from '../../store/useApp'
 
@@ -11,15 +12,20 @@ export default function Login() {
   const [loginId, setLoginId] = useState(accountId)
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!loginId.trim() || password.length < 4) {
-      setError('아이디와 비밀번호를 확인해주세요.')
-      return
+    setError('')
+    setIsSubmitting(true)
+    try {
+      await login(loginId.trim(), password)
+      navigate('/')
+    } catch (err) {
+      setError(extractErrorMessage(err))
+    } finally {
+      setIsSubmitting(false)
     }
-    login()
-    navigate('/')
   }
 
   return (
@@ -73,9 +79,10 @@ export default function Login() {
         {error && <p className="mt-3 text-sm font-semibold text-rose-600">{error}</p>}
         <button
           type="submit"
-          className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 py-3.5 font-bold text-white"
+          disabled={isSubmitting}
+          className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 py-3.5 font-bold text-white disabled:opacity-60"
         >
-          로그인 <ArrowRight size={18} />
+          {isSubmitting ? '로그인 중...' : '로그인'} <ArrowRight size={18} />
         </button>
       </form>
 
