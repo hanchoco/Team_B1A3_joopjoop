@@ -113,8 +113,22 @@ function AppLayout() {
               </RequireAuth>
             }
           />
-          <Route path="/policies" element={<PolicyList />} />
-          <Route path="/policies/:id" element={<PolicyDetail />} />
+          <Route
+            path="/policies"
+            element={
+              <RequireAuth>
+                <PolicyList />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/policies/:id"
+            element={
+              <RequireAuth>
+                <PolicyDetail />
+              </RequireAuth>
+            }
+          />
           <Route path="/policies/:id/simulation" element={<Simulator />} />
           <Route path="/policies/:id/impact" element={<ImpactView />} />
           <Route path="/impact" element={<ImpactView />} />
