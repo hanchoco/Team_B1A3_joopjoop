@@ -23,19 +23,7 @@ const tabs: { id: PolicyTab; label: string; icon: typeof Bookmark }[] = [
   { id: 'completed', label: '신청 완료', icon: CheckCircle2 },
 ]
 
-const mockPolicies = {
-  preparing: [
-    {
-      id: 4,
-      title: '국민취업지원제도',
-      progress: 40,
-      completed: 2,
-      total: 5,
-      deadline: 12,
-    },
-  ],
-  completed: [{ id: 3, title: '서울시 청년 교통비 지원', completedAt: '2026. 07. 18.' }],
-}
+const completedPolicies: DisplayPolicy[] = []
 
 export default function MyPolicies() {
   const navigate = useNavigate()
@@ -53,9 +41,6 @@ export default function MyPolicies() {
       Object.values(favoritePolicies).forEach((policy) => {
         combined.set(policy.id, { ...policy, state: 'interest' })
       })
-      mockPolicies.preparing.forEach((policy) => {
-        combined.set(policy.id, { ...policy, state: 'preparing' })
-      })
       Object.values(preparedPolicies).forEach((policy) => {
         combined.set(policy.id, { ...policy, state: 'preparing' })
       })
@@ -64,14 +49,12 @@ export default function MyPolicies() {
       )
     }
     if (tab === 'preparing') {
-      const merged = new Map<number, DisplayPolicy>(
-        mockPolicies.preparing.map((policy) => [policy.id, policy]),
-      )
+      const merged = new Map<number, DisplayPolicy>()
       Object.values(preparedPolicies).forEach((policy) => merged.set(policy.id, policy))
       return [...merged.values()]
     }
     const list: DisplayPolicy[] =
-      tab === 'interest' ? Object.values(favoritePolicies) : [...mockPolicies.completed]
+      tab === 'interest' ? Object.values(favoritePolicies) : completedPolicies
     if (tab === 'interest' && sort === 'deadline') {
       list.sort((a, b) => (a.deadline ?? Infinity) - (b.deadline ?? Infinity))
     }
@@ -140,6 +123,11 @@ export default function MyPolicies() {
         </div>
       )}
       <div className="mt-5 space-y-3">
+        {policies.length === 0 && (
+          <p className="rounded-xl bg-slate-50 p-8 text-center text-sm text-gray-600">
+            아직 저장된 정책이 없어요.
+          </p>
+        )}
         {policies.map((policy) => {
           const currentState = isUrgentView ? (policy.state ?? 'interest') : tab
           const currentTab = tabs.find((item) => item.id === currentState) || tabs[0]

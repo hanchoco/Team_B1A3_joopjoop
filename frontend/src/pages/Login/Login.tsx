@@ -2,24 +2,48 @@ import { ArrowRight, LockKeyhole, UserRound } from 'lucide-react'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { getAuthErrorMessage, login as loginRequest } from '../../api/auth'
 import BrandLogo from '../../components/common/BrandLogo'
 import { useApp } from '../../store/useApp'
 
 export default function Login() {
   const navigate = useNavigate()
-  const { accountId, login } = useApp()
+  const { accountId, login, updateAccountId, updateUserProfile } = useApp()
   const [loginId, setLoginId] = useState(accountId)
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!loginId.trim() || password.length < 4) {
-      setError('아이디와 비밀번호를 확인해주세요.')
+    if (!loginId.trim() || !password) {
+      setError('이메일과 비밀번호를 다시 한번 확인해 주세요.')
       return
     }
-    login()
-    navigate('/')
+
+    setIsSubmitting(true)
+    setError('')
+    try {
+      const response = await loginRequest({
+        email: loginId.trim(),
+        password,
+      })
+      updateAccountId(response.user.email)
+      if (response.user.nickname) {
+        updateUserProfile({ name: response.user.nickname })
+      }
+      login()
+      navigate('/')
+    } catch (requestError: unknown) {
+      setError(
+        getAuthErrorMessage(
+          requestError,
+          '로그인하지 못했어요. 이메일과 비밀번호를 다시 확인해 주세요.',
+        ),
+      )
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -42,7 +66,10 @@ export default function Login() {
               required
               type="email"
               value={loginId}
-              onChange={(event) => setLoginId(event.target.value)}
+              onChange={(event) => {
+                setLoginId(event.target.value)
+                setError('')
+              }}
               autoComplete="username"
               placeholder="이메일 아이디"
               className="w-full rounded-lg border border-gray-300 py-3.5 pl-11 pr-4 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
@@ -73,9 +100,10 @@ export default function Login() {
         {error && <p className="mt-3 text-sm font-semibold text-rose-600">{error}</p>}
         <button
           type="submit"
-          className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 py-3.5 font-bold text-white"
+          disabled={isSubmitting}
+          className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 py-3.5 font-bold text-white disabled:cursor-not-allowed disabled:bg-blue-300"
         >
-          로그인 <ArrowRight size={18} />
+          {isSubmitting ? '로그인하고 있어요...' : '로그인'} <ArrowRight size={18} />
         </button>
       </form>
 

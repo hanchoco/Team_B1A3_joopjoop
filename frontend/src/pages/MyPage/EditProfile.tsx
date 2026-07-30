@@ -13,7 +13,9 @@ export default function EditProfile() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [avatarUrl, setAvatarUrl] = useState(userProfile.avatarUrl)
   const [avatarError, setAvatarError] = useState('')
+  const [formError, setFormError] = useState('')
   const [form, setForm] = useState({
+    name: userProfile.name,
     birthYear: String(userProfile.birthYear),
     regionName: userProfile.regionName,
     incomeBracket: userProfile.incomeBracket,
@@ -24,8 +26,13 @@ export default function EditProfile() {
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (!form.name.trim()) {
+      setFormError('이름을 입력해 주세요.')
+      return
+    }
     updateUserProfile({
       ...form,
+      name: form.name.trim(),
       birthYear: Number(form.birthYear),
       avatarUrl,
     })
@@ -115,6 +122,18 @@ export default function EditProfile() {
             </p>
           </div>
         </div>
+        <label className="block text-sm font-semibold sm:col-span-2">
+          이름
+          <input
+            required
+            value={form.name}
+            onChange={(event) => {
+              setForm({ ...form, name: event.target.value })
+              setFormError('')
+            }}
+            className={fieldClass}
+          />
+        </label>
         <label className="block text-sm font-semibold">
           출생연도
           <input
@@ -189,6 +208,9 @@ export default function EditProfile() {
             ))}
           </select>
         </label>
+        {formError && (
+          <p className="text-sm font-semibold text-rose-600 sm:col-span-2">{formError}</p>
+        )}
         <button className="w-full rounded-lg bg-blue-600 py-3.5 font-bold text-white sm:col-span-2">
           저장하기
         </button>

@@ -27,15 +27,7 @@ export function AppProvider({ children }: PropsWithChildren) {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [userProfile, setUserProfile] = useState(initialProfile)
   const [preparedPolicies, setPreparedPolicies] = useState<Record<number, PreparedPolicy>>({})
-  const [favoritePolicies, setFavoritePolicies] = useState<Record<number, FavoritePolicy>>({
-    1: {
-      id: 1,
-      title: '청년 월세 한시 특별지원',
-      category: '주거',
-      deadline: 23,
-    },
-    2: { id: 2, title: '청년도약계좌', category: '금융', deadline: 51 },
-  })
+  const [favoritePolicies, setFavoritePolicies] = useState<Record<number, FavoritePolicy>>({})
   const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
     enabled: true,
     sevenDaysBefore: true,
@@ -106,6 +98,11 @@ export function AppProvider({ children }: PropsWithChildren) {
     })
   }
 
+  function resetPolicyState() {
+    setPreparedPolicies({})
+    setFavoritePolicies({})
+  }
+
   const value = useMemo(
     () => ({
       isLoggedIn,
@@ -118,6 +115,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       removePreparation,
       favoritePolicies,
       toggleFavorite,
+      resetPolicyState,
       notificationSettings,
       updateNotificationSettings: setNotificationSettings,
       accountId,

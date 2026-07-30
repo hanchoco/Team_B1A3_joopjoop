@@ -11,18 +11,12 @@ export default function MyPage() {
     {
       id: 'preparing',
       label: '준비 중',
-      count: Math.max(3, preparing.length),
+      count: preparing.length,
       icon: ClipboardList,
     },
-    { id: 'completed', label: '신청 완료', count: 2, icon: CheckCircle2 },
+    { id: 'completed', label: '신청 완료', count: 0, icon: CheckCircle2 },
   ]
-  const continuePolicy = preparing[0] || {
-    id: 4,
-    title: '국민취업지원제도',
-    progress: 40,
-    completed: 2,
-    total: 5,
-  }
+  const continuePolicy = preparing[0]
 
   return (
     <section>
@@ -73,21 +67,25 @@ export default function MyPage() {
           </div>
           <div className="mt-5 rounded-xl border border-blue-200 bg-blue-50 p-6">
             <p className="text-sm font-semibold text-blue-700">준비 중인 정책</p>
-            <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-center">
-              <div className="flex-1">
-                <h3 className="font-bold">{continuePolicy.title}</h3>
-                <p className="mt-1 text-xs text-gray-600">
-                  준비 항목 {continuePolicy.completed}/{continuePolicy.total} 완료 ·{' '}
-                  {continuePolicy.progress}%
-                </p>
+            {continuePolicy ? (
+              <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-center">
+                <div className="flex-1">
+                  <h3 className="font-bold">{continuePolicy.title}</h3>
+                  <p className="mt-1 text-xs text-gray-600">
+                    준비 항목 {continuePolicy.completed}/{continuePolicy.total} 완료 ·{' '}
+                    {continuePolicy.progress}%
+                  </p>
+                </div>
+                <button
+                  onClick={() => navigate(`/policies/${continuePolicy.id}/prepare`)}
+                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-bold text-white"
+                >
+                  이어서 준비하기 <ArrowRight size={16} />
+                </button>
               </div>
-              <button
-                onClick={() => navigate(`/policies/${continuePolicy.id}/prepare`)}
-                className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-bold text-white"
-              >
-                이어서 준비하기 <ArrowRight size={16} />
-              </button>
-            </div>
+            ) : (
+              <p className="mt-3 text-sm text-blue-900">아직 준비 중인 정책이 없어요.</p>
+            )}
           </div>
           <div className="mt-5 rounded-xl border border-gray-200 bg-white p-6">
             <div className="flex justify-between">

@@ -2,21 +2,27 @@ import { ArrowRight } from 'lucide-react'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { getAuthErrorMessage, signup as signupRequest } from '../../api/auth'
 import BrandLogo from '../../components/common/BrandLogo'
 import { useApp } from '../../store/useApp'
 
 export default function Signup() {
   const navigate = useNavigate()
-  const { login, updateAccountId } = useApp()
+  const { login, resetPolicyState, updateAccountId, updateUserProfile } = useApp()
   const [name, setName] = useState('')
   const [loginId, setLoginId] = useState('')
   const [password, setPassword] = useState('')
   const [confirmation, setConfirmation] = useState('')
   const [agreed, setAgreed] = useState(false)
   const [error, setError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (!name.trim()) {
+      setError('이름을 입력해주세요.')
+      return
+    }
     if (password.length < 8) {
       setError('비밀번호는 8자 이상 입력해주세요.')
       return
@@ -29,9 +35,42 @@ export default function Signup() {
       setError('필수 약관에 동의해주세요.')
       return
     }
-    updateAccountId(loginId.trim())
-    login()
-    navigate('/onboarding')
+
+    setIsSubmitting(true)
+    setError('')
+    try {
+      const response = await signupRequest({
+        email: loginId.trim(),
+        password,
+        nickname: name.trim(),
+        consents: [
+          {
+            consent_type: 'TERMS_REQUIRED',
+            consent_version: '1.0',
+            is_agreed: true,
+          },
+          {
+            consent_type: 'PRIVACY_REQUIRED',
+            consent_version: '1.0',
+            is_agreed: true,
+          },
+        ],
+      })
+      updateAccountId(response.user.email)
+      updateUserProfile({ name: response.user.nickname ?? name.trim() })
+      resetPolicyState()
+      login()
+      navigate('/onboarding')
+    } catch (requestError: unknown) {
+      setError(
+        getAuthErrorMessage(
+          requestError,
+          '회원가입을 완료하지 못했어요. 입력한 정보를 다시 확인해 주세요.',
+        ),
+      )
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -51,7 +90,10 @@ export default function Signup() {
           <input
             required
             value={name}
-            onChange={(event) => setName(event.target.value)}
+            onChange={(event) => {
+              setName(event.target.value)
+              setError('')
+            }}
             className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3.5 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
           />
         </label>
@@ -61,7 +103,10 @@ export default function Signup() {
             required
             type="email"
             value={loginId}
-            onChange={(event) => setLoginId(event.target.value)}
+            onChange={(event) => {
+              setLoginId(event.target.value)
+              setError('')
+            }}
             autoComplete="username"
             placeholder="이메일 아이디"
             className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3.5 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
@@ -73,7 +118,10 @@ export default function Signup() {
             required
             type="password"
             value={password}
-            onChange={(event) => setPassword(event.target.value)}
+            onChange={(event) => {
+              setPassword(event.target.value)
+              setError('')
+            }}
             autoComplete="new-password"
             placeholder="8자 이상 입력"
             className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3.5 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
@@ -109,9 +157,10 @@ export default function Signup() {
         {error && <p className="text-sm font-semibold text-rose-600">{error}</p>}
         <button
           type="submit"
-          className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 py-3.5 font-bold text-white"
+          disabled={isSubmitting}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 py-3.5 font-bold text-white disabled:cursor-not-allowed disabled:bg-blue-300"
         >
-          회원가입 완료 <ArrowRight size={18} />
+          {isSubmitting ? '계정을 만들고 있어요...' : '회원가입 완료'} <ArrowRight size={18} />
         </button>
       </form>
       <p className="mt-5 text-center text-sm text-gray-500">

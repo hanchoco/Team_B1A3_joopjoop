@@ -1,3 +1,4 @@
+import axios from 'axios'
 import apiClient, { ACCESS_TOKEN_STORAGE_KEY } from './client'
 
 export interface LoginRequest {
@@ -32,6 +33,17 @@ export interface AuthResponse {
   access_token: string
   token_type: string
   user: AuthUser
+}
+
+interface ApiErrorResponse {
+  detail?: string
+}
+
+export function getAuthErrorMessage(error: unknown, fallbackMessage: string): string {
+  if (!axios.isAxiosError<ApiErrorResponse>(error)) return fallbackMessage
+  return typeof error.response?.data?.detail === 'string'
+    ? error.response.data.detail
+    : fallbackMessage
 }
 
 function saveAccessToken(response: AuthResponse): AuthResponse {

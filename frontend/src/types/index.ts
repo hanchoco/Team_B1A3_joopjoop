@@ -29,6 +29,7 @@ export interface UserProfile {
 export type UserProfileUpdate = Partial<
   Pick<
     UserProfile,
+    | 'name'
     | 'age'
     | 'regionName'
     | 'monthlyIncome'
@@ -100,6 +101,7 @@ export interface AppContextValue {
   removePreparation: (policyId: number) => void
   favoritePolicies: Record<number, FavoritePolicy>
   toggleFavorite: (policy: FavoritePolicy) => void
+  resetPolicyState: () => void
   notificationSettings: NotificationSettings
   updateNotificationSettings: (settings: NotificationSettings) => void
   accountId: string
