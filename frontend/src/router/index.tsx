@@ -37,7 +37,7 @@ function AppLayout() {
       <header className="sticky top-0 z-30 border-b border-gray-200 bg-white/95 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center px-5 sm:px-8">
           <button onClick={() => navigate('/')} aria-label="joopjoop 홈으로 이동">
-            <BrandLogo className="h-8 w-[116px] object-contain" />
+            <BrandLogo className="h-9 w-32 object-contain" />
           </button>
           <nav className="ml-auto hidden items-center gap-7 md:flex">
             {menu.slice(0, 3).map(([label, path]) => (
