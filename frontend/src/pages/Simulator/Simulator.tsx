@@ -24,13 +24,13 @@ const simulatorForms: Record<SimulatorCategory, ComponentType<SimulatorFormProps
   welfare: WelfareSimulatorForm,
 }
 
-const policyCategories: Record<string, SimulatorCategory> = {
-  'youth-rent': 'housing',
-  transport: 'transport',
-  'youth-account': 'finance',
-  'tax-credit': 'tax',
-  'employment-support': 'employment',
-  'welfare-support': 'welfare',
+const policyCategories: Record<number, SimulatorCategory> = {
+  1: 'housing',
+  2: 'finance',
+  3: 'transport',
+  4: 'employment',
+  5: 'tax',
+  6: 'welfare',
 }
 
 export default function Simulator() {
@@ -38,7 +38,8 @@ export default function Simulator() {
   const [formValues, setFormValues] = useState<Record<string, SimulatorInputValue>>({})
   const navigate = useNavigate()
   const { id } = useParams()
-  const category = policyCategories[id ?? 'youth-rent'] ?? 'housing'
+  const policyId = Number(id ?? 1)
+  const category = policyCategories[policyId] ?? 'housing'
   const CategoryForm = simulatorForms[category]
   const { before, after, monthlySavings, annualSavings } = mockData.savingsSimulation
   const yearly = period === '연 기준'

@@ -26,15 +26,15 @@ export function AppProvider({ children }: PropsWithChildren) {
   }
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [userProfile, setUserProfile] = useState(initialProfile)
-  const [preparedPolicies, setPreparedPolicies] = useState<Record<string, PreparedPolicy>>({})
-  const [favoritePolicies, setFavoritePolicies] = useState<Record<string, FavoritePolicy>>({
-    'youth-rent': {
-      id: 'youth-rent',
+  const [preparedPolicies, setPreparedPolicies] = useState<Record<number, PreparedPolicy>>({})
+  const [favoritePolicies, setFavoritePolicies] = useState<Record<number, FavoritePolicy>>({
+    1: {
+      id: 1,
       title: '청년 월세 한시 특별지원',
       category: '주거',
       deadline: 23,
     },
-    'youth-account': { id: 'youth-account', title: '청년도약계좌', category: '금융', deadline: 51 },
+    2: { id: 2, title: '청년도약계좌', category: '금융', deadline: 51 },
   })
   const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
     enabled: true,
@@ -87,7 +87,7 @@ export function AppProvider({ children }: PropsWithChildren) {
     }))
   }
 
-  function removePreparation(policyId: string) {
+  function removePreparation(policyId: number) {
     setPreparedPolicies((current) => {
       const next = { ...current }
       delete next[policyId]

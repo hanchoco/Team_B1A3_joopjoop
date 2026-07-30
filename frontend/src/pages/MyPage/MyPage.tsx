@@ -17,7 +17,7 @@ export default function MyPage() {
     { id: 'completed', label: '신청 완료', count: 2, icon: CheckCircle2 },
   ]
   const continuePolicy = preparing[0] || {
-    id: 'employment-support',
+    id: 4,
     title: '국민취업지원제도',
     progress: 40,
     completed: 2,
@@ -96,7 +96,7 @@ export default function MyPage() {
                 <p className="mt-1 text-sm text-gray-500">업데이트된 조건에 맞는 정책이에요.</p>
               </div>
               <button
-                onClick={() => navigate('/policies?filter=POSSIBILITY_HIGH')}
+                onClick={() => navigate('/policies?filter=ELIGIBLE')}
                 className="text-sm font-bold text-blue-600"
               >
                 더 많은 정보 보기
@@ -105,7 +105,7 @@ export default function MyPage() {
             {['청년 월세 한시 특별지원', '청년도약계좌', '청년 교통비 지원사업'].map((name) => (
               <button
                 key={name}
-                onClick={() => navigate('/policies/youth-rent')}
+                onClick={() => navigate('/policies/1')}
                 className="mt-4 flex w-full items-center justify-between border-t border-gray-100 pt-4 text-left text-sm font-semibold"
               >
                 {name}

@@ -1,30 +1,103 @@
-import { ArrowLeft, Bot, CheckCircle2, ClipboardCheck, Calculator, Star } from 'lucide-react'
-import { useState } from 'react'
+import { ArrowLeft, Bot, Calculator, CheckCircle2, ClipboardCheck, Star } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { getPolicyDetail, type PolicyDetail as PolicyDetailData } from '../../api/policies'
 import { useApp } from '../../store/useApp'
 
-const tabData = {
-  지원내용: ['월 최대 20만 원 지원', '최대 12개월, 총 240만 원', '본인 계좌로 매월 지급'],
-  신청조건: ['만 19~34세 청년', '부모와 별도 거주하는 무주택자', '청년가구 중위소득 60% 이하'],
-  신청방법: ['복지로 온라인 신청', '주소지 관할 주민센터 방문', '접수 후 소득·재산 조사'],
-  필요서류: ['임대차계약서 사본', '최근 3개월 월세 이체 내역', '가족관계증명서'],
-}
+type PolicyTab = '지원내용' | '신청조건' | '신청방법' | '필요서류'
 
-type PolicyTab = keyof typeof tabData
+const policyTabs: PolicyTab[] = ['지원내용', '신청조건', '신청방법', '필요서류']
 
 export default function PolicyDetail() {
   const navigate = useNavigate()
   const { id } = useParams()
   const [tab, setTab] = useState<PolicyTab>('지원내용')
+  const [result, setResult] = useState<{
+    policyId: number | null
+    policy: PolicyDetailData | null
+    error: string | null
+  }>({ policyId: null, policy: null, error: null })
   const { favoritePolicies, toggleFavorite } = useApp()
-  const policyId = id ?? 'youth-rent'
-  const policy = {
-    id: policyId,
-    title: '청년 월세 한시 특별지원',
-    category: '주거',
-    deadline: 23,
-  }
+  const policyId = Number(id)
+  const isInvalidPolicyId = !Number.isInteger(policyId) || policyId <= 0
+  const isLoading = !isInvalidPolicyId && result.policyId !== policyId
+  const policy = result.policyId === policyId ? result.policy : null
+  const error = isInvalidPolicyId
+    ? '올바르지 않은 정책 번호예요.'
+    : result.policyId === policyId
+      ? result.error
+      : null
   const isStarred = Boolean(favoritePolicies[policyId])
+
+  useEffect(() => {
+    let isCurrent = true
+
+    if (isInvalidPolicyId) return
+
+    getPolicyDetail(policyId)
+      .then((response) => {
+        if (isCurrent) setResult({ policyId, policy: response, error: null })
+      })
+      .catch(() => {
+        if (!isCurrent) return
+        setResult({
+          policyId,
+          policy: null,
+          error: '정책 정보를 불러오지 못했어요. 잠시 후 다시 확인해 주세요.',
+        })
+      })
+
+    return () => {
+      isCurrent = false
+    }
+  }, [isInvalidPolicyId, policyId])
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[420px] flex-col items-center justify-center gap-4 rounded-xl bg-amber-50/60 text-center">
+        <span className="h-10 w-10 animate-spin rounded-full border-4 border-amber-200 border-t-amber-500" />
+        <p className="text-sm font-semibold text-amber-900">
+          정책 내용을 차근차근 준비하고 있어요. 잠시만 기다려 주세요.
+        </p>
+      </div>
+    )
+  }
+
+  if (error || !policy) {
+    return (
+      <section className="text-center">
+        <p className="rounded-xl bg-rose-50 p-6 text-sm text-rose-700">
+          {error ?? '정책 정보를 찾을 수 없어요.'}
+        </p>
+        <button
+          type="button"
+          onClick={() => navigate('/policies')}
+          className="mt-4 text-sm font-bold text-blue-600"
+        >
+          정책 목록으로 돌아가기
+        </button>
+      </section>
+    )
+  }
+
+  const category = policy.categories.find((item) => item.is_primary)?.name ?? '기타'
+  const tabData: Record<PolicyTab, string[]> = {
+    지원내용: policy.benefits.map(
+      (benefit) => benefit.display_text ?? '혜택 상세 내용은 공고문을 확인해 주세요.',
+    ),
+    신청조건: policy.conditions.map((condition) => condition.description),
+    신청방법: [policy.application_method ?? '신청 방법은 공고문을 확인해 주세요.'],
+    필요서류: policy.documents.map((document) => document.document_name),
+  }
+  const benefitAmount =
+    policy.max_benefit_amount === null
+      ? '상세 확인 필요'
+      : `${Number(policy.max_benefit_amount).toLocaleString('ko-KR')}원`
+  const durationMonths = policy.benefits.find((benefit) => benefit.duration_months)?.duration_months
+  const deadline = policy.is_ongoing
+    ? '상시 신청'
+    : (policy.application_end_date ?? '상세 확인 필요')
+
   return (
     <section>
       <button
@@ -39,15 +112,22 @@ export default function PolicyDetail() {
             <div>
               <div className="flex items-center gap-2">
                 <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-600">
-                  주거
+                  {category}
                 </span>
-                <span className="text-xs text-gray-400">정책 ID · {id}</span>
+                <span className="text-xs text-gray-400">정책 ID · {policy.id}</span>
               </div>
-              <h1 className="mt-4 text-3xl font-black">청년 월세 한시 특별지원</h1>
+              <h1 className="mt-4 text-3xl font-black">{policy.title}</h1>
             </div>
             <button
               type="button"
-              onClick={() => toggleFavorite(policy)}
+              onClick={() =>
+                toggleFavorite({
+                  id: policy.id,
+                  title: policy.title,
+                  category,
+                  deadline: policy.days_until_deadline ?? 0,
+                })
+              }
               className="grid h-10 w-10 shrink-0 place-items-center rounded-lg transition hover:bg-amber-50"
               aria-label={isStarred ? '관심 정책 해제' : '관심 정책 등록'}
               aria-pressed={isStarred}
@@ -58,17 +138,17 @@ export default function PolicyDetail() {
             </button>
           </div>
           <p className="mt-3 max-w-2xl text-sm leading-7 text-gray-500">
-            월세 부담이 큰 청년이 조금 더 안정적으로 생활할 수 있도록 주거비를 지원해요.
+            {policy.description ?? policy.summary ?? '정책의 자세한 내용을 확인해 주세요.'}
           </p>
           <div className="mt-7 grid gap-3 sm:grid-cols-3">
             {[
-              ['예상 혜택', '월 최대 20만 원'],
-              ['지원 기간', '최대 12개월'],
-              ['신청 마감', '2026. 08. 20.'],
-            ].map(([k, v]) => (
-              <div key={k} className="rounded-lg bg-slate-50 p-4">
-                <p className="text-xs text-gray-500">{k}</p>
-                <p className="mt-2 font-bold">{v}</p>
+              ['예상 혜택', benefitAmount],
+              ['지원 기간', durationMonths ? `최대 ${durationMonths}개월` : '상세 확인 필요'],
+              ['신청 마감', deadline],
+            ].map(([label, value]) => (
+              <div key={label} className="rounded-lg bg-slate-50 p-4">
+                <p className="text-xs text-gray-500">{label}</p>
+                <p className="mt-2 font-bold">{value}</p>
               </div>
             ))}
           </div>
@@ -76,15 +156,19 @@ export default function PolicyDetail() {
         <aside className="rounded-xl border border-emerald-200 bg-emerald-50 p-6">
           <CheckCircle2 className="text-emerald-600" />
           <p className="mt-4 text-sm font-semibold text-emerald-700">조건 충족 요약</p>
-          <p className="mt-2 text-xl font-black">3개 중 3개 충족</p>
+          <p className="mt-2 text-xl font-black">매칭 점수 {policy.match_score ?? 0}점</p>
           <p className="mt-2 text-sm leading-6 text-gray-600">
-            현재 입력한 정보로는 신청 가능성이 높아요.
+            {policy.card_status === 'ELIGIBLE'
+              ? '현재 입력한 정보로는 신청 가능성이 높아요.'
+              : policy.card_status === 'NEEDS_REVIEW'
+                ? '추가로 확인할 조건이 있어요.'
+                : '현재 입력한 정보로는 충족하지 못한 조건이 있어요.'}
           </p>
         </aside>
       </div>
       <div className="mt-5 rounded-xl border border-gray-200 bg-white">
         <div className="flex overflow-x-auto border-b border-gray-200">
-          {(Object.keys(tabData) as PolicyTab[]).map((name) => (
+          {policyTabs.map((name) => (
             <button
               key={name}
               onClick={() => setTab(name)}
@@ -97,7 +181,10 @@ export default function PolicyDetail() {
         <div className="p-6">
           <h2 className="font-bold">{tab}</h2>
           <ul className="mt-4 space-y-3">
-            {tabData[tab].map((item) => (
+            {(tabData[tab].length > 0
+              ? tabData[tab]
+              : ['등록된 상세 내용이 없어요. 공고문을 확인해 주세요.']
+            ).map((item) => (
               <li key={item} className="flex items-center gap-3 text-sm text-gray-600">
                 <CheckCircle2 size={17} className="text-blue-600" />
                 {item}
@@ -108,19 +195,19 @@ export default function PolicyDetail() {
       </div>
       <div className="mt-5 grid gap-3 sm:grid-cols-3">
         <button
-          onClick={() => navigate(`/policies/${id}/simulation`)}
+          onClick={() => navigate(`/policies/${policy.id}/simulation`)}
           className="inline-flex items-center justify-center gap-2 rounded-lg border border-blue-600 bg-white px-4 py-3.5 font-bold text-blue-600"
         >
           <Calculator size={18} /> 예상 시뮬레이션 보기
         </button>
         <button
-          onClick={() => navigate(`/policies/${id}/prepare`)}
+          onClick={() => navigate(`/policies/${policy.id}/prepare`)}
           className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3.5 font-bold text-white"
         >
           <ClipboardCheck size={18} /> 가입 준비하기
         </button>
         <button
-          onClick={() => navigate(`/policies/${id}/ai-chat`)}
+          onClick={() => navigate(`/policies/${policy.id}/ai-chat`)}
           className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-3.5 font-bold"
         >
           <Bot size={18} /> AI에게 물어보기

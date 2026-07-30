@@ -15,10 +15,10 @@
   },
   "recommendedPolicies": [
     {
-      "id": "youth-rent-support",
+      "id": 1,
       "title": "청년 월세 지원",
       "category": "주거",
-      "possibility": "POSSIBILITY_HIGH",
+      "possibility": "ELIGIBLE",
       "possibilityLabel": "가능성 높음",
       "benefitSummary": "월 최대 20만 원, 최대 12개월 지원",
       "estimatedBenefit": 2400000,
@@ -28,10 +28,10 @@
       "isFavorite": true
     },
     {
-      "id": "youth-leap-account",
+      "id": 2,
       "title": "청년도약계좌",
       "category": "금융",
-      "possibility": "POSSIBILITY_HIGH",
+      "possibility": "ELIGIBLE",
       "possibilityLabel": "가능성 높음",
       "benefitSummary": "정부 기여금과 비과세 혜택 지원",
       "estimatedBenefit": 8000000,
@@ -41,10 +41,10 @@
       "isFavorite": false
     },
     {
-      "id": "youth-transport-support",
+      "id": 3,
       "title": "청년 대중교통비 지원",
       "category": "교통",
-      "possibility": "REVIEW_REQUIRED",
+      "possibility": "NEEDS_REVIEW",
       "possibilityLabel": "추가 확인 필요",
       "benefitSummary": "연간 교통비 최대 10만 원 지원",
       "estimatedBenefit": 100000,
@@ -55,7 +55,7 @@
     }
   ],
   "savingsSimulation": {
-    "policyId": "youth-rent-support",
+    "policyId": 1,
     "period": "MONTHLY",
     "before": {
       "housingCost": 600000

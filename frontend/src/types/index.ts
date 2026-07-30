@@ -42,15 +42,37 @@ export type UserProfileUpdate = Partial<
   >
 >
 
+export type EligibilityStatus = 'ELIGIBLE' | 'NEEDS_REVIEW' | 'INELIGIBLE'
+
+export interface Policy {
+  id: number
+  title: string
+  description: string
+  category: string
+  possibility: EligibilityStatus
+  chance: string
+  benefit: string
+  condition: string
+  matchedConditions: number
+  totalConditions: number
+  deadline: number
+  minAge: number
+  maxAge: number
+  regions: string[]
+  incomeLimit: number
+  employments: string[]
+  housingTypes: string[]
+}
+
 export interface FavoritePolicy {
-  id: string
+  id: number
   title: string
   category: string
   deadline: number
 }
 
 export interface PreparedPolicy {
-  id: string
+  id: number
   title: string
   progress: number
   completed: number
@@ -73,10 +95,10 @@ export interface AppContextValue {
   logout: () => void
   userProfile: UserProfile
   updateUserProfile: (profile: UserProfileUpdate) => void
-  preparedPolicies: Record<string, PreparedPolicy>
+  preparedPolicies: Record<number, PreparedPolicy>
   updatePreparation: (policy: PreparedPolicy) => void
-  removePreparation: (policyId: string) => void
-  favoritePolicies: Record<string, FavoritePolicy>
+  removePreparation: (policyId: number) => void
+  favoritePolicies: Record<number, FavoritePolicy>
   toggleFavorite: (policy: FavoritePolicy) => void
   notificationSettings: NotificationSettings
   updateNotificationSettings: (settings: NotificationSettings) => void

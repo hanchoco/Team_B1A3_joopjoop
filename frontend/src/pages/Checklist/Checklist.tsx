@@ -58,8 +58,8 @@ const documents = [
 ] as const
 
 const policyNames = {
-  'youth-rent': '청년 월세 한시 특별지원',
-  'employment-support': '국민취업지원제도',
+  1: '청년 월세 한시 특별지원',
+  4: '국민취업지원제도',
 }
 
 type DocumentItem = (typeof documents)[number]
@@ -68,7 +68,7 @@ export default function Checklist() {
   const navigate = useNavigate()
   const { id } = useParams()
   const { preparedPolicies, updatePreparation, removePreparation } = useApp()
-  const policyId = id ?? 'youth-rent'
+  const policyId = Number(id ?? 1)
   const saved = preparedPolicies[policyId]
   const [checkedIds, setCheckedIds] = useState<Set<number>>(
     () => new Set(saved?.completedIds ?? []),

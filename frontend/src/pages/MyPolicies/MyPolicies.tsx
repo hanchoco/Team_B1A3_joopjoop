@@ -6,7 +6,7 @@ import { useApp } from '../../store/useApp'
 type PolicyTab = 'interest' | 'preparing' | 'completed'
 
 interface DisplayPolicy {
-  id: string
+  id: number
   title: string
   category?: string
   deadline?: number
@@ -26,7 +26,7 @@ const tabs: { id: PolicyTab; label: string; icon: typeof Bookmark }[] = [
 const mockPolicies = {
   preparing: [
     {
-      id: 'employment-support',
+      id: 4,
       title: '국민취업지원제도',
       progress: 40,
       completed: 2,
@@ -34,7 +34,7 @@ const mockPolicies = {
       deadline: 12,
     },
   ],
-  completed: [{ id: 'transport', title: '서울시 청년 교통비 지원', completedAt: '2026. 07. 18.' }],
+  completed: [{ id: 3, title: '서울시 청년 교통비 지원', completedAt: '2026. 07. 18.' }],
 }
 
 export default function MyPolicies() {
@@ -49,7 +49,7 @@ export default function MyPolicies() {
 
   const policies = useMemo<DisplayPolicy[]>(() => {
     if (isUrgentView) {
-      const combined = new Map<string, DisplayPolicy>()
+      const combined = new Map<number, DisplayPolicy>()
       Object.values(favoritePolicies).forEach((policy) => {
         combined.set(policy.id, { ...policy, state: 'interest' })
       })
@@ -64,7 +64,7 @@ export default function MyPolicies() {
       )
     }
     if (tab === 'preparing') {
-      const merged = new Map<string, DisplayPolicy>(
+      const merged = new Map<number, DisplayPolicy>(
         mockPolicies.preparing.map((policy) => [policy.id, policy]),
       )
       Object.values(preparedPolicies).forEach((policy) => merged.set(policy.id, policy))
