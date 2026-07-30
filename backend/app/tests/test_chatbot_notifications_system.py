@@ -14,6 +14,7 @@ from app.db.session import SessionLocal
 from app.models.policy import Policy
 from app.models.policy_condition import PolicyCondition
 from app.models.user_policy import UserPolicyState
+from app.services import notification_service
 from app.services.ai.solar_client import SolarClient, SolarClientError
 from app.services.notification.scheduler import KST
 from app.services.notification_service import create_due_deadline_notifications
@@ -157,6 +158,30 @@ def _bookmark_policy(*, user_id: int, policy_id: int, bookmarked: bool) -> None:
 
 def _enum_value(value: object) -> str:
     return str(getattr(value, "value", value))
+
+
+class _RecordingEmailAdapter:
+    """Fake EmailAdapter that records calls instead of sending real mail."""
+
+    def __init__(self) -> None:
+        self.calls: list[dict[str, str]] = []
+
+    async def send_email(
+        self,
+        *,
+        recipient: str,
+        title: str,
+        body: str,
+        dedup_key: str,
+    ) -> None:
+        self.calls.append(
+            {
+                "recipient": recipient,
+                "title": title,
+                "body": body,
+                "dedup_key": dedup_key,
+            }
+        )
 
 
 def test_chatbot_uses_mocked_solar_and_only_selected_policy(
@@ -596,6 +621,107 @@ def test_deadline_generation_respects_notification_toggles(
     )
     assert feed_response.status_code == 200, feed_response.text
     assert feed_response.json() == []
+
+
+def test_deadline_notification_stays_pending_without_smtp_configured(
+    client: TestClient,
+) -> None:
+    """SMTP 미설정(기본 상태)에서는 기존과 동일하게 PENDING으로 남아야 한다(회귀)."""
+
+    fixed_now = datetime(2026, 7, 29, 12, 30, tzinfo=UTC)
+    email = "no-smtp-user@example.com"
+    token, user_id = _signup(client, email=email)
+    settings_response = client.get(
+        "/api/v1/users/me/notification-settings",
+        headers=_headers(token),
+    )
+    assert settings_response.status_code == 200, settings_response.text
+    policy_id = _seed_policy(
+        external_id="no-smtp-dday",
+        title="SMTP 미설정 정책",
+        application_end_date=fixed_now.date(),
+    )
+    _bookmark_policy(user_id=user_id, policy_id=policy_id, bookmarked=True)
+
+    with SessionLocal() as db:
+        created = create_due_deadline_notifications(db, as_of=fixed_now)
+
+    assert len(created) == 1
+    assert created[0].sent_at is None
+    assert _enum_value(created[0].send_status) == "PENDING"
+
+
+def test_deadline_notification_sends_email_when_adapter_configured(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """어댑터가 있으면 실제로 send_email이 호출되고 SENT/sent_at이 채워져야 한다."""
+
+    fake_adapter = _RecordingEmailAdapter()
+    monkeypatch.setattr(notification_service, "get_email_adapter", lambda: fake_adapter)
+
+    fixed_now = datetime(2026, 7, 29, 12, 30, tzinfo=UTC)
+    email = "smtp-configured-user@example.com"
+    token, user_id = _signup(client, email=email)
+    settings_response = client.get(
+        "/api/v1/users/me/notification-settings",
+        headers=_headers(token),
+    )
+    assert settings_response.status_code == 200, settings_response.text
+    title = "SMTP 발송 대상 정책"
+    policy_id = _seed_policy(
+        external_id="smtp-configured-dday",
+        title=title,
+        application_end_date=fixed_now.date(),
+    )
+    _bookmark_policy(user_id=user_id, policy_id=policy_id, bookmarked=True)
+
+    with SessionLocal() as db:
+        created = create_due_deadline_notifications(db, as_of=fixed_now)
+
+    assert len(created) == 1
+    assert len(fake_adapter.calls) == 1
+    call = fake_adapter.calls[0]
+    assert call["recipient"] == email
+    assert call["title"] == f"[마감일] {title}"
+    assert call["body"] == f"관심 정책 '{title}'의 신청 마감일입니다."
+    assert created[0].sent_at is not None
+    assert _enum_value(created[0].send_status) == "SENT"
+
+
+def test_deadline_notification_skips_email_when_channel_disabled(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """email_enabled=False면 어댑터가 있어도 send_email이 호출되지 않아야 한다."""
+
+    fake_adapter = _RecordingEmailAdapter()
+    monkeypatch.setattr(notification_service, "get_email_adapter", lambda: fake_adapter)
+
+    fixed_now = datetime(2026, 7, 29, 12, 30, tzinfo=UTC)
+    token, user_id = _signup(client, email="email-disabled-user@example.com")
+    headers = _headers(token)
+    settings_response = client.patch(
+        "/api/v1/users/me/notification-settings",
+        headers=headers,
+        json={"email_enabled": False},
+    )
+    assert settings_response.status_code == 200, settings_response.text
+
+    policy_id = _seed_policy(
+        external_id="email-disabled-dday",
+        title="이메일 비활성 정책",
+        application_end_date=fixed_now.date(),
+    )
+    _bookmark_policy(user_id=user_id, policy_id=policy_id, bookmarked=True)
+
+    with SessionLocal() as db:
+        created = create_due_deadline_notifications(db, as_of=fixed_now)
+
+    assert len(created) == 1
+    assert fake_adapter.calls == []
+    assert created[0].sent_at is None
+    assert _enum_value(created[0].send_status) == "PENDING"
 
 
 @pytest.mark.parametrize(
