@@ -32,7 +32,7 @@ export default function UserProfile() {
       age: Number(form.age),
       monthlyIncome: Number(form.monthlyIncome),
     })
-    navigate('/policies?filter=POSSIBILITY_HIGH', {
+    navigate('/policies?filter=ELIGIBLE', {
       state: { profileSaved: true },
     })
   }

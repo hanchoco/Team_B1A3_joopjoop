@@ -13,7 +13,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useApp } from '../../store/useApp'
 
-type PossibilityFilter = 'POSSIBILITY_HIGH' | 'REVIEW_REQUIRED' | 'ALL'
+type PossibilityFilter = 'ELIGIBLE' | 'NEEDS_REVIEW' | 'ALL'
 type PolicySort = 'recommended' | 'deadline'
 
 interface PolicyQueryProfile {
@@ -37,7 +37,7 @@ const policies = [
     title: '청년 월세 한시 특별지원',
     description: '월세 부담이 큰 청년이 조금 더 안정적으로 생활할 수 있도록 주거비를 지원해요.',
     category: '주거',
-    possibility: 'POSSIBILITY_HIGH',
+    possibility: 'ELIGIBLE',
     chance: '가능성 높음',
     benefit: '월 최대 20만 원 · 최대 12개월',
     condition: '현재 조건 5개 중 4개 충족',
@@ -56,7 +56,7 @@ const policies = [
     title: '청년도약계좌',
     description: '청년이 꾸준히 자산을 형성할 수 있도록 정부 기여금과 비과세 혜택을 지원해요.',
     category: '금융',
-    possibility: 'POSSIBILITY_HIGH',
+    possibility: 'ELIGIBLE',
     chance: '가능성 높음',
     benefit: '만기 약 5,400만 원 · 정부 기여금 지원',
     condition: '현재 조건 5개 중 5개 충족',
@@ -75,7 +75,7 @@ const policies = [
     title: '청년 교통비 지원사업',
     description: '대중교통을 자주 이용하는 청년의 생활비 부담을 덜어드려요.',
     category: '교통',
-    possibility: 'REVIEW_REQUIRED',
+    possibility: 'NEEDS_REVIEW',
     chance: '추가 확인 필요',
     benefit: '월 최대 5만 원 · 교통비 환급',
     condition: '현재 조건 5개 중 3개 충족',
@@ -94,7 +94,7 @@ const policies = [
     title: '청년 재직자 경력 지원',
     description: '청년 재직자의 직무 역량 향상과 안정적인 경력 개발을 지원해요.',
     category: '고용',
-    possibility: 'REVIEW_REQUIRED',
+    possibility: 'NEEDS_REVIEW',
     chance: '추가 확인 필요',
     benefit: '교육비 최대 100만 원',
     condition: '현재 조건 5개 중 2개 충족',
@@ -111,8 +111,8 @@ const policies = [
 ]
 
 const possibilityFilters = [
-  { value: 'POSSIBILITY_HIGH', label: '가능성 높음' },
-  { value: 'REVIEW_REQUIRED', label: '추가 확인 필요' },
+  { value: 'ELIGIBLE', label: '가능성 높음' },
+  { value: 'NEEDS_REVIEW', label: '추가 확인 필요' },
   { value: 'ALL', label: '전체' },
 ]
 
@@ -139,8 +139,8 @@ function queryPolicies({ profile, filter, category, sort }: PolicyQuery) {
         ageMatch && regionMatch && incomeMatch && employmentMatch && housingMatch
       const allConditionsFulfilled = policy.matchedConditions === policy.totalConditions
       const computedPossibility =
-        allProfileConditionsMatch && allConditionsFulfilled ? 'POSSIBILITY_HIGH' : 'REVIEW_REQUIRED'
-      const chance = computedPossibility === 'POSSIBILITY_HIGH' ? '가능성 높음' : '추가 확인 필요'
+        allProfileConditionsMatch && allConditionsFulfilled ? 'ELIGIBLE' : 'NEEDS_REVIEW'
+      const chance = computedPossibility === 'ELIGIBLE' ? '가능성 높음' : '추가 확인 필요'
       return { ...policy, possibility: computedPossibility, chance }
     })
     .filter((policy) => {
@@ -152,7 +152,7 @@ function queryPolicies({ profile, filter, category, sort }: PolicyQuery) {
       if (sort === 'deadline') return a.deadline - b.deadline
 
       if (a.possibility !== b.possibility) {
-        return a.possibility === 'POSSIBILITY_HIGH' ? -1 : 1
+        return a.possibility === 'ELIGIBLE' ? -1 : 1
       }
 
       const aConditionRatio = a.matchedConditions / a.totalConditions
@@ -167,7 +167,7 @@ export default function PolicyList() {
   const [filterOpen, setFilterOpen] = useState(false)
   const { favoritePolicies, toggleFavorite, userProfile } = useApp()
   const selectedCategory = searchParams.get('category')
-  const activeFilter = searchParams.get('filter') || 'POSSIBILITY_HIGH'
+  const activeFilter = searchParams.get('filter') || 'ELIGIBLE'
   const activeSort: PolicySort =
     searchParams.get('sort') === 'deadline' ? 'deadline' : 'recommended'
   const visiblePolicies = queryPolicies({
@@ -186,7 +186,7 @@ export default function PolicyList() {
   useEffect(() => {
     if (!searchParams.has('filter')) {
       const nextParams = new URLSearchParams(searchParams)
-      nextParams.set('filter', 'POSSIBILITY_HIGH')
+      nextParams.set('filter', 'ELIGIBLE')
       setSearchParams(nextParams, { replace: true })
     }
   }, [searchParams, setSearchParams])
