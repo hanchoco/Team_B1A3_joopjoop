@@ -6,26 +6,46 @@ import {
   CreditCard,
   Heart,
   House,
+  MoreHorizontal,
   Search,
   TrainFront,
 } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { listCategories } from '../../api/categories'
 import BrandLogo from '../../components/common/BrandLogo'
 import BenefitCoins from '../../components/common/BenefitCoins'
 import { useApp } from '../../store/useApp'
+import type { CategoryResponse } from '../../types/api'
 
-const categories = [
-  { id: 'housing', name: '주거', icon: House },
-  { id: 'transport', name: '교통', icon: TrainFront },
-  { id: 'finance', name: '금융', icon: CreditCard },
-  { id: 'tax', name: '세금', icon: Calculator },
-  { id: 'employment', name: '고용', icon: BriefcaseBusiness },
-  { id: 'welfare', name: '복지', icon: Heart },
-]
+const ICON_BY_CODE: Record<string, typeof House> = {
+  HOUSING: House,
+  TRANSPORT: TrainFront,
+  FINANCE: CreditCard,
+  TAX: Calculator,
+  EMPLOYMENT: BriefcaseBusiness,
+  WELFARE: Heart,
+}
 
 export default function Dashboard() {
   const navigate = useNavigate()
   const { isLoggedIn, userProfile } = useApp()
+  const [categories, setCategories] = useState<CategoryResponse[]>([])
+
+  useEffect(() => {
+    let cancelled = false
+    listCategories()
+      .then((data) => {
+        if (!cancelled) setCategories(data.filter((item) => item.code in ICON_BY_CODE))
+      })
+      .catch(() => {
+        if (!cancelled) setCategories([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   return (
     <section className="space-y-8">
       {' '}
@@ -126,16 +146,19 @@ export default function Dashboard() {
           </button>
         </div>{' '}
         <div className="mt-4 grid grid-cols-3 gap-3 md:grid-cols-6">
-          {categories.map(({ id, name, icon: Icon }) => (
-            <button
-              key={id}
-              onClick={() => navigate(`/categories/${id}/questions`)}
-              className="flex h-24 flex-col items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white text-sm font-semibold transition hover:border-blue-300 hover:bg-blue-50"
-            >
-              <Icon size={24} className="text-gray-500" />
-              {name}
-            </button>
-          ))}
+          {categories.map(({ id, code, name }) => {
+            const Icon = ICON_BY_CODE[code] ?? MoreHorizontal
+            return (
+              <button
+                key={id}
+                onClick={() => navigate(`/categories/${id}/questions`)}
+                className="flex h-24 flex-col items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white text-sm font-semibold transition hover:border-blue-300 hover:bg-blue-50"
+              >
+                <Icon size={24} className="text-gray-500" />
+                {name}
+              </button>
+            )
+          })}
         </div>{' '}
       </div>{' '}
       <div>

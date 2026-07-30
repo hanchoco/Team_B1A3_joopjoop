@@ -5,8 +5,9 @@ from __future__ import annotations
 from datetime import datetime
 
 from fastapi.testclient import TestClient
-from sqlalchemy import select
+from sqlalchemy import func, select
 
+from app.crud.categories import ensure_default_categories, ensure_default_category_questions
 from app.db.session import SessionLocal
 from app.models.user import AccountStatus, User
 from app.models.user_category_profile import (
@@ -626,3 +627,49 @@ def test_categories_questions_and_answer_upsert(client: TestClient) -> None:
         assert len(stored_answers) == 1
         assert stored_answers[0].id == created_answer["id"]
         assert stored_answers[0].answer_json == {"value": "NOT_ENROLLED"}
+
+
+def test_ensure_default_category_questions_seeds_employment_only(
+    client: TestClient,
+) -> None:
+    """Seeding creates the five employment.* questions and is idempotent."""
+
+    del client  # only used to trigger the autouse reset_database fixture
+
+    with SessionLocal() as db:
+        ensure_default_categories(db)
+        first_pass = ensure_default_category_questions(db)
+        second_pass = ensure_default_category_questions(db)
+
+    assert len(first_pass) == 5
+    assert len(second_pass) == 5
+
+    with SessionLocal() as db:
+        employment = db.scalar(select(Category).where(Category.code == CategoryCode.EMPLOYMENT))
+        assert employment is not None
+        employment_questions = list(
+            db.scalars(
+                select(CategoryQuestion)
+                .where(CategoryQuestion.category_id == employment.id)
+                .order_by(CategoryQuestion.display_order.asc())
+            ).all()
+        )
+        assert [question.question_key for question in employment_questions] == [
+            "employment.company_size",
+            "employment.contract_type",
+            "employment.tenure_months",
+            "employment.insurance_enrolled",
+            "employment.job_field",
+        ]
+        assert all(question.is_used_for_matching for question in employment_questions)
+
+        other_categories = db.scalars(
+            select(Category).where(Category.code != CategoryCode.EMPLOYMENT)
+        ).all()
+        for category in other_categories:
+            count = db.scalar(
+                select(func.count(CategoryQuestion.id)).where(
+                    CategoryQuestion.category_id == category.id
+                )
+            )
+            assert count == 0

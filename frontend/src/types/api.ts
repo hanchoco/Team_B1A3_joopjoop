@@ -197,3 +197,98 @@ export interface CategoryResponse {
   is_active: boolean
   questions: unknown[]
 }
+
+export type AnswerType = 'SINGLE_SELECT' | 'MULTI_SELECT' | 'NUMBER' | 'BOOLEAN' | 'TEXT' | 'DATE'
+
+export interface CategoryQuestionResponse {
+  id: number
+  category_id: number
+  question_key: string
+  label: string
+  description: string | null
+  answer_type: AnswerType
+  options_json: unknown
+  unit: string | null
+  is_required: boolean
+  is_used_for_matching: boolean
+  display_order: number
+  is_active: boolean
+}
+
+export interface CategoryAnswerUpsert {
+  question_id: number
+  answer_json: { value: unknown }
+}
+
+export interface CategoryAnswerResponse extends CategoryAnswerUpsert {
+  id: number
+  user_id: number
+  answered_at: string
+  updated_at: string
+}
+
+// Simulator DTOs (see backend/app/schemas/simulator.py). Money/percentage
+// fields are plain numbers over the wire.
+
+export type SimulatorCategory =
+  | 'HOUSING'
+  | 'TRANSPORT'
+  | 'FINANCE'
+  | 'TAX'
+  | 'EMPLOYMENT'
+  | 'WELFARE'
+
+export interface SimulatorResult {
+  category: SimulatorCategory
+  monthly_before_amount: number | string
+  monthly_after_amount: number | string
+  monthly_savings_amount: number | string
+  annual_before_amount: number | string
+  annual_after_amount: number | string
+  annual_savings_amount: number | string
+  total_benefit_amount: number | string
+  support_months: number
+  breakdown: Record<string, number | string>
+  disclaimer: string
+}
+
+export interface HousingSimulatorRequest {
+  monthly_rent_amount: number
+  monthly_management_fee_amount?: number
+  deposit_amount?: number
+  monthly_support_amount: number
+  support_months?: number
+}
+
+export interface TransportSimulatorRequest {
+  monthly_transport_cost_amount: number
+  reimbursement_rate_percent: number
+  monthly_support_cap_amount?: number | null
+  support_months?: number
+}
+
+export interface FinanceSimulatorRequest {
+  principal_amount: number
+  annual_interest_rate_percent: number
+  interest_reduction_rate_percent: number
+  support_months?: number
+}
+
+export interface TaxSimulatorRequest {
+  annual_tax_amount: number
+  tax_reduction_rate_percent: number
+  max_reduction_amount?: number | null
+  support_months?: number
+}
+
+export interface EmploymentSimulatorRequest {
+  monthly_income_amount: number
+  monthly_subsidy_amount: number
+  support_months?: number
+}
+
+export interface WelfareSimulatorRequest {
+  monthly_living_cost_amount: number
+  monthly_benefit_amount: number
+  support_months?: number
+}

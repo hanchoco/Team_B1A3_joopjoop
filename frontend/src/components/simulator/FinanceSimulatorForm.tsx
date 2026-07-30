@@ -6,25 +6,40 @@ export default function FinanceSimulatorForm({ values, onChange }: SimulatorForm
     onChange(event.target.name, Number(event.target.value))
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
+    <div className="grid gap-4 sm:grid-cols-3">
       <label className="text-sm font-semibold">
-        월 납입액
+        대출/저축 원금
         <input
-          name="monthlyContribution"
+          name="principal_amount"
           type="number"
           min={0}
-          value={values.monthlyContribution ?? 0}
+          value={values.principal_amount ?? 0}
           onChange={update}
           className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 font-normal"
         />
       </label>
       <label className="text-sm font-semibold">
-        납입 기간(개월)
+        연 이자율(%)
         <input
-          name="contributionMonths"
+          name="annual_interest_rate_percent"
           type="number"
-          min={1}
-          value={values.contributionMonths ?? 12}
+          min={0}
+          max={100}
+          step={0.01}
+          value={values.annual_interest_rate_percent ?? 0}
+          onChange={update}
+          className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 font-normal"
+        />
+      </label>
+      <label className="text-sm font-semibold">
+        정책 이자 감면율(%)
+        <input
+          name="interest_reduction_rate_percent"
+          type="number"
+          min={0}
+          max={100}
+          step={0.01}
+          value={values.interest_reduction_rate_percent ?? 0}
           onChange={update}
           className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 font-normal"
         />

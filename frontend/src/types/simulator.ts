@@ -1,4 +1,4 @@
-export type SimulatorInputValue = string | number
+export type SimulatorInputValue = number
 
 export interface SimulatorFormProps {
   values: Record<string, SimulatorInputValue>

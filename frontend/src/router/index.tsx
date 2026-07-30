@@ -129,7 +129,14 @@ function AppLayout() {
               </RequireAuth>
             }
           />
-          <Route path="/policies/:id/simulation" element={<Simulator />} />
+          <Route
+            path="/policies/:id/simulation"
+            element={
+              <RequireAuth>
+                <Simulator />
+              </RequireAuth>
+            }
+          />
           <Route path="/policies/:id/impact" element={<ImpactView />} />
           <Route path="/impact" element={<ImpactView />} />
           <Route
