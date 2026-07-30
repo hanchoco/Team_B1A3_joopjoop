@@ -6,7 +6,8 @@ from datetime import date
 
 import pytest
 
-from app.schemas.policy import ConditionStatus, PolicyCardStatus
+from app.models.user_policy import EligibilityStatus
+from app.schemas.policy import ConditionStatus
 from app.services.policy_engine.matcher import (
     evaluate_condition,
     evaluate_policy,
@@ -155,7 +156,7 @@ def test_policy_is_likely_only_when_every_condition_is_satisfied() -> None:
 
     result = evaluate_policy(conditions, context)
 
-    assert result.status is PolicyCardStatus.LIKELY_ELIGIBLE
+    assert result.status is EligibilityStatus.ELIGIBLE
     assert result.satisfied_condition_count == 2
     assert result.total_condition_count == 2
 
@@ -168,7 +169,7 @@ def test_truly_unsatisfied_required_condition_makes_card_ineligible() -> None:
         ],
         {"profile": {"employment_status_code": "EMPLOYED", "household_size": 1}},
     )
-    assert result.status is PolicyCardStatus.INELIGIBLE
+    assert result.status is EligibilityStatus.INELIGIBLE
 
 
 def test_manual_check_condition_makes_card_need_review() -> None:
@@ -180,7 +181,7 @@ def test_manual_check_condition_makes_card_need_review() -> None:
         ],
         {"profile": {"employment_status_code": "EMPLOYED", "household_size": 1}},
     )
-    assert result.status is PolicyCardStatus.NEEDS_REVIEW
+    assert result.status is EligibilityStatus.NEEDS_REVIEW
     assert result.total_condition_count == 2
 
 
@@ -196,4 +197,4 @@ def test_alternate_eligibility_paths_use_or_across_groups() -> None:
 
     result = evaluate_policy(conditions, context)
 
-    assert result.status is PolicyCardStatus.LIKELY_ELIGIBLE
+    assert result.status is EligibilityStatus.ELIGIBLE

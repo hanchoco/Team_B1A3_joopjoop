@@ -28,8 +28,10 @@ _API_KEY = os.environ["UPSTAGE_API_KEY"]
 _BASE_URL = os.environ.get("UPSTAGE_BASE_URL", "https://api.upstage.ai/v1")
 
 # 동기(sync) 컨텍스트에서 쓰는 공용 클라이언트/모델명.
-# checklist_generator.py의 generate_application_checklist()(S10 실시간 화면용,
-# 동기 함수)가 이걸 가져다 씁니다. 나머지(A02 파이프라인)는 아래 SolarClient(비동기)를 씁니다.
+# checklist_generator.py의 generate_application_checklist()(동기 함수)가 이걸
+# 가져다 쓰도록 설계됐지만, 그 함수 자체가 현재 어디서도 호출되지 않는 미사용
+# 함수라 이 client도 사실상 쓰이지 않습니다. 나머지(A02 파이프라인)는 아래
+# SolarClient(비동기)를 씁니다.
 client = OpenAI(api_key=_API_KEY, base_url=_BASE_URL)
 SOLAR_MODEL = os.environ.get("UPSTAGE_SOLAR_MODEL", "solar-pro2")
 

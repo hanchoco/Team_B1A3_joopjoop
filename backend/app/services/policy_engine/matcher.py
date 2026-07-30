@@ -1,8 +1,8 @@
 """Pure policy eligibility matching.
 
 This module accepts already-loaded condition/context objects and never performs
-database access.  Condition-level results use three states, while the policy
-card intentionally exposes only the two states required by the product flow.
+database access.  Both condition-level and policy-level results use the same
+three-state vocabulary (``EligibilityStatus``), matched to how each is persisted.
 """
 
 from __future__ import annotations
@@ -13,7 +13,8 @@ from datetime import date
 from enum import Enum
 from typing import Any, Protocol
 
-from app.schemas.policy import ConditionStatus, PolicyCardStatus
+from app.models.user_policy import EligibilityStatus
+from app.schemas.policy import ConditionStatus
 from app.services.policy_engine.rules import (
     MISSING_VALUE,
     ConditionCheckMode,
@@ -54,7 +55,7 @@ class ConditionEvaluation:
 class PolicyEvaluation:
     """Aggregated card result and its auditable condition details."""
 
-    status: PolicyCardStatus
+    status: EligibilityStatus
     condition_results: tuple[ConditionEvaluation, ...]
     satisfied_condition_count: int
     review_condition_count: int
@@ -253,24 +254,24 @@ def evaluate_policy(
         groups[group_no].append(result.status)
 
     if not groups:
-        card_status = PolicyCardStatus.NEEDS_REVIEW
+        card_status = EligibilityStatus.NEEDS_REVIEW
     else:
         group_statuses = []
         for statuses in groups.values():
             if ConditionStatus.UNSATISFIED in statuses:
-                group_statuses.append(PolicyCardStatus.INELIGIBLE)
+                group_statuses.append(EligibilityStatus.INELIGIBLE)
             elif ConditionStatus.NEEDS_REVIEW in statuses:
-                group_statuses.append(PolicyCardStatus.NEEDS_REVIEW)
+                group_statuses.append(EligibilityStatus.NEEDS_REVIEW)
             else:
-                group_statuses.append(PolicyCardStatus.LIKELY_ELIGIBLE)
+                group_statuses.append(EligibilityStatus.ELIGIBLE)
 
         # 그룹간 OR: 하나라도 통과하는 그룹이 있으면 전체 통과
-        if PolicyCardStatus.LIKELY_ELIGIBLE in group_statuses:
-            card_status = PolicyCardStatus.LIKELY_ELIGIBLE
-        elif PolicyCardStatus.NEEDS_REVIEW in group_statuses:
-            card_status = PolicyCardStatus.NEEDS_REVIEW
+        if EligibilityStatus.ELIGIBLE in group_statuses:
+            card_status = EligibilityStatus.ELIGIBLE
+        elif EligibilityStatus.NEEDS_REVIEW in group_statuses:
+            card_status = EligibilityStatus.NEEDS_REVIEW
         else:
-            card_status = PolicyCardStatus.INELIGIBLE
+            card_status = EligibilityStatus.INELIGIBLE
 
     return PolicyEvaluation(
         status=card_status,

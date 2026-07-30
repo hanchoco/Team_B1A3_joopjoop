@@ -8,11 +8,16 @@
   + 필요서류 안내
   위 전체를 "진짜 목록(체크리스트)"으로 보여주고, 동시에 AI가 쉬운 말로도 설명한다.
 
-역할 분리:
+역할 분리 (설계 당시 의도, 현재는 미채택):
   - Backend/Policy Engine: 각 조건이 충족/불충족/확인필요 중 무엇인지 판정. (condition_results)
   - AI: 판정을 바꾸지 않고, (1) 불충족 항목엔 예외조항이 있는지 확인해서 설명,
     (2) 충족 항목도 포함해 구조화 데이터에 없는 추가 확인사항을 안내,
     (3) 서류 체크리스트와 전체 요약을 자연어로 정리합니다.
+
+주의: 체크리스트 화면(가입 준비하기)에 AI 설명을 붙이는 기능은 기획에서 빠졌습니다.
+아래 generate_application_checklist()는 이 역할 분리를 구현한 함수이지만, 현재
+checklist_service.py/api/v1/checklist.py 등 어떤 호출부에서도 쓰이지 않는 미사용
+함수입니다. 이 기능을 다시 채택하기 전까지는 호출하지 마세요.
 """
 
 import json
@@ -106,8 +111,9 @@ def validate_checklist_payload(payload: dict) -> list[GeneratedDocument]:
 
 
 # ============================================================
-# 2. S10 실시간 화면용 - 조건+예외+참여제한+서류 통합 체크리스트
-#    (seed 파이프라인과 무관, 별도 API 엔드포인트에서 사용될 함수)
+# 2. (미사용) S10 실시간 화면용으로 설계했던 조건+예외+참여제한+서류 통합 체크리스트
+#    (seed 파이프라인과 무관). 체크리스트에 AI 설명을 붙이는 기능 자체가 기획에서
+#    제외되어, 현재 이 함수를 호출하는 API 엔드포인트/서비스가 없습니다.
 # ============================================================
 
 def generate_application_checklist(
@@ -117,6 +123,10 @@ def generate_application_checklist(
     ai_interpreted: dict,
 ) -> dict:
     """
+    (미사용) 체크리스트 화면에 AI 설명을 붙이는 기능은 기획에서 제외되어, 현재
+    checklist_service.py 등 어떤 호출부에서도 이 함수를 쓰지 않습니다. 아래 시그니처와
+    동작은 설계 당시 의도를 남겨둔 것이며, 이 기능을 다시 채택할 때 참고하세요.
+
     policy: {"id": str, "name": str}
     condition_results: Backend가 계산한 "전체" 조건 결과 (충족/불충족/확인필요 다 포함)
     requirements: policy_documents 테이블 목록 그대로

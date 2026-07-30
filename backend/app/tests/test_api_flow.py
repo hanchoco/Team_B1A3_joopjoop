@@ -131,7 +131,7 @@ def test_policy_recommendation_and_checklist_flow(client: TestClient) -> None:
         headers=headers,
     )
     assert list_response.status_code == 200, list_response.text
-    assert list_response.json()["items"][0]["card_status"] == "가능성 높음"
+    assert list_response.json()["items"][0]["card_status"] == "ELIGIBLE"
 
     match_response = client.get(
         f"/api/v1/policies/{policy_id}/match",

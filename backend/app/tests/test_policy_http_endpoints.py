@@ -246,8 +246,8 @@ def test_policy_discovery_match_and_bookmark_lifecycle(
         seeded.review_policy_id,
     ]
     assert [item["card_status"] for item in list_body["items"]] == [
-        "가능성 높음",
-        "추가 확인 필요",
+        "ELIGIBLE",
+        "NEEDS_REVIEW",
     ]
     assert _as_decimal(list_body["items"][0]["match_score"]) == Decimal("100.00")
     assert _as_decimal(list_body["items"][0]["estimated_benefit_amount"]) == Decimal("2400000.00")
@@ -313,7 +313,7 @@ def test_policy_discovery_match_and_bookmark_lifecycle(
     assert recommendations.status_code == 200, recommendations.text
     assert len(recommendations.json()) == 1
     assert recommendations.json()[0]["id"] == seeded.eligible_policy_id
-    assert recommendations.json()[0]["card_status"] == "가능성 높음"
+    assert recommendations.json()[0]["card_status"] == "ELIGIBLE"
 
     detail = client.get(
         f"/api/v1/policies/{seeded.eligible_policy_id}",
@@ -324,7 +324,7 @@ def test_policy_discovery_match_and_bookmark_lifecycle(
     assert detail_body["id"] == seeded.eligible_policy_id
     assert detail_body["title"] == "Alpha 청년 주거 지원"
     assert detail_body["description"] == "만 19세부터 34세까지 신청할 수 있습니다."
-    assert detail_body["card_status"] == "가능성 높음"
+    assert detail_body["card_status"] == "ELIGIBLE"
     assert detail_body["categories"][0]["id"] == seeded.housing_category_id
     assert detail_body["categories"][0]["code"] == "HOUSING"
     assert detail_body["conditions"][0]["condition_key"] == "profile.age"
@@ -344,7 +344,7 @@ def test_policy_discovery_match_and_bookmark_lifecycle(
     assert match.status_code == 200, match.text
     match_body = match.json()
     assert match_body["policy_id"] == seeded.eligible_policy_id
-    assert match_body["card_status"] == "가능성 높음"
+    assert match_body["card_status"] == "ELIGIBLE"
     assert _as_decimal(match_body["match_score"]) == Decimal("100.00")
     assert match_body["satisfied_condition_count"] == 1
     assert match_body["review_condition_count"] == 0
@@ -359,7 +359,7 @@ def test_policy_discovery_match_and_bookmark_lifecycle(
         headers=headers,
     )
     assert review_match.status_code == 200, review_match.text
-    assert review_match.json()["card_status"] == "추가 확인 필요"
+    assert review_match.json()["card_status"] == "NEEDS_REVIEW"
     assert review_match.json()["review_condition_count"] == 1
     assert review_match.json()["conditions"][0]["status"] == "추가 확인 필요"
 

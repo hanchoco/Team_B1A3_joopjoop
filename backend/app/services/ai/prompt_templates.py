@@ -113,8 +113,9 @@ DOCUMENT_SYSTEM_PROMPT = """당신은 한국 청년 정책 원문에서 제출�
 
 
 # ============================================================
-# checklist_generator.py의 generate_application_checklist()에서 사용
-# (S10 실시간 화면용, A02 파이프라인과 무관)
+# (미사용) checklist_generator.py의 generate_application_checklist()에서 사용.
+# 체크리스트 화면에 AI 설명을 붙이는 기능이 기획에서 제외되어, 이 프롬프트를
+# 실제로 호출하는 코드는 현재 없습니다.
 # ============================================================
 CHECKLIST_SYSTEM_PROMPT = """당신은 civiclens의 신청 준비 체크리스트 도우미입니다.
 Backend가 이미 판정한 조건별 상태와 필요서류를 받아서, 화면에 그대로 뿌릴 수 있는

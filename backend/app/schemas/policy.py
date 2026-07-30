@@ -20,6 +20,7 @@ from app.models.user_category_profile import CategoryCode
 from app.models.user_document_progress import DocumentPreparationStatus
 from app.models.user_policy import (
     ApplicationStatus,
+    EligibilityStatus,
     PreparationStatus,
 )
 
@@ -30,18 +31,6 @@ class ConditionStatus(str, Enum):
     SATISFIED = "충족"
     NEEDS_REVIEW = "추가 확인 필요"
     UNSATISFIED = "불충족"
-
-
-class PolicyCardStatus(str, Enum):
-    """Card-level status used on recommendation/list screens.
-
-    Three states, matching the condition-level 3단계 판정 체계:
-    ELIGIBLE(가능성 높음) / NEEDS_REVIEW(추가 확인 필요) / INELIGIBLE(불충족).
-    """
-    LIKELY_ELIGIBLE = "가능성 높음"
-    HIGH_PROBABILITY = "가능성 높음"
-    NEEDS_REVIEW = "추가 확인 필요"
-    INELIGIBLE = "불충족"
 
 
 class PolicySort(str, Enum):
@@ -237,7 +226,7 @@ class PolicySummaryResponse(SchemaModel):
     subcategory: str | None = None
     region_scope: str | None = None
     categories: list[PolicyCategoryResponse] = Field(default_factory=list)
-    card_status: PolicyCardStatus | None = None
+    card_status: EligibilityStatus | None = None
     match_score: Decimal | None = Field(default=None, ge=0, le=100)
     estimated_benefit_amount: Decimal | None = Field(default=None, ge=0)
     max_benefit_amount: Decimal | None = Field(default=None, ge=0)
@@ -282,7 +271,7 @@ class PolicyMatchResponse(SchemaModel):
     id: int | None = None
     user_id: int
     policy_id: int
-    card_status: PolicyCardStatus
+    card_status: EligibilityStatus
     match_score: Decimal = Field(ge=0, le=100)
     satisfied_condition_count: int = Field(ge=0)
     review_condition_count: int = Field(ge=0)
@@ -312,7 +301,7 @@ class PolicyListQuery(SchemaModel):
     """Validated policy list filters."""
 
     category_code: CategoryCode | None = None
-    card_status: PolicyCardStatus | None = None
+    card_status: EligibilityStatus | None = None
     sort: PolicySort = PolicySort.RECOMMENDATION
     page: int = Field(default=1, ge=1)
     size: int = Field(default=20, ge=1, le=100)
@@ -422,7 +411,6 @@ __all__ = [
     "PolicyBenefitResponse",
     "PolicyBookmarkResponse",
     "PolicyCard",
-    "PolicyCardStatus",
     "PolicyCategoryResponse",
     "PolicyConditionCreate",
     "PolicyConditionResponse",
