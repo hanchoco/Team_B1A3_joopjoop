@@ -64,6 +64,8 @@ export function AppProvider({ children }: PropsWithChildren) {
   const [favoritePolicies, setFavoritePolicies] = useState<Record<number, FavoritePolicy>>({})
   const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
     enabled: true,
+    emailEnabled: true,
+    pushEnabled: true,
     sevenDaysBefore: true,
     threeDaysBefore: true,
     deadlineDay: true,

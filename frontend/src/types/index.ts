@@ -85,6 +85,8 @@ export interface PreparedPolicy {
 
 export interface NotificationSettings {
   enabled: boolean
+  emailEnabled: boolean
+  pushEnabled: boolean
   sevenDaysBefore: boolean
   threeDaysBefore: boolean
   deadlineDay: boolean

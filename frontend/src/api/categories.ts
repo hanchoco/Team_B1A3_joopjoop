@@ -1,22 +1,9 @@
 import apiClient from './client'
 
 export type CategoryCode =
-  | 'HOUSING'
-  | 'TRANSPORT'
-  | 'FINANCE'
-  | 'TAX'
-  | 'EMPLOYMENT'
-  | 'WELFARE'
-  | 'PARTICIPATION'
-  | 'ETC'
+  'HOUSING' | 'TRANSPORT' | 'FINANCE' | 'TAX' | 'EMPLOYMENT' | 'WELFARE' | 'PARTICIPATION' | 'ETC'
 
-export type AnswerType =
-  | 'SINGLE_SELECT'
-  | 'MULTI_SELECT'
-  | 'NUMBER'
-  | 'BOOLEAN'
-  | 'TEXT'
-  | 'DATE'
+export type AnswerType = 'SINGLE_SELECT' | 'MULTI_SELECT' | 'NUMBER' | 'BOOLEAN' | 'TEXT' | 'DATE'
 
 export interface Category {
   id: number
@@ -56,7 +43,10 @@ export async function getCategoryQuestions(categoryId: number): Promise<Category
 
 export async function saveCategoryAnswers(
   categoryId: number,
-  answers: Array<{ question_id: number; answer_json: { value: string | number | boolean | string[] } }>,
+  answers: Array<{
+    question_id: number
+    answer_json: { value: string | number | boolean | string[] }
+  }>,
 ): Promise<void> {
   await apiClient.put(`/api/v1/categories/${categoryId}/answers`, { answers })
 }

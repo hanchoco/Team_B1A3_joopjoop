@@ -1,6 +1,7 @@
 import apiClient from './client'
 
-export type SimulatorCategory = 'housing' | 'transport' | 'finance' | 'tax' | 'employment' | 'welfare'
+export type SimulatorCategory =
+  'housing' | 'transport' | 'finance' | 'tax' | 'employment' | 'welfare'
 
 export type SimulatorPayload = Record<string, number>
 
@@ -22,9 +23,6 @@ export async function runSimulation(
   category: SimulatorCategory,
   payload: SimulatorPayload,
 ): Promise<SimulatorResult> {
-  const { data } = await apiClient.post<SimulatorResult>(
-    `/api/v1/simulator/${category}`,
-    payload,
-  )
+  const { data } = await apiClient.post<SimulatorResult>(`/api/v1/simulator/${category}`, payload)
   return data
 }

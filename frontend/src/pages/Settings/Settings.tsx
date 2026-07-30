@@ -8,13 +8,22 @@ import {
   UserRound,
   X,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
+import {
+  getNotifications,
+  getNotificationSettings,
+  markNotificationRead,
+  updateNotificationSettings as updateNotificationSettingsRequest,
+  type NotificationItem,
+  type NotificationSettingsPatch,
+} from '../../api/notifications'
 import { useApp } from '../../store/useApp'
 
 const menuItems = [
   { id: 'notifications', label: '알림 설정', icon: Bell },
+  { id: 'notification-list', label: '알림 내역', icon: CalendarClock },
   { id: 'account', label: '회원 정보', icon: UserRound },
   { id: 'privacy', label: '개인정보 처리 안내', icon: ShieldCheck },
   { id: 'logout', label: '로그아웃' },
@@ -29,7 +38,7 @@ const detailContent = {
 }
 
 type DetailKey = keyof typeof detailContent
-type MenuId = DetailKey | 'account' | 'privacy' | 'logout' | 'withdraw'
+type MenuId = DetailKey | 'notification-list' | 'account' | 'privacy' | 'logout' | 'withdraw'
 type DetailContent = (typeof detailContent)[DetailKey]
 
 interface NotificationSwitchProps {
@@ -74,6 +83,36 @@ export default function Settings() {
   const [passwordCheckOpen, setPasswordCheckOpen] = useState(false)
   const [currentPassword, setCurrentPassword] = useState('')
   const [passwordError, setPasswordError] = useState('')
+  const [notificationsOpen, setNotificationsOpen] = useState(false)
+  const [notifications, setNotifications] = useState<NotificationItem[]>([])
+  const [notificationError, setNotificationError] = useState('')
+  const [isNotificationLoading, setIsNotificationLoading] = useState(true)
+
+  useEffect(() => {
+    let isCurrent = true
+    Promise.all([getNotificationSettings(), getNotifications()])
+      .then(([settings, items]) => {
+        if (!isCurrent) return
+        updateNotificationSettings({
+          enabled: settings.notification_enabled,
+          emailEnabled: settings.email_enabled,
+          pushEnabled: settings.push_enabled,
+          sevenDaysBefore: settings.deadline_d7_enabled,
+          threeDaysBefore: settings.deadline_d3_enabled,
+          deadlineDay: settings.deadline_d0_enabled,
+        })
+        setNotifications(items)
+      })
+      .catch(() => {
+        if (isCurrent) setNotificationError('알림 정보를 불러오지 못했어요.')
+      })
+      .finally(() => {
+        if (isCurrent) setIsNotificationLoading(false)
+      })
+    return () => {
+      isCurrent = false
+    }
+  }, [updateNotificationSettings])
 
   function handleMenu(id: MenuId) {
     if (id === 'logout') {
@@ -82,6 +121,10 @@ export default function Settings() {
     }
     if (id === 'withdraw') {
       navigate('/settings/withdraw')
+      return
+    }
+    if (id === 'notification-list') {
+      setNotificationsOpen(true)
       return
     }
     if (id === 'account') {
@@ -107,21 +150,49 @@ export default function Settings() {
     navigate('/settings/account')
   }
 
+  async function saveNotificationPatch(payload: NotificationSettingsPatch): Promise<void> {
+    setNotificationError('')
+    try {
+      const settings = await updateNotificationSettingsRequest(payload)
+      updateNotificationSettings({
+        enabled: settings.notification_enabled,
+        emailEnabled: settings.email_enabled,
+        pushEnabled: settings.push_enabled,
+        sevenDaysBefore: settings.deadline_d7_enabled,
+        threeDaysBefore: settings.deadline_d3_enabled,
+        deadlineDay: settings.deadline_d0_enabled,
+      })
+    } catch {
+      setNotificationError('알림 설정을 저장하지 못했어요. 잠시 후 다시 시도해 주세요.')
+    }
+  }
+
   function toggleAllNotifications(enabled: boolean) {
-    updateNotificationSettings({
-      ...notificationSettings,
-      enabled,
-    })
+    void saveNotificationPatch({ notification_enabled: enabled })
   }
 
   function toggleSchedule(
     schedule: 'sevenDaysBefore' | 'threeDaysBefore' | 'deadlineDay',
     checked: boolean,
   ) {
-    updateNotificationSettings({
-      ...notificationSettings,
-      [schedule]: checked,
-    })
+    const fieldBySchedule = {
+      sevenDaysBefore: 'deadline_d7_enabled',
+      threeDaysBefore: 'deadline_d3_enabled',
+      deadlineDay: 'deadline_d0_enabled',
+    } as const
+    void saveNotificationPatch({ [fieldBySchedule[schedule]]: checked })
+  }
+
+  async function readNotification(notification: NotificationItem): Promise<void> {
+    if (notification.read_at) return
+    try {
+      const updated = await markNotificationRead(notification.id)
+      setNotifications((current) =>
+        current.map((item) => (item.id === updated.id ? updated : item)),
+      )
+    } catch {
+      setNotificationError('알림을 읽음 처리하지 못했어요.')
+    }
   }
 
   return (
@@ -255,15 +326,40 @@ export default function Settings() {
                     onChange={toggleAllNotifications}
                   />
                 </div>
+                {notificationError && (
+                  <p className="mt-3 text-sm font-semibold text-rose-600">{notificationError}</p>
+                )}
 
                 <div className="mt-5 flex items-center gap-3 rounded-lg bg-slate-50 px-4 py-3">
                   <Mail size={18} className="text-blue-600" />
-                  <div>
+                  <div className="flex-1">
                     <p className="text-sm font-semibold text-gray-950">이메일로 알려드려요</p>
                     <p className="mt-0.5 text-xs text-gray-500">
                       등록된 계정 이메일로 마감 알림을 보내드려요.
                     </p>
                   </div>
+                  <NotificationSwitch
+                    checked={notificationSettings.emailEnabled}
+                    disabled={!notificationSettings.enabled}
+                    label="이메일 알림"
+                    onChange={(checked) => void saveNotificationPatch({ email_enabled: checked })}
+                  />
+                </div>
+
+                <div className="mt-3 flex items-center gap-3 rounded-lg bg-slate-50 px-4 py-3">
+                  <Bell size={18} className="text-blue-600" />
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-gray-950">푸시로 알려드려요</p>
+                    <p className="mt-0.5 text-xs text-gray-500">
+                      앱에서 관심 정책의 마감 소식을 받아보세요.
+                    </p>
+                  </div>
+                  <NotificationSwitch
+                    checked={notificationSettings.pushEnabled}
+                    disabled={!notificationSettings.enabled}
+                    label="푸시 알림"
+                    onChange={(checked) => void saveNotificationPatch({ push_enabled: checked })}
+                  />
                 </div>
 
                 <div className="mt-6">
@@ -310,6 +406,68 @@ export default function Settings() {
             >
               확인
             </button>
+          </div>
+        </div>
+      )}
+
+      {notificationsOpen && (
+        <div
+          className="fixed inset-0 z-50 grid place-items-center bg-gray-950/35 px-5"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="notifications-title"
+        >
+          <div className="max-h-[calc(100vh-2rem)] w-full max-w-lg overflow-y-auto rounded-xl bg-white p-6 shadow-xl">
+            <div className="flex items-center justify-between">
+              <h2 id="notifications-title" className="text-xl font-black">
+                알림 내역
+              </h2>
+              <button
+                type="button"
+                onClick={() => setNotificationsOpen(false)}
+                className="rounded-lg p-2 text-gray-400 hover:bg-slate-100"
+                aria-label="닫기"
+              >
+                <X size={19} />
+              </button>
+            </div>
+            {isNotificationLoading ? (
+              <p className="mt-6 text-center text-sm text-gray-500">알림을 불러오고 있어요.</p>
+            ) : notifications.length === 0 ? (
+              <p className="mt-6 rounded-lg bg-slate-50 p-6 text-center text-sm text-gray-500">
+                아직 도착한 알림이 없어요.
+              </p>
+            ) : (
+              <ul className="mt-5 space-y-3">
+                {notifications.map((notification) => (
+                  <li key={notification.id}>
+                    <button
+                      type="button"
+                      onClick={() => void readNotification(notification)}
+                      className={`w-full rounded-lg border p-4 text-left ${
+                        notification.read_at
+                          ? 'border-gray-200 bg-white'
+                          : 'border-blue-200 bg-blue-50'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <strong className="text-sm">{notification.title}</strong>
+                        {!notification.read_at && (
+                          <span className="h-2 w-2 rounded-full bg-blue-600" />
+                        )}
+                      </div>
+                      <p className="mt-2 text-sm leading-6 text-gray-600">{notification.body}</p>
+                      <time className="mt-2 block text-xs text-gray-400">
+                        {new Date(notification.scheduled_at).toLocaleString('ko-KR')}
+                      </time>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {notificationError && (
+              <p className="mt-3 text-sm font-semibold text-rose-600">{notificationError}</p>
+            )}
           </div>
         </div>
       )}
