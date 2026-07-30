@@ -7,6 +7,7 @@ import {
   removePolicyBookmark,
   type PolicyDetail as PolicyDetailData,
 } from '../../api/policies'
+import { startPolicyPreparation } from '../../api/checklists'
 
 type PolicyTab = '지원내용' | '신청조건' | '신청방법' | '필요서류'
 
@@ -22,7 +23,9 @@ export default function PolicyDetail() {
     error: string | null
   }>({ policyId: null, policy: null, error: null })
   const [isBookmarking, setIsBookmarking] = useState(false)
+  const [isPreparing, setIsPreparing] = useState(false)
   const [bookmarkError, setBookmarkError] = useState('')
+  const [preparationError, setPreparationError] = useState('')
   const policyId = Number(id)
   const isInvalidPolicyId = !Number.isInteger(policyId) || policyId <= 0
   const isLoading = !isInvalidPolicyId && result.policyId !== policyId
@@ -62,18 +65,38 @@ export default function PolicyDetail() {
     setIsBookmarking(true)
     setBookmarkError('')
     try {
-      if (policyData.is_bookmarked) await removePolicyBookmark(policyData.id)
-      else await addPolicyBookmark(policyData.id)
+      let isBookmarked: boolean
+      if (policyData.is_bookmarked) {
+        await removePolicyBookmark(policyData.id)
+        isBookmarked = false
+      } else {
+        isBookmarked = (await addPolicyBookmark(policyData.id)).is_bookmarked
+      }
       setResult((current) => ({
         ...current,
         policy: current.policy
-          ? { ...current.policy, is_bookmarked: !policyData.is_bookmarked }
+          ? { ...current.policy, is_bookmarked: isBookmarked }
           : null,
       }))
     } catch {
       setBookmarkError('관심 정책을 변경하지 못했어요. 잠시 후 다시 시도해 주세요.')
     } finally {
       setIsBookmarking(false)
+    }
+  }
+
+  async function startPreparation(policyData: PolicyDetailData): Promise<void> {
+    if (isPreparing) return
+    setIsPreparing(true)
+    setPreparationError('')
+    try {
+      const checklist = await startPolicyPreparation(policyData.id)
+      navigate(`/policies/${policyData.id}/prepare`, {
+        state: { initialChecklist: checklist },
+      })
+    } catch {
+      setPreparationError('정책 준비를 시작하지 못했어요. 잠시 후 다시 시도해 주세요.')
+      setIsPreparing(false)
     }
   }
 
@@ -220,12 +243,20 @@ export default function PolicyDetail() {
         >
           <Calculator size={18} /> 예상 시뮬레이션 보기
         </button>
-        <button
-          onClick={() => navigate(`/policies/${policy.id}/prepare`)}
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3.5 font-bold text-white"
-        >
-          <ClipboardCheck size={18} /> 가입 준비하기
-        </button>
+        <div>
+          <button
+            type="button"
+            disabled={isPreparing}
+            onClick={() => void startPreparation(policy)}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3.5 font-bold text-white disabled:cursor-not-allowed disabled:bg-blue-300"
+          >
+            <ClipboardCheck size={18} />
+            {isPreparing ? '준비 목록 저장 중...' : '가입 준비하기'}
+          </button>
+          {preparationError && (
+            <p className="mt-2 text-xs font-semibold text-rose-600">{preparationError}</p>
+          )}
+        </div>
         <button
           onClick={() => navigate(`/policies/${policy.id}/ai-chat`)}
           className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-3.5 font-bold"

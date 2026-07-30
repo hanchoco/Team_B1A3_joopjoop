@@ -1,6 +1,6 @@
 import { ArrowLeft, Check, CircleCheck, ExternalLink, FileText, TriangleAlert } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import {
   confirmChecklistCondition,
   recordPolicyApplication,
@@ -11,12 +11,20 @@ import {
 
 export default function Checklist() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { id } = useParams()
   const policyId = Number(id)
   const isInvalidPolicyId = !Number.isInteger(policyId) || policyId <= 0
-  const [checklist, setChecklist] = useState<ChecklistResponse | null>(null)
-  const [selectedDocumentId, setSelectedDocumentId] = useState<number | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const initialChecklist = (
+    location.state as { initialChecklist?: ChecklistResponse } | null
+  )?.initialChecklist
+  const validInitialChecklist =
+    initialChecklist?.policy_id === policyId ? initialChecklist : null
+  const [checklist, setChecklist] = useState<ChecklistResponse | null>(validInitialChecklist)
+  const [selectedDocumentId, setSelectedDocumentId] = useState<number | null>(
+    validInitialChecklist?.documents[0]?.document_id ?? null,
+  )
+  const [isLoading, setIsLoading] = useState(validInitialChecklist === null)
   const [updatingId, setUpdatingId] = useState<number | null>(null)
   const [isApplying, setIsApplying] = useState(false)
   const [error, setError] = useState('')
@@ -24,6 +32,7 @@ export default function Checklist() {
   useEffect(() => {
     let isCurrent = true
     if (isInvalidPolicyId) return
+    if (validInitialChecklist) return
 
     startPolicyPreparation(policyId)
       .then((response) => {
@@ -41,7 +50,7 @@ export default function Checklist() {
     return () => {
       isCurrent = false
     }
-  }, [isInvalidPolicyId, policyId])
+  }, [isInvalidPolicyId, policyId, validInitialChecklist])
 
   const selected =
     checklist?.documents.find((document) => document.document_id === selectedDocumentId) ?? null

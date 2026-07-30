@@ -131,12 +131,17 @@ export default function PolicyList() {
     setBookmarkingIds((current) => new Set(current).add(policy.id))
     setBookmarkError('')
     try {
-      if (policy.is_bookmarked) await removePolicyBookmark(policy.id)
-      else await addPolicyBookmark(policy.id)
+      let isBookmarked: boolean
+      if (policy.is_bookmarked) {
+        await removePolicyBookmark(policy.id)
+        isBookmarked = false
+      } else {
+        isBookmarked = (await addPolicyBookmark(policy.id)).is_bookmarked
+      }
       setResult((current) => ({
         ...current,
         policies: current.policies.map((item) =>
-          item.id === policy.id ? { ...item, is_bookmarked: !policy.is_bookmarked } : item,
+          item.id === policy.id ? { ...item, is_bookmarked: isBookmarked } : item,
         ),
       }))
     } catch {

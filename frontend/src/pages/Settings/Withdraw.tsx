@@ -28,7 +28,7 @@ export default function Withdraw() {
     try {
       await withdrawCurrentAccount(currentPassword)
       logout()
-      navigate('/login', { replace: true })
+      navigate('/', { replace: true })
     } catch (requestError: unknown) {
       setError(
         getAuthErrorMessage(

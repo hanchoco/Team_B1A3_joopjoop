@@ -162,7 +162,11 @@ export default function AccountSettings() {
 
         {error && <p className="mt-4 text-sm font-semibold text-rose-600">{error}</p>}
         {saved && (
-          <p className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-emerald-700">
+          <p
+            role="status"
+            aria-live="polite"
+            className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-emerald-700"
+          >
             <CheckCircle2 size={17} /> 회원 정보가 변경됐어요.
           </p>
         )}
