@@ -67,6 +67,50 @@ def test_supported_operators_can_satisfy(
     assert result.status is ConditionStatus.SATISFIED
 
 
+def test_region_code_in_matches_by_sido_prefix() -> None:
+    """User profiles only store a 2-digit 시/도 code; policy conditions store
+    5-digit 시/군/구 codes. IN/NOT_IN must compare by the shared prefix."""
+
+    context = {"profile.region_code": "11"}
+    condition = _condition(
+        key="profile.region_code",
+        operator="IN",
+        expected={"values": ["11110", "11140", "41111"]},
+    )
+
+    result = evaluate_condition(condition, context)
+
+    assert result.status is ConditionStatus.SATISFIED
+
+
+def test_region_code_in_does_not_match_other_sido_prefix() -> None:
+    context = {"profile.region_code": "26"}
+    condition = _condition(
+        key="profile.region_code",
+        operator="IN",
+        expected={"values": ["11110", "11140", "41111"]},
+    )
+
+    result = evaluate_condition(condition, context)
+
+    assert result.status is ConditionStatus.UNSATISFIED
+
+
+def test_other_in_conditions_still_require_exact_match() -> None:
+    """The 시/도 prefix rule must stay scoped to profile.region_code only."""
+
+    context = {"profile.income_band_code": "BETWEEN_50_75"}
+    condition = _condition(
+        key="profile.income_band_code",
+        operator="IN",
+        expected={"values": ["BELOW_50", "BETWEEN_75_100"]},
+    )
+
+    result = evaluate_condition(condition, context)
+
+    assert result.status is ConditionStatus.UNSATISFIED
+
+
 def test_json_expected_value_and_derived_age_are_supported() -> None:
     condition = _condition(
         key="profile.age",

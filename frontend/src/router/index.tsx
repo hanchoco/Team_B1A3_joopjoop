@@ -12,7 +12,6 @@ import EditProfile from '../pages/MyPage/EditProfile'
 import MyPage from '../pages/MyPage/MyPage'
 import MyPolicies from '../pages/MyPolicies/MyPolicies'
 import Onboarding from '../pages/Onboarding/Onboarding'
-import UserProfile from '../pages/Onboarding/UserProfile'
 import PolicyDetail from '../pages/PolicyDetail/PolicyDetail'
 import PolicyList from '../pages/PolicyList/PolicyList'
 import ImpactView from '../pages/Simulator/ImpactView'
@@ -92,14 +91,6 @@ function AppLayout() {
             element={
               <RequireAuth>
                 <Onboarding />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <RequireAuth>
-                <UserProfile />
               </RequireAuth>
             }
           />

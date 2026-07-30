@@ -2,7 +2,6 @@ import { ArrowRight, Bot, Send, Sparkles, TrendingDown, UserRound } from 'lucide
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import mockData from '../../utils/mockData.json'
-import { useApp } from '../../store/useApp'
 
 const recommendedQuestions = ['필요한 서류가 무엇인가요?']
 
@@ -16,9 +15,7 @@ function formatManWon(amount: number) {
 }
 
 export default function ImpactView() {
-  const { userProfile: storedProfile } = useApp()
-  const { savingsSimulation } = mockData
-  const userProfile = storedProfile || mockData.userProfile
+  const { savingsSimulation, userProfile } = mockData
   const [input, setInput] = useState('')
   const [messages, setMessages] = useState<{ role: 'assistant' | 'user'; text: string }[]>([
     {

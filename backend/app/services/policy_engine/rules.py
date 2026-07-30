@@ -237,6 +237,8 @@ def evaluate_rule(
     operator: RuleOperator | str | Enum,
     actual_value: object,
     expected_value: object,
+    *,
+    condition_key: str | None = None,
 ) -> bool:
     """Evaluate a validated operator against an actual and expected value."""
 
@@ -258,8 +260,12 @@ def evaluate_rule(
     if normalised_operator is RuleOperator.NE:
         return not _equal(actual_value, _scalar(expected))
     if normalised_operator is RuleOperator.IN:
+        if condition_key == "profile.region_code":
+            return _region_prefix_in(actual_value, _values(expected))
         return any(_equal(actual_value, item) for item in _values(expected))
     if normalised_operator is RuleOperator.NOT_IN:
+        if condition_key == "profile.region_code":
+            return not _region_prefix_in(actual_value, _values(expected))
         return not any(_equal(actual_value, item) for item in _values(expected))
     if normalised_operator is RuleOperator.GT:
         return _compare(actual_value, _scalar(expected)) > 0
@@ -333,6 +339,21 @@ def _range(value: object) -> tuple[object, object]:
     ):
         return value[0], value[1]
     raise RuleEvaluationError("BETWEEN 기대값은 min/max 또는 길이 2 목록이어야 합니다.")
+
+
+def _region_prefix_in(actual: object, values: tuple[object, ...]) -> bool:
+    """Compare region codes by their leading 2 digits (시/도 단위).
+
+    Policy conditions store fine-grained 시/군/구 codes (5 digits) while user
+    profiles only collect the coarser 시/도 code (2 digits), so an exact
+    match is never possible. Matching on the shared 시/도 prefix keeps the
+    condition meaningful without requiring a full district-level catalog.
+    """
+
+    actual_prefix = str(actual).strip()[:2]
+    if not actual_prefix:
+        return False
+    return any(str(item).strip()[:2] == actual_prefix for item in values)
 
 
 def _equal(left: object, right: object) -> bool:

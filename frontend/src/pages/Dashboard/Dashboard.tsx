@@ -15,6 +15,11 @@ import { useNavigate } from 'react-router-dom'
 import { listCategories } from '../../api/categories'
 import BrandLogo from '../../components/common/BrandLogo'
 import BenefitCoins from '../../components/common/BenefitCoins'
+import {
+  employmentStatusLabel,
+  housingTypeLabel,
+  regionNameByCode,
+} from '../../constants/profile'
 import { useApp } from '../../store/useApp'
 import type { CategoryResponse } from '../../types/api'
 
@@ -29,8 +34,9 @@ const ICON_BY_CODE: Record<string, typeof House> = {
 
 export default function Dashboard() {
   const navigate = useNavigate()
-  const { isLoggedIn, userProfile } = useApp()
+  const { isLoggedIn, currentUser, profile } = useApp()
   const [categories, setCategories] = useState<CategoryResponse[]>([])
+  const displayName = currentUser?.nickname || currentUser?.email.split('@')[0] || '회원'
 
   useEffect(() => {
     let cancelled = false
@@ -54,7 +60,7 @@ export default function Dashboard() {
         <div className="rounded-xl border border-gray-200 bg-white p-6 sm:p-8">
           {' '}
           <p className="text-sm font-semibold text-blue-600">
-            {isLoggedIn ? `${userProfile.name} 님을 위한 정책 탐색` : '청년 정책을 한곳에서'}
+            {isLoggedIn ? `${displayName} 님을 위한 정책 탐색` : '청년 정책을 한곳에서'}
           </p>{' '}
           <h1 className="mt-3 text-3xl font-black tracking-tight text-gray-950">
             지금 나에게 필요한 정책,
@@ -92,10 +98,10 @@ export default function Dashboard() {
               </div>
               <dl className="mt-5 space-y-3 text-sm">
                 {[
-                  ['출생연도', `${userProfile.birthYear}년`],
-                  ['거주지역', userProfile.regionName],
-                  ['취업상태', userProfile.employment],
-                  ['주거형태', userProfile.housingType],
+                  ['출생연도', profile?.birth_year ? `${profile.birth_year}년` : '미입력'],
+                  ['거주지역', regionNameByCode(profile?.region_code)],
+                  ['취업상태', employmentStatusLabel(profile?.employment_status_code)],
+                  ['주거형태', housingTypeLabel(profile?.housing_type_code)],
                 ].map(([key, value]) => (
                   <div key={key} className="flex justify-between gap-3">
                     <dt className="text-gray-500">{key}</dt>
@@ -104,7 +110,7 @@ export default function Dashboard() {
                 ))}
               </dl>
               <button
-                onClick={() => navigate('/profile')}
+                onClick={() => navigate('/mypage/profile')}
                 className="mt-6 w-full rounded-lg border border-blue-600 py-2.5 text-sm font-semibold text-blue-600"
               >
                 정보 다시 확인하기

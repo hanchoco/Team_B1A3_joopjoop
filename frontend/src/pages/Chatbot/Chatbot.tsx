@@ -15,7 +15,8 @@ export default function Chatbot() {
   const navigate = useNavigate()
   const { id } = useParams()
   const policyId = Number(id)
-  const { userProfile } = useApp()
+  const { currentUser } = useApp()
+  const displayName = currentUser?.nickname || currentUser?.email.split('@')[0] || '회원'
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const [input, setInput] = useState('')
   const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([])
@@ -24,7 +25,7 @@ export default function Chatbot() {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: 'assistant',
-      text: `안녕하세요, ${userProfile?.name || '김나라'} 님. 이 정책에 대해 무엇이든 편하게 물어보세요.`,
+      text: `안녕하세요, ${displayName} 님. 이 정책에 대해 무엇이든 편하게 물어보세요.`,
     },
   ])
 
