@@ -1,10 +1,10 @@
 """User-policy match, bookmark, preparation, and application persistence."""
 
 from collections.abc import Mapping, Sequence
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.models.policy import Policy
@@ -355,6 +355,36 @@ def list_user_policy_states(
         )
     else:
         statement = statement.order_by(UserPolicyState.updated_at.desc())
+    return list(db.scalars(statement).all())
+
+
+def list_upcoming_deadline_states(
+    db: Session,
+    *,
+    user_id: int,
+    within_days: int,
+) -> list[UserPolicyState]:
+    """Return bookmarked/in-progress states with a near-term deadline, soonest first."""
+
+    today = date.today()
+    cutoff = today + timedelta(days=within_days)
+    statement = (
+        select(UserPolicyState)
+        .join(Policy, Policy.id == UserPolicyState.policy_id)
+        .where(UserPolicyState.user_id == user_id)
+        .where(
+            or_(
+                UserPolicyState.is_bookmarked.is_(True),
+                UserPolicyState.preparation_status == "IN_PROGRESS",
+            )
+        )
+        .where(Policy.is_active.is_(True))
+        .where(Policy.is_ongoing.is_(False))
+        .where(Policy.application_end_date.is_not(None))
+        .where(Policy.application_end_date >= today)
+        .where(Policy.application_end_date <= cutoff)
+        .order_by(Policy.application_end_date.asc())
+    )
     return list(db.scalars(statement).all())
 
 
