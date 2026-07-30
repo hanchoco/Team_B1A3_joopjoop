@@ -2,22 +2,14 @@ import { ArrowLeft, Bot, LoaderCircle, Send, UserRound } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { askPolicyQuestion } from '../../api/chatbot'
 import { useApp } from '../../store/useApp'
 
-const recommendedQuestions = [
+const defaultRecommendedQuestions = [
   '신청 자격이 조금 궁금해요.',
   '필요한 서류가 무엇인가요?',
   '신청 결과는 언제 나오나요?',
 ]
-
-const answerMap: Record<string, string> = {
-  '신청 자격이 조금 궁금해요.':
-    '연령, 소득, 주거 조건을 중심으로 확인해요. 현재 입력하신 정보로는 주요 조건을 충족하지만, 최종 자격은 신청 기관의 심사를 통해 확정돼요.',
-  '필요한 서류가 무엇인가요?':
-    '임대차계약서 사본, 최근 월세 이체 내역, 가족관계증명서를 먼저 준비해 주세요. 공고에 따라 추가 서류가 필요할 수 있어요.',
-  '신청 결과는 언제 나오나요?':
-    '접수 후 소득·재산 조사를 거쳐 보통 4~6주 정도 걸려요. 신청 기관의 처리 상황에 따라 조금 달라질 수 있어요.',
-}
 
 const greeting = '안녕하세요, 김나라 님. 청년 월세 지원 정책에 대해 무엇이든 편하게 물어보세요.'
 
@@ -32,10 +24,10 @@ export default function Chatbot() {
   const { id } = useParams()
   const { userProfile } = useApp()
   const scrollAreaRef = useRef<HTMLDivElement>(null)
-  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const [input, setInput] = useState('')
   const [showSuggestions, setShowSuggestions] = useState(true)
   const [isAnswering, setIsAnswering] = useState(false)
+  const [recommendedQuestions, setRecommendedQuestions] = useState(defaultRecommendedQuestions)
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: 'assistant',
@@ -48,39 +40,49 @@ export default function Chatbot() {
     if (area) area.scrollTo({ top: area.scrollHeight, behavior: 'smooth' })
   }, [messages, isAnswering, showSuggestions])
 
-  useEffect(() => () => clearTimeout(timerRef.current), [])
-
-  function ask(question: string) {
+  async function ask(question: string): Promise<void> {
     const trimmedQuestion = question.trim()
     if (!trimmedQuestion || isAnswering) return
+    const policyId = Number(id)
 
     setShowSuggestions(false)
     setIsAnswering(true)
     setInput('')
     setMessages((current) => [...current, { role: 'user', text: trimmedQuestion }])
 
-    timerRef.current = setTimeout(() => {
-      const answer =
-        answerMap[trimmedQuestion] ||
-        '질문을 확인했어요. 저장된 프로필과 현재 정책 공고를 기준으로 차근차근 안내해 드릴게요.'
-
+    try {
+      if (!Number.isInteger(policyId) || policyId <= 0) {
+        throw new Error('invalid policy id')
+      }
+      const response = await askPolicyQuestion(policyId, trimmedQuestion)
       setMessages((current) => [
         ...current,
-        { role: 'assistant', text: answer },
+        { role: 'assistant', text: response.answer },
         {
           role: 'assistant',
           text: greeting.replace('김나라', userProfile?.name || '김나라'),
           showSuggestions: true,
         },
       ])
+      setRecommendedQuestions(response.suggested_questions)
+    } catch {
+      setMessages((current) => [
+        ...current,
+        {
+          role: 'assistant',
+          text: '답변을 가져오지 못했어요. 잠시 후 다시 질문해 주세요.',
+          showSuggestions: true,
+        },
+      ])
+    } finally {
       setIsAnswering(false)
       setShowSuggestions(true)
-    }, 650)
+    }
   }
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    ask(input)
+    void ask(input)
   }
 
   return (

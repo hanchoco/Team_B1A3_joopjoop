@@ -77,10 +77,9 @@ export interface AccountUpdateRequest {
 }
 
 export async function verifyCurrentPassword(currentPassword: string): Promise<string> {
-  const { data } = await apiClient.post<{ message: string }>(
-    '/api/v1/users/me/verify-password',
-    { current_password: currentPassword },
-  )
+  const { data } = await apiClient.post<{ message: string }>('/api/v1/users/me/verify-password', {
+    current_password: currentPassword,
+  })
   return data.message
 }
 

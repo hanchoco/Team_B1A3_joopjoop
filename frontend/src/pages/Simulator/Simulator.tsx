@@ -8,12 +8,15 @@ import HousingSimulatorForm from '../../components/simulator/HousingSimulatorFor
 import TaxSimulatorForm from '../../components/simulator/TaxSimulatorForm'
 import TransportSimulatorForm from '../../components/simulator/TransportSimulatorForm'
 import WelfareSimulatorForm from '../../components/simulator/WelfareSimulatorForm'
+import {
+  runSimulation,
+  type SimulatorCategory,
+  type SimulatorPayload,
+  type SimulatorResult,
+} from '../../api/simulator'
 import type { SimulatorFormProps, SimulatorInputValue } from '../../types/simulator'
-import mockData from '../../utils/mockData.json'
 
 const toManWon = (amount: number) => amount / 10000
-
-type SimulatorCategory = 'housing' | 'transport' | 'finance' | 'tax' | 'employment' | 'welfare'
 
 const simulatorForms: Record<SimulatorCategory, ComponentType<SimulatorFormProps>> = {
   housing: HousingSimulatorForm,
@@ -33,22 +36,101 @@ const policyCategories: Record<number, SimulatorCategory> = {
   6: 'welfare',
 }
 
+function numberValue(values: Record<string, SimulatorInputValue>, key: string, fallback = 0): number {
+  const value = Number(values[key] ?? fallback)
+  return Number.isFinite(value) ? value : fallback
+}
+
+function buildPayload(
+  category: SimulatorCategory,
+  values: Record<string, SimulatorInputValue>,
+): SimulatorPayload {
+  const supportMonths = numberValue(values, 'supportMonths', 12)
+  if (category === 'housing') {
+    return {
+      monthly_rent_amount: numberValue(values, 'monthlyRent'),
+      monthly_management_fee_amount: numberValue(values, 'maintenanceFee'),
+      deposit_amount: numberValue(values, 'deposit'),
+      monthly_support_amount: numberValue(values, 'monthlySupport'),
+      support_months: supportMonths,
+    }
+  }
+  if (category === 'transport') {
+    return {
+      monthly_transport_cost_amount: numberValue(values, 'monthlyTransportCost'),
+      reimbursement_rate_percent: numberValue(values, 'reimbursementRate'),
+      monthly_support_cap_amount: numberValue(values, 'supportCap'),
+      support_months: supportMonths,
+    }
+  }
+  if (category === 'finance') {
+    return {
+      principal_amount: numberValue(values, 'principal'),
+      annual_interest_rate_percent: numberValue(values, 'annualInterestRate'),
+      interest_reduction_rate_percent: numberValue(values, 'interestReductionRate'),
+      support_months: supportMonths,
+    }
+  }
+  if (category === 'tax') {
+    return {
+      annual_tax_amount: numberValue(values, 'annualTaxPaid'),
+      tax_reduction_rate_percent: numberValue(values, 'taxReductionRate'),
+      max_reduction_amount: numberValue(values, 'maxReduction'),
+      support_months: supportMonths,
+    }
+  }
+  if (category === 'employment') {
+    return {
+      monthly_income_amount: numberValue(values, 'monthlySalary'),
+      monthly_subsidy_amount: numberValue(values, 'monthlySubsidy'),
+      support_months: supportMonths,
+    }
+  }
+  return {
+    monthly_living_cost_amount: numberValue(values, 'monthlyLivingCost'),
+    monthly_benefit_amount: numberValue(values, 'monthlyBenefit'),
+    support_months: supportMonths,
+  }
+}
+
 export default function Simulator() {
   const [period, setPeriod] = useState('월 기준')
   const [formValues, setFormValues] = useState<Record<string, SimulatorInputValue>>({})
+  const [result, setResult] = useState<SimulatorResult | null>(null)
+  const [isCalculating, setIsCalculating] = useState(false)
+  const [error, setError] = useState('')
   const navigate = useNavigate()
   const { id } = useParams()
   const policyId = Number(id ?? 1)
   const category = policyCategories[policyId] ?? 'housing'
   const CategoryForm = simulatorForms[category]
-  const { before, after, monthlySavings, annualSavings } = mockData.savingsSimulation
   const yearly = period === '연 기준'
-  const beforeAmount = toManWon(before.housingCost) * (yearly ? 12 : 1)
-  const afterAmount = toManWon(after.housingCost) * (yearly ? 12 : 1)
-  const savedAmount = toManWon(yearly ? annualSavings : monthlySavings)
+  const beforeAmount = result
+    ? toManWon(Number(yearly ? result.annual_before_amount : result.monthly_before_amount))
+    : 0
+  const afterAmount = result
+    ? toManWon(Number(yearly ? result.annual_after_amount : result.monthly_after_amount))
+    : 0
+  const savedAmount = result
+    ? toManWon(Number(yearly ? result.annual_savings_amount : result.monthly_savings_amount))
+    : 0
 
   function updateFormValue(name: string, value: SimulatorInputValue) {
     setFormValues((current) => ({ ...current, [name]: value }))
+    setResult(null)
+    setError('')
+  }
+
+  async function calculate(): Promise<void> {
+    setIsCalculating(true)
+    setError('')
+    try {
+      setResult(await runSimulation(category, buildPayload(category, formValues)))
+    } catch {
+      setError('혜택을 계산하지 못했어요. 입력값을 확인하고 다시 시도해 주세요.')
+    } finally {
+      setIsCalculating(false)
+    }
   }
 
   return (
@@ -72,6 +154,15 @@ export default function Simulator() {
       <div className="mt-6 border-y border-gray-200 py-6">
         <h2 className="mb-4 text-lg font-bold">시뮬레이션 조건</h2>
         <CategoryForm values={formValues} onChange={updateFormValue} />
+        <button
+          type="button"
+          disabled={isCalculating}
+          onClick={() => void calculate()}
+          className="mt-5 w-full rounded-lg bg-blue-600 py-3.5 font-bold text-white disabled:bg-blue-300"
+        >
+          {isCalculating ? '혜택을 계산하고 있어요...' : '예상 혜택 계산하기'}
+        </button>
+        {error && <p className="mt-3 text-sm font-semibold text-rose-600">{error}</p>}
       </div>
 
       <div className="mt-6 inline-flex rounded-lg bg-slate-100 p-1">
@@ -89,6 +180,8 @@ export default function Simulator() {
         ))}
       </div>
 
+      {result ? (
+        <>
       <div className="mt-5 grid items-stretch gap-4 md:grid-cols-[1fr_auto_1fr]">
         <div className="rounded-xl border border-gray-200 bg-white p-6">
           <p className="text-sm font-semibold text-gray-500">지원 전 · Before</p>
@@ -118,9 +211,14 @@ export default function Simulator() {
       </div>
 
       <p className="mt-4 rounded-lg bg-slate-50 p-4 text-xs leading-6 text-gray-500">
-        이 결과는 저장된 프로필과 가상 정책 데이터를 바탕으로 계산한 예상 금액이에요. 실제 지급
-        금액은 심사 결과에 따라 달라질 수 있어요.
+        {result.disclaimer}
       </p>
+        </>
+      ) : (
+        <p className="mt-5 rounded-xl bg-amber-50 p-6 text-center text-sm text-amber-900">
+          값을 입력하고 계산 버튼을 누르면 월간·연간 예상 혜택을 보여드릴게요.
+        </p>
+      )}
     </section>
   )
 }

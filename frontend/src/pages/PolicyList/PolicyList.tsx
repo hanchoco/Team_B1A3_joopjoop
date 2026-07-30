@@ -12,7 +12,9 @@ import {
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
+  addPolicyBookmark,
   getRecommendedPolicies,
+  removePolicyBookmark,
   type PolicyListParams,
   type PolicySummary,
 } from '../../api/policies'
@@ -68,7 +70,9 @@ export default function PolicyList() {
     total: number
     error: string | null
   }>({ requestKey: '', policies: [], total: 0, error: null })
-  const { favoritePolicies, toggleFavorite, userProfile } = useApp()
+  const [bookmarkingIds, setBookmarkingIds] = useState<Set<number>>(new Set())
+  const [bookmarkError, setBookmarkError] = useState('')
+  const { userProfile } = useApp()
   const selectedCategory = searchParams.get('category')
   const activeFilter = searchParams.get('filter') || 'ELIGIBLE'
   const activeSort: PolicySort =
@@ -125,6 +129,30 @@ export default function PolicyList() {
     const nextParams = new URLSearchParams(searchParams)
     nextParams.set('filter', filter)
     setSearchParams(nextParams)
+  }
+
+  async function toggleBookmark(policy: PolicySummary): Promise<void> {
+    if (bookmarkingIds.has(policy.id)) return
+    setBookmarkingIds((current) => new Set(current).add(policy.id))
+    setBookmarkError('')
+    try {
+      if (policy.is_bookmarked) await removePolicyBookmark(policy.id)
+      else await addPolicyBookmark(policy.id)
+      setResult((current) => ({
+        ...current,
+        policies: current.policies.map((item) =>
+          item.id === policy.id ? { ...item, is_bookmarked: !policy.is_bookmarked } : item,
+        ),
+      }))
+    } catch {
+      setBookmarkError('관심 정책을 변경하지 못했어요. 잠시 후 다시 시도해 주세요.')
+    } finally {
+      setBookmarkingIds((current) => {
+        const next = new Set(current)
+        next.delete(policy.id)
+        return next
+      })
+    }
   }
 
   return (
@@ -203,6 +231,9 @@ export default function PolicyList() {
         </div>
       )}
       <div className="mt-6 space-y-3">
+        {bookmarkError && (
+          <p className="rounded-lg bg-rose-50 p-3 text-sm text-rose-700">{bookmarkError}</p>
+        )}
         {isLoading && (
           <div className="flex min-h-64 flex-col items-center justify-center gap-4 rounded-xl bg-amber-50/60 text-center">
             <span className="h-9 w-9 animate-spin rounded-full border-4 border-amber-200 border-t-amber-500" />
@@ -226,7 +257,7 @@ export default function PolicyList() {
             const category = policy.categories.find((item) => item.is_primary)?.name ?? '기타'
             const chance = policy.card_status ? statusLabels[policy.card_status] : '판정 준비 중'
             const deadline = policy.days_until_deadline
-            const favorite = Boolean(favoritePolicies[id])
+            const favorite = policy.is_bookmarked
             const CategoryIcon = categoryIcons[category] ?? ReceiptText
             return (
               <article
@@ -245,16 +276,12 @@ export default function PolicyList() {
                     </span>
                     <button
                       type="button"
+                      disabled={bookmarkingIds.has(id)}
                       onClick={(event) => {
                         event.stopPropagation()
-                        toggleFavorite({
-                          id,
-                          title,
-                          category,
-                          deadline: deadline ?? 0,
-                        })
+                        void toggleBookmark(policy)
                       }}
-                      className="rounded-md p-1"
+                      className="rounded-md p-1 disabled:opacity-50"
                       aria-label={`${title} ${favorite ? '관심 정책 해제' : '관심 정책 등록'}`}
                     >
                       <Star

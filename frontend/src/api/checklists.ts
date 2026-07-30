@@ -2,12 +2,7 @@ import apiClient from './client'
 
 export type DocumentPreparationStatus = 'NOT_STARTED' | 'PREPARING' | 'READY' | 'SUBMITTED'
 export type ApplicationStatus =
-  | 'NOT_APPLIED'
-  | 'SUBMITTED'
-  | 'UNDER_REVIEW'
-  | 'APPROVED'
-  | 'REJECTED'
-  | 'PAID'
+  'NOT_APPLIED' | 'SUBMITTED' | 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED' | 'PAID'
 export type PreparationStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED'
 
 export interface ChecklistCondition {

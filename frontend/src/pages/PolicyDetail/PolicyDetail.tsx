@@ -1,8 +1,12 @@
 import { ArrowLeft, Bot, Calculator, CheckCircle2, ClipboardCheck, Star } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { getPolicyDetail, type PolicyDetail as PolicyDetailData } from '../../api/policies'
-import { useApp } from '../../store/useApp'
+import {
+  addPolicyBookmark,
+  getPolicyDetail,
+  removePolicyBookmark,
+  type PolicyDetail as PolicyDetailData,
+} from '../../api/policies'
 
 type PolicyTab = '지원내용' | '신청조건' | '신청방법' | '필요서류'
 
@@ -17,7 +21,8 @@ export default function PolicyDetail() {
     policy: PolicyDetailData | null
     error: string | null
   }>({ policyId: null, policy: null, error: null })
-  const { favoritePolicies, toggleFavorite } = useApp()
+  const [isBookmarking, setIsBookmarking] = useState(false)
+  const [bookmarkError, setBookmarkError] = useState('')
   const policyId = Number(id)
   const isInvalidPolicyId = !Number.isInteger(policyId) || policyId <= 0
   const isLoading = !isInvalidPolicyId && result.policyId !== policyId
@@ -27,7 +32,7 @@ export default function PolicyDetail() {
     : result.policyId === policyId
       ? result.error
       : null
-  const isStarred = Boolean(favoritePolicies[policyId])
+  const isStarred = Boolean(policy?.is_bookmarked)
 
   useEffect(() => {
     let isCurrent = true
@@ -51,6 +56,26 @@ export default function PolicyDetail() {
       isCurrent = false
     }
   }, [isInvalidPolicyId, policyId])
+
+  async function toggleBookmark(policyData: PolicyDetailData): Promise<void> {
+    if (isBookmarking) return
+    setIsBookmarking(true)
+    setBookmarkError('')
+    try {
+      if (policyData.is_bookmarked) await removePolicyBookmark(policyData.id)
+      else await addPolicyBookmark(policyData.id)
+      setResult((current) => ({
+        ...current,
+        policy: current.policy
+          ? { ...current.policy, is_bookmarked: !policyData.is_bookmarked }
+          : null,
+      }))
+    } catch {
+      setBookmarkError('관심 정책을 변경하지 못했어요. 잠시 후 다시 시도해 주세요.')
+    } finally {
+      setIsBookmarking(false)
+    }
+  }
 
   if (isLoading) {
     return (
@@ -120,15 +145,9 @@ export default function PolicyDetail() {
             </div>
             <button
               type="button"
-              onClick={() =>
-                toggleFavorite({
-                  id: policy.id,
-                  title: policy.title,
-                  category,
-                  deadline: policy.days_until_deadline ?? 0,
-                })
-              }
-              className="grid h-10 w-10 shrink-0 place-items-center rounded-lg transition hover:bg-amber-50"
+              disabled={isBookmarking}
+              onClick={() => void toggleBookmark(policy)}
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-lg transition hover:bg-amber-50 disabled:opacity-50"
               aria-label={isStarred ? '관심 정책 해제' : '관심 정책 등록'}
               aria-pressed={isStarred}
             >
@@ -137,6 +156,7 @@ export default function PolicyDetail() {
               />
             </button>
           </div>
+          {bookmarkError && <p className="mt-3 text-sm text-rose-600">{bookmarkError}</p>}
           <p className="mt-3 max-w-2xl text-sm leading-7 text-gray-500">
             {policy.description ?? policy.summary ?? '정책의 자세한 내용을 확인해 주세요.'}
           </p>
