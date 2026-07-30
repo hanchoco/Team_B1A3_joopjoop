@@ -118,13 +118,42 @@ export interface PolicyBookmarkResponse {
 }
 
 type PolicySummaryApiResponse = Omit<PolicySummary, 'card_status'> & {
-  card_status: EligibilityStatus | BackendEligibilityStatus | null
+  card_status?: EligibilityStatus | BackendEligibilityStatus | null
 }
 
-function normalizePolicySummary<T extends PolicySummaryApiResponse>(
-  policy: T,
-): Omit<T, 'card_status'> & Pick<PolicySummary, 'card_status'> {
-  return { ...policy, card_status: toEligibilityStatus(policy.card_status) }
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function extractPolicyItems(payload: unknown): unknown[] {
+  if (Array.isArray(payload)) return payload
+  if (!isRecord(payload)) return []
+
+  if (Array.isArray(payload.items)) return payload.items
+  if (Array.isArray(payload.policies)) return payload.policies
+  if (Array.isArray(payload.data)) return payload.data
+
+  if (isRecord(payload.data)) {
+    if (Array.isArray(payload.data.items)) return payload.data.items
+    if (Array.isArray(payload.data.policies)) return payload.data.policies
+    if (Array.isArray(payload.data.data)) return payload.data.data
+  }
+
+  return []
+}
+
+function getResponseMetadata(payload: unknown): Record<string, unknown> {
+  if (!isRecord(payload)) return {}
+  return isRecord(payload.data) ? { ...payload, ...payload.data } : payload
+}
+
+function normalizePolicySummary(policy: PolicySummaryApiResponse): PolicySummary {
+  const cardStatus = policy.card_status ?? null
+  return {
+    ...policy,
+    categories: Array.isArray(policy.categories) ? policy.categories : [],
+    card_status: toEligibilityStatus(cardStatus),
+  }
 }
 
 export async function getRecommendedPolicies(
@@ -134,23 +163,39 @@ export async function getRecommendedPolicies(
     params.eligibility_status === 'INELIGIBLE'
       ? { ...params, eligibility_status: undefined }
       : params
-  const { data } = await apiClient.get<Omit<PolicyListResponse, 'items'> & {
-    items: PolicySummaryApiResponse[]
-  }>('/api/v1/policies', { params: requestParams })
-  const items = data.items.map(normalizePolicySummary)
-  if (params.eligibility_status !== 'INELIGIBLE') return { ...data, items }
+  const { data } = await apiClient.get<unknown>('/api/v1/policies', {
+    params: requestParams,
+  })
+  const metadata = getResponseMetadata(data)
+  const items = extractPolicyItems(data)
+    .filter(isRecord)
+    .map((policy) => normalizePolicySummary(policy as unknown as PolicySummaryApiResponse))
+  const response: PolicyListResponse = {
+    items,
+    total: typeof metadata.total === 'number' ? metadata.total : items.length,
+    page: typeof metadata.page === 'number' ? metadata.page : (params.page ?? 1),
+    size: typeof metadata.size === 'number' ? metadata.size : items.length,
+  }
+  if (params.eligibility_status !== 'INELIGIBLE') return response
 
   const ineligibleItems = items.filter((policy) => policy.card_status === 'INELIGIBLE')
-  return { ...data, items: ineligibleItems, total: ineligibleItems.length }
+  return { ...response, items: ineligibleItems, total: ineligibleItems.length }
 }
 
 export async function getPolicyDetail(policyId: number): Promise<PolicyDetail> {
-  const { data } = await apiClient.get<
-    Omit<PolicyDetail, 'card_status'> & {
-      card_status: EligibilityStatus | BackendEligibilityStatus | null
-    }
-  >(`/api/v1/policies/${policyId}`)
-  return normalizePolicySummary(data) as PolicyDetail
+  const { data } = await apiClient.get<unknown>(`/api/v1/policies/${policyId}`)
+  const payload = isRecord(data) && isRecord(data.data) ? data.data : data
+  if (!isRecord(payload)) throw new Error('Invalid policy detail response')
+
+  const policy = normalizePolicySummary(
+    payload as unknown as PolicySummaryApiResponse,
+  ) as PolicyDetail
+  return {
+    ...policy,
+    conditions: Array.isArray(policy.conditions) ? policy.conditions : [],
+    benefits: Array.isArray(policy.benefits) ? policy.benefits : [],
+    documents: Array.isArray(policy.documents) ? policy.documents : [],
+  }
 }
 
 export async function addPolicyBookmark(policyId: number): Promise<PolicyBookmarkResponse> {

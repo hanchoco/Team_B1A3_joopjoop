@@ -34,6 +34,7 @@ from app.services.ai.checklist_generator import (
     validate_checklist_payload,
 )
 from app.services.ai.rule_extractor import (
+    categorize_policy,
     extract_conditions,
     validate_condition_payload,
 )
@@ -69,7 +70,29 @@ _POLICY_DATE_FIELDS = (
 )
 _ALLOWED_SOURCES = frozenset({"ONTONG_YOUTH", "MANUAL"})
 _ALLOWED_STATUSES = frozenset({"DRAFT", "ACTIVE", "CLOSED", "ARCHIVED"})
+_ALLOWED_CATEGORY_CODES = frozenset(
+    {"HOUSING", "TRANSPORT", "FINANCE", "TAX", "EMPLOYMENT", "WELFARE"}
+)
 _MAX_DRAFT_BYTES = 50 * 1024 * 1024
+
+
+def category_codes_for_policy(policy: Mapping[str, object]) -> list[str]:
+    """Map an Ontong Youth policy's source classifications to app categories."""
+
+    raw_payload = policy.get("raw_payload")
+    source = raw_payload if isinstance(raw_payload, Mapping) else policy
+    large_classification = source.get("lclsfNm")
+    medium_classification = source.get("mclsfNm")
+    source_codes = categorize_policy(
+        large_classification if isinstance(large_classification, str) else "",
+        medium_classification if isinstance(medium_classification, str) else "",
+    )
+    supported_codes: list[str] = []
+    for source_code in source_codes:
+        category_code = "WELFARE" if source_code in {"PARTICIPATION", "ETC"} else source_code
+        if category_code not in supported_codes:
+            supported_codes.append(category_code)
+    return supported_codes
 
 
 class SeedDraftError(ValueError):
@@ -210,6 +233,18 @@ def _validate_policy(policy: object) -> dict[str, object]:
     return validated
 
 
+def _validate_category_codes(value: object) -> list[str]:
+    if not isinstance(value, list) or not value:
+        raise SeedDraftError("category_codes must be a non-empty array")
+    category_codes: list[str] = []
+    for item in value:
+        if not isinstance(item, str) or item not in _ALLOWED_CATEGORY_CODES:
+            raise SeedDraftError(f"unsupported category code: {item}")
+        if item not in category_codes:
+            category_codes.append(item)
+    return category_codes
+
+
 def _validated_bundles(
     payload: Mapping[str, object],
 ) -> list[dict[str, object]]:
@@ -240,6 +275,7 @@ def _validated_bundles(
         conditions = validate_condition_payload({"conditions": raw_bundle.get("conditions")})
         documents = validate_checklist_payload({"documents": raw_bundle.get("documents")})
         bundle = dict(policy)
+        bundle["category_codes"] = _validate_category_codes(raw_bundle.get("category_codes"))
         bundle["conditions"] = [condition.to_dict() for condition in conditions]
         bundle["documents"] = [document.to_dict() for document in documents]
         bundles.append(bundle)
@@ -372,6 +408,7 @@ async def create_seed_draft(
             bundles.append(
                 {
                     "policy": policy_payload,
+                    "category_codes": category_codes_for_policy(policy_payload),
                     "conditions": [condition.to_dict() for condition in conditions],
                     "documents": [document.to_dict() for document in documents],
                 }

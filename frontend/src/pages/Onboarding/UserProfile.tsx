@@ -41,7 +41,7 @@ export default function UserProfile() {
         },
         true,
       )
-      navigate('/policies?filter=ELIGIBLE', {
+      navigate('/policies?filter=ALL', {
         state: { profileSaved: true },
       })
     } catch {

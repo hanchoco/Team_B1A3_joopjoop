@@ -69,19 +69,19 @@ export default function PolicyList() {
   const [bookmarkError, setBookmarkError] = useState('')
   const { userProfile } = useApp()
   const selectedCategory = searchParams.get('category')
-  const activeFilter = searchParams.get('filter') || 'ELIGIBLE'
+  const activeFilter = searchParams.get('filter') || 'ALL'
   const activeSort: PolicySort =
     searchParams.get('sort') === 'deadline' ? 'deadline' : 'recommended'
   const requestKey = `${selectedCategory ?? ''}:${activeFilter}:${activeSort}`
   const isLoading = result.requestKey !== requestKey
-  const policies = isLoading ? [] : result.policies
+  const policies = !isLoading && Array.isArray(result.policies) ? result.policies : []
   const total = isLoading ? 0 : result.total
   const error = isLoading ? null : result.error
 
   useEffect(() => {
     if (!searchParams.has('filter')) {
       const nextParams = new URLSearchParams(searchParams)
-      nextParams.set('filter', 'ELIGIBLE')
+      nextParams.set('filter', 'ALL')
       setSearchParams(nextParams, { replace: true })
     }
   }, [searchParams, setSearchParams])
@@ -100,8 +100,13 @@ export default function PolicyList() {
         if (!isCurrent) return
         setResult({
           requestKey,
-          policies: response.items,
-          total: response.total,
+          policies: Array.isArray(response.items) ? response.items : [],
+          total:
+            typeof response.total === 'number'
+              ? response.total
+              : Array.isArray(response.items)
+                ? response.items.length
+                : 0,
           error: null,
         })
       })
@@ -140,9 +145,11 @@ export default function PolicyList() {
       }
       setResult((current) => ({
         ...current,
-        policies: current.policies.map((item) =>
-          item.id === policy.id ? { ...item, is_bookmarked: isBookmarked } : item,
-        ),
+        policies: Array.isArray(current.policies)
+          ? current.policies.map((item) =>
+              item.id === policy.id ? { ...item, is_bookmarked: isBookmarked } : item,
+            )
+          : [],
       }))
     } catch {
       setBookmarkError('관심 정책을 변경하지 못했어요. 잠시 후 다시 시도해 주세요.')
@@ -254,7 +261,8 @@ export default function PolicyList() {
           !error &&
           policies.map((policy) => {
             const { id, title } = policy
-            const category = policy.categories.find((item) => item.is_primary)?.name ?? '기타'
+            const categories = Array.isArray(policy.categories) ? policy.categories : []
+            const category = categories.find((item) => item.is_primary)?.name ?? '기타'
             const chance = policy.card_status
               ? eligibilityStatusLabels[policy.card_status]
               : '판정 준비 중'
