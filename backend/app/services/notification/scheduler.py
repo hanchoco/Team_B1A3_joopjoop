@@ -10,8 +10,10 @@ from __future__ import annotations
 import hashlib
 from collections.abc import Iterable, Mapping
 from dataclasses import asdict, dataclass
-from datetime import date, datetime, time, timezone
+from datetime import date, datetime, time
+from zoneinfo import ZoneInfo
 
+KST = ZoneInfo("Asia/Seoul")
 DEADLINE_OFFSETS = (7, 3, 0)
 _EVENT_TYPES = {
     7: "DEADLINE_D7",
@@ -242,12 +244,16 @@ def build_notification_events(
 ) -> list[NotificationEvent]:
     """Emit today's fixed deadline events and remove duplicate keys."""
 
-    current = as_of or datetime.now(timezone.utc)
-    scheduled_at = datetime.combine(
-        current.date(),
-        time(hour=9),
-        tzinfo=current.tzinfo or timezone.utc,
-    )
+    if as_of is None:
+        current = datetime.now(KST)
+    elif as_of.tzinfo is None:
+        current = as_of.replace(tzinfo=KST)
+    else:
+        current = as_of.astimezone(KST)
+
+    # "한국시간 오전 9시"를 의미하는 naive 값. 이 프로젝트의 다른 타임스탬프(created_at 등)는
+    # naive UTC 관례를 쓰지만, 이 필드만 의도적으로 naive KST다.
+    scheduled_at = datetime.combine(current.date(), time(hour=9))
     events: list[NotificationEvent] = []
     seen_keys: set[str] = set()
     for item in records:

@@ -81,3 +81,17 @@ def mark_notification_read(
         notification_id=notification_id,
     )
     return NotificationResponse.model_validate(notification)
+
+
+@router.post(
+    "/users/me/notifications/run-deadline-check",
+    response_model=list[NotificationResponse],
+)
+def run_deadline_check(
+    db: DbSession,
+    current_user: CurrentUser,
+) -> list[NotificationResponse]:
+    """로그인한 사용자가 수동으로 마감 알림 배치를 즉시 실행한다."""
+
+    notifications = notification_service.create_due_deadline_notifications(db)
+    return [NotificationResponse.model_validate(record) for record in notifications]
