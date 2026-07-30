@@ -292,3 +292,58 @@ export interface WelfareSimulatorRequest {
   monthly_benefit_amount: number
   support_months?: number
 }
+
+// Checklist DTOs (see backend/app/schemas/checklist.py).
+
+export type PreparationStatus = 'NOT_STARTED' | 'PREPARING' | 'READY' | 'SUBMITTED'
+
+// Cached condition-check result for the checklist screen. This is a
+// separate, English-valued cache enum from the live ConditionStatus used on
+// the policy detail page (see AGENTS.md 4번) — do not conflate the two.
+export type ConditionResultStatus = 'SATISFIED' | 'NEEDS_REVIEW' | 'UNSATISFIED'
+
+export interface ChecklistConditionItem {
+  condition_id: number
+  condition_key: string
+  description: string
+  result_status: ConditionResultStatus
+  reason: string
+  is_user_confirmed: boolean
+  confirmed_at: string | null
+}
+
+export interface ChecklistDocumentItem {
+  document_id: number
+  document_code: string
+  document_name: string
+  required_reason: string | null
+  issuing_organization: string | null
+  issuing_method: string | null
+  issuing_url: string | null
+  submission_format: string | null
+  is_required: boolean
+  preparation_status: PreparationStatus
+  is_checked: boolean
+  checked_at: string | null
+  note: string | null
+}
+
+export interface ChecklistResponse {
+  state_id: number
+  policy_id: number
+  policy_title: string
+  preparation_status: PreparationStatus
+  progress_percent: number
+  conditions: ChecklistConditionItem[]
+  documents: ChecklistDocumentItem[]
+}
+
+export interface DocumentProgressUpdate {
+  preparation_status: PreparationStatus
+  is_checked: boolean
+  note?: string | null
+}
+
+export interface ConditionConfirmationUpdate {
+  confirmed: boolean
+}
