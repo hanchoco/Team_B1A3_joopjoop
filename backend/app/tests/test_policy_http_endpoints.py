@@ -538,6 +538,14 @@ def test_checklist_application_and_missing_resource_responses(
     assert completed.json()["progress_percent"] == 100
     assert completed.json()["preparation_status"] == "COMPLETED"
 
+    still_preparing = client.get(
+        "/api/v1/users/me/policies",
+        params={"tab": "preparing"},
+        headers=headers,
+    )
+    assert still_preparing.status_code == 200, still_preparing.text
+    assert [item["policy_id"] for item in still_preparing.json()] == [seeded.review_policy_id]
+
     application_date = date(2026, 7, 29)
     application = client.post(
         f"/api/v1/policies/{seeded.review_policy_id}/applications",
