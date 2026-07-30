@@ -235,29 +235,43 @@ def evaluate_policy(
     *,
     reference_date: date | None = None,
 ) -> PolicyEvaluation:
-    """Aggregate condition evaluations into the two-state policy card status.
-
-    ``LIKELY_ELIGIBLE`` is returned only when at least one condition exists and
-    every condition is ``SATISFIED``.  An empty condition set is not sufficient
-    evidence of eligibility and therefore remains ``NEEDS_REVIEW``.
-    """
-
+    condition_list = list(conditions)
     results = tuple(
-        evaluate_condition(
-            condition,
-            context,
-            reference_date=reference_date,
-        )
-        for condition in conditions
+        evaluate_condition(condition, context, reference_date=reference_date)
+        for condition in condition_list
     )
-    satisfied_count = sum(result.status is ConditionStatus.SATISFIED for result in results)
-    review_count = sum(result.status is ConditionStatus.NEEDS_REVIEW for result in results)
-    unsatisfied_count = sum(result.status is ConditionStatus.UNSATISFIED for result in results)
+    satisfied_count = sum(r.status is ConditionStatus.SATISFIED for r in results)
+    review_count = sum(r.status is ConditionStatus.NEEDS_REVIEW for r in results)
+    unsatisfied_count = sum(r.status is ConditionStatus.UNSATISFIED for r in results)
 
-    all_satisfied = bool(results) and satisfied_count == len(results)
-    card_status = (
-        PolicyCardStatus.LIKELY_ELIGIBLE if all_satisfied else PolicyCardStatus.NEEDS_REVIEW
-    )
+    from collections import defaultdict
+    groups: dict[int, list[ConditionStatus]] = defaultdict(list)
+    for condition, result in zip(condition_list, results):
+        if not _field(condition, ("is_required",), default=True):
+            continue  # 선택 조건은 그룹 판정에서 제외 (기존 로직 유지)
+        group_no = _field(condition, ("condition_group_no",), default=1)
+        groups[group_no].append(result.status)
+
+    if not groups:
+        card_status = PolicyCardStatus.NEEDS_REVIEW
+    else:
+        group_statuses = []
+        for statuses in groups.values():
+            if ConditionStatus.UNSATISFIED in statuses:
+                group_statuses.append(PolicyCardStatus.INELIGIBLE)
+            elif ConditionStatus.NEEDS_REVIEW in statuses:
+                group_statuses.append(PolicyCardStatus.NEEDS_REVIEW)
+            else:
+                group_statuses.append(PolicyCardStatus.LIKELY_ELIGIBLE)
+
+        # 그룹간 OR: 하나라도 통과하는 그룹이 있으면 전체 통과
+        if PolicyCardStatus.LIKELY_ELIGIBLE in group_statuses:
+            card_status = PolicyCardStatus.LIKELY_ELIGIBLE
+        elif PolicyCardStatus.NEEDS_REVIEW in group_statuses:
+            card_status = PolicyCardStatus.NEEDS_REVIEW
+        else:
+            card_status = PolicyCardStatus.INELIGIBLE
+
     return PolicyEvaluation(
         status=card_status,
         condition_results=results,
@@ -266,7 +280,6 @@ def evaluate_policy(
         unsatisfied_condition_count=unsatisfied_count,
         total_condition_count=len(results),
     )
-
 
 def _review_result(
     *,
