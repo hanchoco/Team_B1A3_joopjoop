@@ -16,23 +16,34 @@
 """
 
 import json
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
+from typing import Any
 
 try:
-    from .solar_client import SolarClient, client as _default_sync_client, SOLAR_MODEL as _DEFAULT_MODEL
-    from .prompt_templates import DOCUMENT_SYSTEM_PROMPT, CHECKLIST_SYSTEM_PROMPT
+    from .prompt_templates import CHECKLIST_SYSTEM_PROMPT, DOCUMENT_SYSTEM_PROMPT
+    from .solar_client import (
+        SOLAR_MODEL as _DEFAULT_MODEL,
+    )
+    from .solar_client import (
+        SolarClient,
+    )
+    from .solar_client import (
+        client as _default_sync_client,
+    )
 except ImportError:
+    from prompt_templates import CHECKLIST_SYSTEM_PROMPT, DOCUMENT_SYSTEM_PROMPT
     from solar_client import SolarClient
-    from prompt_templates import DOCUMENT_SYSTEM_PROMPT, CHECKLIST_SYSTEM_PROMPT
 
 
 # ============================================================
 # 타입
 # ============================================================
 
+
 @dataclass
 class GeneratedDocument:
     """policy_documents 한 행을 담는 타입."""
+
     document_code: str
     document_name: str
     required_reason: str = None
@@ -47,36 +58,84 @@ class GeneratedDocument:
         return asdict(self)
 
 
+_GENERIC_DOCUMENT_GUIDANCE = (
+    "붙임파일",
+    "첨부파일",
+    "별도 문의",
+    "공고문 확인",
+    "홈페이지 확인",
+)
+
+
+def _document_source_text(policy_payload: dict[str, Any]) -> str:
+    raw = policy_payload.get("raw_payload") or policy_payload
+    if not isinstance(raw, dict):
+        return ""
+    for key in ("sbmsnDcmntCn", "pstnPaprCn", "requiredDocuments"):
+        value = raw.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return ""
+
+
+def _has_only_generic_guidance(source_text: str) -> bool:
+    normalized = " ".join(source_text.split())
+    return bool(normalized) and any(
+        guidance in normalized for guidance in _GENERIC_DOCUMENT_GUIDANCE
+    )
+
+
+def _source_grounded_value(value: object, source_text: str) -> str | None:
+    if not isinstance(value, str):
+        return None
+    normalized = " ".join(value.split())
+    normalized_source = " ".join(source_text.split())
+    return normalized if normalized and normalized in normalized_source else None
+
+
 # ============================================================
 # 1. A02 파이프라인용 - 서류 목록만 생성 (실제 seed_policy_data.py가 호출)
 # ============================================================
 
-async def generate_checklist(policy_payload: dict, *, client: SolarClient) -> list[GeneratedDocument]:
+
+async def generate_checklist(
+    policy_payload: dict, *, client: SolarClient
+) -> list[GeneratedDocument]:
     """
     policy_payload: youth_policy_api.py가 만든 정규화된 정책 dict.
     client: SolarClient 인스턴스 (seed_policy_data.py가 생성해서 넘겨줌)
     반환: GeneratedDocument 리스트 (제출서류 초안)
     """
     raw = policy_payload.get("raw_payload") or policy_payload
+    source_text = _document_source_text(policy_payload)
+    if not source_text or _has_only_generic_guidance(source_text):
+        return []
+
     user_input = f"""
 [정책명] {raw.get('plcyNm') or policy_payload.get('title')}
-[제출서류] {raw.get('sbmsnDcmntCn', '') or '(없음)'}
+[제출서류] {source_text}
 """
     ai_result = await client.complete_json(DOCUMENT_SYSTEM_PROMPT, user_input)
+    raw_documents = ai_result.get("documents", [])
+    if not isinstance(raw_documents, list):
+        return []
 
     return [
         GeneratedDocument(
             document_code=f"DOC-{i + 1:02d}",
-            document_name=d.get("document_name"),
-            required_reason=d.get("required_reason"),
-            issuing_organization=d.get("issuing_organization"),
-            issuing_method=d.get("issuing_method"),
-            issuing_url=d.get("issuing_url"),
-            submission_format=d.get("submission_format"),
+            document_name=d["document_name"].strip(),
+            required_reason=_source_grounded_value(d.get("required_reason"), source_text),
+            issuing_organization=_source_grounded_value(d.get("issuing_organization"), source_text),
+            issuing_method=_source_grounded_value(d.get("issuing_method"), source_text),
+            issuing_url=_source_grounded_value(d.get("issuing_url"), source_text),
+            submission_format=_source_grounded_value(d.get("submission_format"), source_text),
             is_required=d.get("is_required", True),
             display_order=i + 1,
         )
-        for i, d in enumerate(ai_result.get("documents", []))
+        for i, d in enumerate(raw_documents)
+        if isinstance(d, dict)
+        and isinstance(d.get("document_name"), str)
+        and d["document_name"].strip()
     ]
 
 
@@ -109,6 +168,7 @@ def validate_checklist_payload(payload: dict) -> list[GeneratedDocument]:
 # 2. S10 실시간 화면용 - 조건+예외+참여제한+서류 통합 체크리스트
 #    (seed 파이프라인과 무관, 별도 API 엔드포인트에서 사용될 함수)
 # ============================================================
+
 
 def generate_application_checklist(
     policy: dict,
@@ -146,7 +206,8 @@ def generate_application_checklist(
 
     real_keys = {c.get("condition_key") for c in condition_results}
     result["checklist"] = [
-        item for item in result.get("checklist", [])
+        item
+        for item in result.get("checklist", [])
         if item.get("type") != "exception" or item.get("condition_key") in real_keys
     ]
     return result

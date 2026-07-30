@@ -204,7 +204,7 @@ def _original_text(record: Mapping[str, object]) -> str:
         ("지원내용", ("plcySprtCn", "sporCn", "supportContent")),
         ("신청기간", ("aplyYmd", "rqutPrdCn", "applicationPeriod")),
         ("신청방법", ("plcyAplyMthdCn", "rqutProcCn", "applicationMethod")),
-        ("제출서류", ("pstnPaprCn", "requiredDocuments")),
+        ("제출서류", ("sbmsnDcmntCn", "pstnPaprCn", "requiredDocuments")),
         ("문의처", ("cherCtpcCn", "cnsgNmor", "contact")),
     )
     lines: list[str] = []
@@ -524,7 +524,7 @@ class YouthPolicyClient:
             "pageNum": page_index,
             "pageSize": page_size,
             "rtnType": "json",
-            }
+        }
         if filters is not None:
             params.update(
                 {str(key): str(value) for key, value in filters.items() if str(value).strip()}

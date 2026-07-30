@@ -18,7 +18,8 @@ QA_SYSTEM_PROMPT = """당신은 civiclens의 정책 도우미입니다.
   확인하라고 안내하세요.
 
 그 외에는 자유롭게 답하세요:
-- [정책 원문], [자격 조건 정의], 일반 상식과 행정 절차 지식을 모두 활용해 실질적으로 도움이 되게 답하세요.
+- [정책 원문], [자격 조건 정의], 일반 상식과 행정 절차 지식을 모두 활용해
+  실질적으로 도움이 되게 답하세요.
 - 서류, 신청 절차, 일정 등 구체적인 세부사항이 원문에 없으면 일반적으로 알려진 절차를 바탕으로
   안내하되, 정확한 최신 정보는 신청 사이트/담당기관에서 확인하라고 자연스럽게 덧붙이세요.
 - 행정 용어를 쉬운 말로 풀어서 설명하세요.
@@ -45,7 +46,8 @@ CONDITION_SYSTEM_PROMPT = """당신은 한국 청년 정책 원문에서 자격�
           "is_required": true/false, "description": "화면 표시용 조건 설명",
           "failure_message": "불충족 시 보여줄 문구", "evidence": "원문 근거 문장"}
 
-operator는 다음 중 하나: EQ, NE, IN, NOT_IN, GT, GTE, LT, LTE, BETWEEN, CONTAINS, EXISTS, MANUAL_CHECK
+operator는 다음 중 하나:
+EQ, NE, IN, NOT_IN, GT, GTE, LT, LTE, BETWEEN, CONTAINS, EXISTS, MANUAL_CHECK
 코드값 레지스트리:
   housing_type_code: OWNED, JEONSE, MONTHLY_RENT, PUBLIC_RENTAL, DORMITORY, WITH_FAMILY, OTHER
   household_type_code: SINGLE, COUPLE, WITH_PARENTS, SINGLE_PARENT, MULTI_PERSON, OTHER
@@ -97,11 +99,11 @@ condition_key 레지스트리에 안 맞아서 조건으로 못 만든 내용(�
 DOCUMENT_SYSTEM_PROMPT = """당신은 한국 청년 정책 원문에서 제출서류를 추출하는 도우미입니다.
 반드시 JSON으로만 답하세요.
 
-제출서류 텍스트를 항목별로 분리하세요. 이름만 있고 발급기관/방법 정보가 없으면
-일반적으로 알려진 한국 행정 상식(정부24, 홈택스, 국민건강보험공단 등)으로 채우되,
-확실하지 않으면 "정확한 발급처는 신청 사이트에서 확인 필요"로 안내하세요.
-서류 정보 자체가 전혀 없으면(예: "붙임파일 확인") 안내용 항목 하나만 만드세요.
-없으면 빈 배열로 두세요.
+제출서류 텍스트에 명시된 항목만 분리하세요.
+원문에 없는 발급기관, 발급방법, URL, 제출형태를 추측하거나 일반 상식으로 채우지 마세요.
+명시되지 않은 값은 반드시 null로 두세요.
+"붙임파일 확인", "별도 문의"처럼 구체적인 서류명이 없는 문구는 documents를 빈 배열로 두세요.
+제출서류 텍스트가 비어 있어도 documents를 빈 배열로 두세요.
 
 각 항목: {"document_name": "...", "required_reason": "...", "issuing_organization": "...",
           "issuing_method": "...", "issuing_url": "..." 또는 null,
@@ -142,7 +144,8 @@ Backend가 이미 판정한 조건별 상태와 필요서류를 받아서, 화�
      "status": "충족", "explanation": "..."},
     {"type": "exception", "condition_key": "profile.income_band_code", "title": "소득 조건 확인",
      "explanation": "..."},
-    {"type": "participation_limit", "condition_key": "participation_limit", "title": "참여 제한 안내",
+    {"type": "participation_limit", "condition_key": "participation_limit",
+     "title": "참여 제한 안내",
      "explanation": "..."},
     {"type": "document", "title": "소득 증빙 준비", "is_required": true,
      "explanation": "...", "tip": "...", "link": "..." 또는 null}
