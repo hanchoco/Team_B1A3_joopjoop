@@ -153,6 +153,21 @@ export interface PolicyListResponse {
   size: number
 }
 
+export interface DashboardUpcomingPolicy {
+  policy_id: number
+  title: string
+  summary: string | null
+  application_end_date: string
+  days_until_deadline: number
+}
+
+export interface DashboardSummaryResponse {
+  upcoming_deadline_policy: DashboardUpcomingPolicy | null
+  upcoming_deadline_count: number
+  missed_benefit_total_amount: number | string
+  missed_benefit_policy_count: number
+}
+
 export interface PolicyConditionResultResponse {
   condition_id: number
   condition_key: string

@@ -107,6 +107,18 @@ DEFAULT_CATEGORY_QUESTIONS: dict[
             None,
             "개월",
         ),
+        (
+            "housing.home_ownership_status_code",
+            "현재 주택 소유 상태를 알려주세요",
+            AnswerType.SINGLE_SELECT,
+            [
+                {"label": "무주택", "value": "NONE"},
+                {"label": "본인 소유", "value": "SELF"},
+                {"label": "세대원 소유", "value": "HOUSEHOLD_MEMBER"},
+                {"label": "해당 없음/모름", "value": "UNKNOWN"},
+            ],
+            None,
+        ),
     ),
     "FINANCE": (
         (

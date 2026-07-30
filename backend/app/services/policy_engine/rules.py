@@ -28,7 +28,8 @@ class RuleOperator(str, Enum):
     LT = "LT"
     LTE = "LTE"
     BETWEEN = "BETWEEN"
-    CONTAINS = "CONTAINS"
+    CONTAINS_ANY = "CONTAINS_ANY"
+    CONTAINS_ALL = "CONTAINS_ALL"
     EXISTS = "EXISTS"
     MANUAL_CHECK = "MANUAL_CHECK"
 
@@ -218,6 +219,22 @@ _CONDITION_SPECS = (
         ),
         description="차상위계층 해당 여부",
     ),
+    ConditionKeySpec(
+        key="housing.home_ownership_status_code",
+        context_paths=(
+            "housing.home_ownership_status_code",
+            "category_answers.housing.home_ownership_status_code",
+        ),
+        description="주택 소유 상태",
+    ),
+    ConditionKeySpec(
+        key="finance.income_median_ratio",
+        context_paths=(
+            "finance.income_median_ratio",
+            "category_answers.finance.income_median_ratio",
+        ),
+        description="기준 중위소득 비율",
+    ),
 )
 
 CONDITION_KEY_REGISTRY: Mapping[str, ConditionKeySpec] = MappingProxyType(
@@ -373,8 +390,10 @@ def evaluate_rule(
     if normalised_operator is RuleOperator.BETWEEN:
         minimum, maximum = _range(expected)
         return _compare(actual_value, minimum) >= 0 and _compare(actual_value, maximum) <= 0
-    if normalised_operator is RuleOperator.CONTAINS:
-        return _contains(actual_value, expected)
+    if normalised_operator is RuleOperator.CONTAINS_ANY:
+        return _contains_any(actual_value, expected)
+    if normalised_operator is RuleOperator.CONTAINS_ALL:
+        return _contains_all(actual_value, expected)
 
     raise RuleEvaluationError(f"구현되지 않은 연산자입니다: {normalised_operator.value}")
 
@@ -490,12 +509,14 @@ def _compare(left: object, right: object) -> int:
     return (left_decimal > right_decimal) - (left_decimal < right_decimal)
 
 
-def _contains(actual: object, expected: object) -> bool:
-    candidates: tuple[object, ...]
+def _contains_candidates(expected: object) -> tuple[object, ...]:
     if isinstance(expected, Mapping) and "values" in expected:
-        candidates = _values(expected)
-    else:
-        candidates = (_scalar(expected),)
+        return _values(expected)
+    return (_scalar(expected),)
+
+
+def _contains_all(actual: object, expected: object) -> bool:
+    candidates = _contains_candidates(expected)
 
     if isinstance(actual, str):
         return all(isinstance(candidate, str) and candidate in actual for candidate in candidates)
@@ -503,7 +524,19 @@ def _contains(actual: object, expected: object) -> bool:
         return all(candidate in actual for candidate in candidates)
     if isinstance(actual, Sequence) and not isinstance(actual, (bytes, bytearray)):
         return all(any(_equal(item, candidate) for item in actual) for candidate in candidates)
-    raise RuleEvaluationError("CONTAINS 실제 값은 문자열, 목록 또는 매핑이어야 합니다.")
+    raise RuleEvaluationError("CONTAINS_ALL 실제 값은 문자열, 목록 또는 매핑이어야 합니다.")
+
+
+def _contains_any(actual: object, expected: object) -> bool:
+    candidates = _contains_candidates(expected)
+
+    if isinstance(actual, str):
+        return any(isinstance(candidate, str) and candidate in actual for candidate in candidates)
+    if isinstance(actual, Mapping):
+        return any(candidate in actual for candidate in candidates)
+    if isinstance(actual, Sequence) and not isinstance(actual, (bytes, bytearray)):
+        return any(any(_equal(item, candidate) for item in actual) for candidate in candidates)
+    raise RuleEvaluationError("CONTAINS_ANY 실제 값은 문자열, 목록 또는 매핑이어야 합니다.")
 
 
 def _is_number(value: object) -> bool:

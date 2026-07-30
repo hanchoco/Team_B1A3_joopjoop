@@ -174,14 +174,7 @@ def list_evaluated_policies(
             if str(item.match.eligibility_status).split(".")[-1] == normalized
         ]
     if sort == "recommendation":
-        evaluated.sort(
-            key=lambda item: (
-                _is_high_probability(item),
-                item.match.match_score,
-                item.bundle.policy.published_date or date.min,
-            ),
-            reverse=True,
-        )
+        evaluated.sort(key=_recommendation_sort_key, reverse=True)
 
     if fetch_size == 500:
         total = len(evaluated)
@@ -316,8 +309,32 @@ def _condition_db_status(status: object) -> str:
     }.get(name, "NEEDS_REVIEW")
 
 
-def _is_high_probability(item: EvaluatedPolicy) -> int:
-    return 1 if item.evaluation.status is EligibilityStatus.ELIGIBLE else 0
+_STATUS_SORT_PRIORITY: Mapping[EligibilityStatus, int] = {
+    EligibilityStatus.ELIGIBLE: 2,
+    EligibilityStatus.NEEDS_REVIEW: 1,
+    EligibilityStatus.INELIGIBLE: 0,
+}
+
+
+def _status_sort_priority(item: EvaluatedPolicy) -> int:
+    """추천순: 가능성 높음 → 추가 확인 필요 → 불충족 3단계로 정렬한다(user_flow 7절)."""
+
+    return _STATUS_SORT_PRIORITY.get(item.evaluation.status, 0)
+
+
+def _recommendation_sort_key(item: EvaluatedPolicy) -> tuple[int, Decimal, date]:
+    """정렬 키: 상태 우선순위 → match_score → 공고일, 모두 내림차순으로 정렬한다.
+
+    match_score만으로 정렬하면 필수 조건이 하나 불충족돼 INELIGIBLE인 정책이
+    다른 조건을 많이 만족해 점수가 높다는 이유로 NEEDS_REVIEW 정책보다 앞설 수
+    있다(gpt의견 4-4절). 상태 우선순위를 1순위 정렬 기준으로 둬 이를 막는다.
+    """
+
+    return (
+        _status_sort_priority(item),
+        item.match.match_score,
+        item.bundle.policy.published_date or date.min,
+    )
 
 
 def _json_safe(value: object) -> object:

@@ -1,5 +1,6 @@
 import { apiClient } from './client'
 import type {
+  DashboardSummaryResponse,
   PolicyBookmarkResponse,
   PolicyDetailResponse,
   PolicyListResponse,
@@ -37,4 +38,9 @@ export async function bookmarkPolicy(id: number): Promise<PolicyBookmarkResponse
 
 export async function removeBookmark(id: number): Promise<void> {
   await apiClient.delete(`/policies/${id}/bookmark`)
+}
+
+export async function getDashboardSummary(): Promise<DashboardSummaryResponse> {
+  const response = await apiClient.get<DashboardSummaryResponse>('/users/me/dashboard-summary')
+  return response.data
 }

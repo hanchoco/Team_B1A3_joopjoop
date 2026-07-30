@@ -35,7 +35,8 @@ class ConditionOperator(str, Enum):
     LT = "LT"
     LTE = "LTE"
     BETWEEN = "BETWEEN"
-    CONTAINS = "CONTAINS"
+    CONTAINS_ANY = "CONTAINS_ANY"
+    CONTAINS_ALL = "CONTAINS_ALL"
     EXISTS = "EXISTS"
     MANUAL_CHECK = "MANUAL_CHECK"
 

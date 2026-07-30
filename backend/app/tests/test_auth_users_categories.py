@@ -5,8 +5,9 @@ from __future__ import annotations
 from datetime import datetime
 
 from fastapi.testclient import TestClient
-from sqlalchemy import select
+from sqlalchemy import func, select
 
+from app.crud.categories import ensure_default_categories, ensure_default_category_questions
 from app.db.session import SessionLocal
 from app.models.user import AccountStatus, User
 from app.models.user_category_profile import (
@@ -644,8 +645,8 @@ def test_ensure_default_category_questions_seeds_matched_categories(
         first_pass = ensure_default_category_questions(db)
         second_pass = ensure_default_category_questions(db)
 
-    assert len(first_pass) == 17
-    assert len(second_pass) == 17
+    assert len(first_pass) == 18
+    assert len(second_pass) == 18
 
     expected_question_keys = {
         CategoryCode.EMPLOYMENT: [
@@ -661,6 +662,7 @@ def test_ensure_default_category_questions_seeds_matched_categories(
             "housing.is_household_head",
             "housing.has_lease_contract",
             "housing.residence_months",
+            "housing.home_ownership_status_code",
         ],
         CategoryCode.FINANCE: [
             "finance.monthly_income_amount",

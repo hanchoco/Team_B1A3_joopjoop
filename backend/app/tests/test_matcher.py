@@ -43,7 +43,8 @@ def _condition(
         ("LT", 3, 4),
         ("LTE", 3, 3),
         ("BETWEEN", 3, {"min": 1, "max": 3}),
-        ("CONTAINS", ["BACKEND", "AI"], {"values": ["AI"]}),
+        ("CONTAINS_ALL", ["BACKEND", "AI"], {"values": ["AI"]}),
+        ("CONTAINS_ANY", ["BACKEND"], {"values": ["AI", "BACKEND"]}),
         ("EXISTS", 3, None),
     ],
 )
@@ -55,7 +56,11 @@ def test_supported_operators_can_satisfy(
     key = (
         "profile.region_code"
         if operator in {"IN", "NOT_IN"}
-        else "employment.job_field_code" if operator == "CONTAINS" else "profile.household_size"
+        else (
+            "employment.job_field_code"
+            if operator in {"CONTAINS_ANY", "CONTAINS_ALL"}
+            else "profile.household_size"
+        )
     )
     context = {key: actual}
 
@@ -109,6 +114,50 @@ def test_other_in_conditions_still_require_exact_match() -> None:
     result = evaluate_condition(condition, context)
 
     assert result.status is ConditionStatus.UNSATISFIED
+
+
+def test_contains_any_matches_when_only_one_candidate_present() -> None:
+    """CONTAINS_ANY is satisfied by a partial match, unlike CONTAINS_ALL."""
+
+    context = {"employment.job_field_code": ["BACKEND"]}
+    condition = _condition(
+        key="employment.job_field_code",
+        operator="CONTAINS_ANY",
+        expected={"values": ["AI", "BACKEND"]},
+    )
+
+    result = evaluate_condition(condition, context)
+
+    assert result.status is ConditionStatus.SATISFIED
+
+
+def test_contains_all_requires_every_candidate_present() -> None:
+    context = {"employment.job_field_code": ["BACKEND"]}
+    condition = _condition(
+        key="employment.job_field_code",
+        operator="CONTAINS_ALL",
+        expected={"values": ["AI", "BACKEND"]},
+    )
+
+    result = evaluate_condition(condition, context)
+
+    assert result.status is ConditionStatus.UNSATISFIED
+
+
+@pytest.mark.parametrize(
+    "key",
+    [
+        "housing.home_ownership_status_code",
+        "finance.income_median_ratio",
+    ],
+)
+def test_newly_registered_condition_keys_are_recognised(key: str) -> None:
+    context = {key: "SELF" if key.endswith("_code") else 80}
+    condition = _condition(key=key, operator="EQ", expected=context[key])
+
+    result = evaluate_condition(condition, context)
+
+    assert result.status is ConditionStatus.SATISFIED
 
 
 def test_json_expected_value_and_derived_age_are_supported() -> None:

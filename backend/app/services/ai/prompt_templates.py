@@ -41,18 +41,20 @@ CONDITION_SYSTEM_PROMPT = """당신은 한국 청년 정책 원문에서 자격�
   employment.company_size_code, employment.contract_type_code, employment.tenure_months,
   employment.insurance_enrolled, employment.job_field_code,
   housing.deposit_amount, housing.monthly_rent_amount, housing.is_household_head,
-  housing.has_lease_contract, housing.residence_months,
+  housing.has_lease_contract, housing.residence_months, housing.home_ownership_status_code,
   finance.monthly_income_amount, finance.annual_income_amount, finance.total_asset_amount,
-  finance.total_debt_amount, finance.fixed_monthly_expense_amount,
+  finance.total_debt_amount, finance.fixed_monthly_expense_amount, finance.income_median_ratio,
   welfare.is_basic_livelihood_recipient, welfare.is_near_poverty_household
 
 각 조건: {"condition_key": "...", "operator": "...", "expected_value": {...},
           "is_required": true/false, "description": "화면 표시용 조건 설명",
           "failure_message": "불충족 시 보여줄 문구", "evidence": "원문 근거 문장"}
 
-operator는 다음 중 하나: EQ, NE, IN, NOT_IN, GT, GTE, LT, LTE, BETWEEN, CONTAINS, EXISTS, MANUAL_CHECK
+operator는 다음 중 하나: EQ, NE, IN, NOT_IN, GT, GTE, LT, LTE, BETWEEN,
+  CONTAINS_ANY, CONTAINS_ALL, EXISTS, MANUAL_CHECK
 코드값 레지스트리:
   housing_type_code: OWNED, JEONSE, MONTHLY_RENT, PUBLIC_RENTAL, DORMITORY, WITH_FAMILY, OTHER
+  home_ownership_status_code: NONE, SELF, HOUSEHOLD_MEMBER, UNKNOWN
   household_type_code: SINGLE, COUPLE, WITH_PARENTS, SINGLE_PARENT, MULTI_PERSON, OTHER
   employment_status_code: EMPLOYED, SELF_EMPLOYED, UNEMPLOYED, JOB_SEEKER, STUDENT, ON_LEAVE, OTHER
   company_size_code: MICRO, SMALL, MEDIUM, LARGE, PUBLIC, UNKNOWN

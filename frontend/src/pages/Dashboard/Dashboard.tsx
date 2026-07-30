@@ -13,6 +13,7 @@ import {
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { listCategories } from '../../api/categories'
+import { getDashboardSummary } from '../../api/policies'
 import BrandLogo from '../../components/common/BrandLogo'
 import BenefitCoins from '../../components/common/BenefitCoins'
 import {
@@ -21,7 +22,7 @@ import {
   regionNameByCode,
 } from '../../constants/profile'
 import { useApp } from '../../store/useApp'
-import type { CategoryResponse } from '../../types/api'
+import type { CategoryResponse, DashboardSummaryResponse } from '../../types/api'
 
 const ICON_BY_CODE: Record<string, typeof House> = {
   HOUSING: House,
@@ -32,10 +33,18 @@ const ICON_BY_CODE: Record<string, typeof House> = {
   WELFARE: Heart,
 }
 
+function formatAmount(amount: number | string | null | undefined): string {
+  const numeric = Number(amount)
+  if (!Number.isFinite(numeric) || numeric <= 0) return '0원'
+  return `${numeric.toLocaleString()}원`
+}
+
 export default function Dashboard() {
   const navigate = useNavigate()
   const { isLoggedIn, currentUser, profile } = useApp()
   const [categories, setCategories] = useState<CategoryResponse[]>([])
+  const [dashboardSummary, setDashboardSummary] = useState<DashboardSummaryResponse | null>(null)
+  const [dashboardLoading, setDashboardLoading] = useState(false)
   const displayName = currentUser?.nickname || currentUser?.email.split('@')[0] || '회원'
 
   useEffect(() => {
@@ -51,6 +60,38 @@ export default function Dashboard() {
       cancelled = true
     }
   }, [])
+
+  useEffect(() => {
+    if (!isLoggedIn) return
+    let cancelled = false
+    Promise.resolve()
+      .then(() => {
+        if (cancelled) return undefined
+        setDashboardLoading(true)
+        return getDashboardSummary()
+      })
+      .then((data) => {
+        if (cancelled || !data) return
+        setDashboardSummary(data)
+      })
+      .catch(() => {
+        if (!cancelled) setDashboardSummary(null)
+      })
+      .finally(() => {
+        if (!cancelled) setDashboardLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [isLoggedIn])
+
+  const upcomingPolicy = isLoggedIn ? (dashboardSummary?.upcoming_deadline_policy ?? null) : null
+  const upcomingCount = isLoggedIn ? (dashboardSummary?.upcoming_deadline_count ?? 0) : 0
+  const dDayLabel = upcomingPolicy
+    ? upcomingPolicy.days_until_deadline <= 0
+      ? 'D-day'
+      : `D-${upcomingPolicy.days_until_deadline}`
+    : null
 
   return (
     <section className="space-y-8">
@@ -171,9 +212,11 @@ export default function Dashboard() {
         {' '}
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-black text-gray-950">놓치기 직전 정책</h2>{' '}
-          <span className="rounded-full border border-rose-200 bg-rose-50 px-2.5 py-0.5 text-xs font-bold text-rose-500">
-            D-23
-          </span>{' '}
+          {dDayLabel && (
+            <span className="rounded-full border border-rose-200 bg-rose-50 px-2.5 py-0.5 text-xs font-bold text-rose-500">
+              {dDayLabel}
+            </span>
+          )}{' '}
         </div>{' '}
         <div className="mt-4 grid gap-4 lg:grid-cols-[1.65fr_1fr]">
           {' '}
@@ -183,12 +226,23 @@ export default function Dashboard() {
               <BadgeDollarSign size={32} strokeWidth={1.6} />{' '}
             </span>{' '}
             <div className="mt-4 min-w-0 flex-1 sm:mt-0">
-              <h3 className="text-base font-black">청년 월세 한시 특별지원</h3>{' '}
-              <p className="mt-2 text-sm leading-6 text-gray-500">
-                월 최대 20만 원, 최대 12개월
-                <br />
-                지금 신청하면 최대 2,400,000원 지원 가능
-              </p>{' '}
+              {dashboardLoading ? (
+                <h3 className="text-base font-black text-gray-400">불러오는 중...</h3>
+              ) : upcomingPolicy ? (
+                <>
+                  <h3 className="text-base font-black">{upcomingPolicy.title}</h3>{' '}
+                  <p className="mt-2 text-sm leading-6 text-gray-500">
+                    {upcomingPolicy.summary ?? '마감이 얼마 남지 않았어요.'}
+                  </p>{' '}
+                </>
+              ) : (
+                <>
+                  <h3 className="text-base font-black">놓치기 직전인 정책이 없어요</h3>{' '}
+                  <p className="mt-2 text-sm leading-6 text-gray-500">
+                    관심 정책으로 저장하면 마감이 가까워질 때 여기서 알려드려요.
+                  </p>{' '}
+                </>
+              )}
               <button
                 onClick={() => navigate('/mypage/policies?tab=interest&sort=deadline')}
                 className="mt-4 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-bold transition hover:bg-slate-50"
@@ -201,9 +255,11 @@ export default function Dashboard() {
             {' '}
             <div className="flex items-center justify-between gap-4">
               <h3 className="text-base font-black">신청 마감 임박 정책</h3>
-              <strong className="text-xl">3개</strong>{' '}
+              <strong className="text-xl">{upcomingCount}개</strong>{' '}
             </div>{' '}
-            <p className="mt-6 text-sm leading-7 text-gray-500">이번 달 마감되는 정책이 있어요.</p>{' '}
+            <p className="mt-6 text-sm leading-7 text-gray-500">
+              {upcomingCount > 0 ? '이번 달 마감되는 정책이 있어요.' : '아직 마감이 임박한 정책이 없어요.'}
+            </p>{' '}
             <button
               onClick={() => navigate('/mypage/policies?view=urgent&sort=deadline')}
               className="mt-4 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-bold transition hover:bg-slate-50"
@@ -219,7 +275,10 @@ export default function Dashboard() {
               <div className="ml-6 pt-[35px]">
                 <p className="text-base leading-6 text-gray-500">
                   현재 기본 조건만으로도{' '}
-                  <strong className="font-bold text-gray-700">연간 약 2,820,000원</strong>의 혜택을
+                  <strong className="font-bold text-gray-700">
+                    {formatAmount(isLoggedIn ? dashboardSummary?.missed_benefit_total_amount : null)}
+                  </strong>
+                  의 혜택을
                   <br />
                   확인하지 않아 놓치고 있을 수 있어요.
                 </p>
