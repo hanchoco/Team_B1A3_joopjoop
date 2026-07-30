@@ -12,6 +12,11 @@ import os
 from dataclasses import dataclass, field
 from functools import lru_cache
 from typing import Final
+from pathlib import Path
+from dotenv import load_dotenv
+
+BACKEND_DIR = Path(__file__).resolve().parents[2]
+load_dotenv(BACKEND_DIR / ".env")
 
 DEFAULT_DATABASE_URL: Final[str] = "sqlite:///./joopjoop.db"
 DEFAULT_SECRET_KEY: Final[str] = "change-this-secret-in-production"
