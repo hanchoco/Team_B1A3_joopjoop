@@ -3,6 +3,8 @@ import type {
   ChecklistResponse,
   ConditionConfirmationUpdate,
   DocumentProgressUpdate,
+  MyPoliciesTab,
+  UserPolicyItemResponse,
 } from '../types/api'
 
 export async function startPreparation(policyId: number): Promise<ChecklistResponse> {
@@ -32,5 +34,15 @@ export async function confirmChecklistCondition(
     `/preparations/${stateId}/conditions/${conditionId}`,
     payload,
   )
+  return response.data
+}
+
+export async function listMyPolicies(params?: {
+  tab?: MyPoliciesTab
+  sort?: 'recommendation' | 'latest' | 'deadline'
+}): Promise<UserPolicyItemResponse[]> {
+  const response = await apiClient.get<UserPolicyItemResponse[]>('/users/me/policies', {
+    params,
+  })
   return response.data
 }
