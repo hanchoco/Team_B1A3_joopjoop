@@ -630,25 +630,72 @@ def test_categories_questions_and_answer_upsert(client: TestClient) -> None:
         assert stored_answers[0].answer_json == {"value": "NOT_ENROLLED"}
 
 
-def test_default_category_questions_are_seeded(client: TestClient) -> None:
-    """ensure_default_category_questions() seeds one onboarding question set per category."""
+def test_ensure_default_category_questions_seeds_matched_categories(
+    client: TestClient,
+) -> None:
+    """Seeding creates questions for every category with a registered
+    matching condition key (EMPLOYMENT/HOUSING/FINANCE/WELFARE) and is
+    idempotent; categories with no registered condition key stay empty."""
 
-    categories_response = client.get("/api/v1/categories")
-    assert categories_response.status_code == 200, categories_response.text
-    categories_by_code = {item["code"]: item["id"] for item in categories_response.json()}
+    del client  # only used to trigger the autouse reset_database fixture
 
-    expected_counts = {
-        "EMPLOYMENT": 5,
-        "HOUSING": 5,
-        "FINANCE": 5,
-        "WELFARE": 2,
+    with SessionLocal() as db:
+        ensure_default_categories(db)
+        first_pass = ensure_default_category_questions(db)
+        second_pass = ensure_default_category_questions(db)
+
+    assert len(first_pass) == 17
+    assert len(second_pass) == 17
+
+    expected_question_keys = {
+        CategoryCode.EMPLOYMENT: [
+            "employment.company_size_code",
+            "employment.contract_type_code",
+            "employment.tenure_months",
+            "employment.insurance_enrolled",
+            "employment.job_field_code",
+        ],
+        CategoryCode.HOUSING: [
+            "housing.deposit_amount",
+            "housing.monthly_rent_amount",
+            "housing.is_household_head",
+            "housing.has_lease_contract",
+            "housing.residence_months",
+        ],
+        CategoryCode.FINANCE: [
+            "finance.monthly_income_amount",
+            "finance.annual_income_amount",
+            "finance.total_asset_amount",
+            "finance.total_debt_amount",
+            "finance.fixed_monthly_expense_amount",
+        ],
+        CategoryCode.WELFARE: [
+            "welfare.is_basic_livelihood_recipient",
+            "welfare.is_near_poverty_household",
+        ],
     }
-    for code, expected_count in expected_counts.items():
-        category_id = categories_by_code[code]
-        questions_response = client.get(f"/api/v1/categories/{category_id}/questions")
-        assert questions_response.status_code == 200, questions_response.text
-        questions = questions_response.json()
-        assert len(questions) == expected_count, code
-        assert all(question["is_required"] is False for question in questions)
-        assert all(question["is_used_for_matching"] is True for question in questions)
-        assert all(question["is_active"] is True for question in questions)
+
+    with SessionLocal() as db:
+        for code, question_keys in expected_question_keys.items():
+            category = db.scalar(select(Category).where(Category.code == code))
+            assert category is not None
+            questions = list(
+                db.scalars(
+                    select(CategoryQuestion)
+                    .where(CategoryQuestion.category_id == category.id)
+                    .order_by(CategoryQuestion.display_order.asc())
+                ).all()
+            )
+            assert [question.question_key for question in questions] == question_keys
+            assert all(question.is_used_for_matching for question in questions)
+
+        unmatched_categories = db.scalars(
+            select(Category).where(Category.code.not_in(expected_question_keys.keys()))
+        ).all()
+        for category in unmatched_categories:
+            count = db.scalar(
+                select(func.count(CategoryQuestion.id)).where(
+                    CategoryQuestion.category_id == category.id
+                )
+            )
+            assert count == 0

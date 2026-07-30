@@ -646,3 +646,94 @@ def test_checklist_application_and_missing_resource_responses(
     for response in missing_requests:
         assert response.status_code == 404, response.text
         assert response.json()["code"] == "NOT_FOUND"
+
+
+def test_expired_application_deadline_forces_ineligible(client: TestClient) -> None:
+    """A policy whose application window already closed must never show as
+    ELIGIBLE/NEEDS_REVIEW, even when every structured condition is satisfied."""
+
+    headers = _authenticated_headers(client, email="policy-deadline@example.com")
+    today = date.today()
+
+    with SessionLocal() as db:
+        housing = db.scalar(select(Category).where(Category.code == "HOUSING"))
+        assert housing is not None
+
+        expired = Policy(
+            source="MANUAL",
+            external_id="http-test-expired-housing",
+            title="Gamma 마감된 주거 지원",
+            summary="신청 기간이 이미 끝난 정책입니다.",
+            description="만 19세부터 34세까지 신청할 수 있었습니다.",
+            support_target_text="만 19세부터 34세",
+            support_content_text="월 10만 원",
+            application_start_date=today - timedelta(days=60),
+            application_end_date=today - timedelta(days=1),
+            is_ongoing=False,
+            published_date=today - timedelta(days=90),
+            status="ACTIVE",
+            is_active=True,
+        )
+        ongoing_past_end_date = Policy(
+            source="MANUAL",
+            external_id="http-test-ongoing-housing",
+            title="Delta 상시모집 주거 지원",
+            summary="종료일은 지났지만 상시모집인 정책입니다.",
+            description="만 19세부터 34세까지 신청할 수 있습니다.",
+            support_target_text="만 19세부터 34세",
+            support_content_text="월 10만 원",
+            application_start_date=today - timedelta(days=60),
+            application_end_date=today - timedelta(days=1),
+            is_ongoing=True,
+            published_date=today - timedelta(days=90),
+            status="ACTIVE",
+            is_active=True,
+        )
+        db.add_all([expired, ongoing_past_end_date])
+        db.flush()
+
+        db.add_all(
+            [
+                PolicyCategory(policy_id=expired.id, category_id=housing.id, is_primary=True),
+                PolicyCategory(
+                    policy_id=ongoing_past_end_date.id,
+                    category_id=housing.id,
+                    is_primary=True,
+                ),
+                PolicyCondition(
+                    policy_id=expired.id,
+                    condition_key="profile.age",
+                    operator="BETWEEN",
+                    expected_value_json={"min": 19, "max": 34},
+                    condition_group_no=1,
+                    is_required=True,
+                    check_mode="AUTO",
+                    description="만 19세부터 34세",
+                    failure_message="연령 기준을 충족하지 않습니다.",
+                    sort_order=1,
+                ),
+                PolicyCondition(
+                    policy_id=ongoing_past_end_date.id,
+                    condition_key="profile.age",
+                    operator="BETWEEN",
+                    expected_value_json={"min": 19, "max": 34},
+                    condition_group_no=1,
+                    is_required=True,
+                    check_mode="AUTO",
+                    description="만 19세부터 34세",
+                    failure_message="연령 기준을 충족하지 않습니다.",
+                    sort_order=1,
+                ),
+            ]
+        )
+        db.commit()
+        expired_id = expired.id
+        ongoing_id = ongoing_past_end_date.id
+
+    expired_match = client.get(f"/api/v1/policies/{expired_id}/match", headers=headers)
+    assert expired_match.status_code == 200, expired_match.text
+    assert expired_match.json()["card_status"] == "INELIGIBLE"
+
+    ongoing_match = client.get(f"/api/v1/policies/{ongoing_id}/match", headers=headers)
+    assert ongoing_match.status_code == 200, ongoing_match.text
+    assert ongoing_match.json()["card_status"] == "ELIGIBLE"

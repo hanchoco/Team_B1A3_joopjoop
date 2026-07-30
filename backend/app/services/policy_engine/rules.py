@@ -82,23 +82,142 @@ _CONDITION_SPECS = (
     _profile_spec("household_type_code", "가구 형태 코드"),
     _profile_spec("household_size", "가구원 수"),
     _profile_spec("housing_type_code", "주거 형태 코드"),
-    _category_spec("employment", "company_size_code", "기업 규모 코드"),
-    _category_spec("employment", "contract_type_code", "근로 계약 형태 코드"),
-    _category_spec("employment", "tenure_months", "근속 개월 수"),
-    _category_spec("employment", "insurance_enrolled", "고용보험 가입 여부"),
-    _category_spec("employment", "job_field_code", "직무 분야 코드"),
-    _category_spec("housing", "deposit_amount", "임차 보증금"),
-    _category_spec("housing", "monthly_rent_amount", "월세액"),
-    _category_spec("housing", "is_household_head", "세대주 여부"),
-    _category_spec("housing", "has_lease_contract", "임대차 계약서 제출 가능 여부"),
-    _category_spec("housing", "residence_months", "현재 거주지 거주 개월 수"),
-    _category_spec("finance", "monthly_income_amount", "월 평균 소득"),
-    _category_spec("finance", "annual_income_amount", "연 소득"),
-    _category_spec("finance", "total_asset_amount", "총 자산가액"),
-    _category_spec("finance", "total_debt_amount", "총 부채액"),
-    _category_spec("finance", "fixed_monthly_expense_amount", "월 고정 지출"),
-    _category_spec("welfare", "is_basic_livelihood_recipient", "기초생활수급자 여부"),
-    _category_spec("welfare", "is_near_poverty_household", "차상위계층 해당 여부"),
+    ConditionKeySpec(
+        key="employment.company_size_code",
+        context_paths=(
+            "employment.company_size_code",
+            "category_answers.employment.company_size_code",
+        ),
+        description="기업 규모",
+    ),
+    ConditionKeySpec(
+        key="employment.contract_type_code",
+        context_paths=(
+            "employment.contract_type_code",
+            "category_answers.employment.contract_type_code",
+        ),
+        description="근로 계약 형태",
+    ),
+    ConditionKeySpec(
+        key="employment.tenure_months",
+        context_paths=(
+            "employment.tenure_months",
+            "category_answers.employment.tenure_months",
+        ),
+        description="근속 개월 수",
+    ),
+    ConditionKeySpec(
+        key="employment.insurance_enrolled",
+        context_paths=(
+            "employment.insurance_enrolled",
+            "category_answers.employment.insurance_enrolled",
+        ),
+        description="고용보험 가입 여부",
+    ),
+    ConditionKeySpec(
+        key="employment.job_field_code",
+        context_paths=(
+            "employment.job_field_code",
+            "category_answers.employment.job_field_code",
+        ),
+        description="직무 분야",
+    ),
+    ConditionKeySpec(
+        key="housing.has_lease_contract",
+        context_paths=(
+            "housing.has_lease_contract",
+            "category_answers.housing.has_lease_contract",
+        ),
+        description="임대차 계약 서류 확인 여부",
+    ),
+    ConditionKeySpec(
+        key="housing.deposit_amount",
+        context_paths=(
+            "housing.deposit_amount",
+            "category_answers.housing.deposit_amount",
+        ),
+        description="임차 보증금",
+    ),
+    ConditionKeySpec(
+        key="housing.monthly_rent_amount",
+        context_paths=(
+            "housing.monthly_rent_amount",
+            "category_answers.housing.monthly_rent_amount",
+        ),
+        description="월세액",
+    ),
+    ConditionKeySpec(
+        key="housing.is_household_head",
+        context_paths=(
+            "housing.is_household_head",
+            "category_answers.housing.is_household_head",
+        ),
+        description="세대주 여부",
+    ),
+    ConditionKeySpec(
+        key="housing.residence_months",
+        context_paths=(
+            "housing.residence_months",
+            "category_answers.housing.residence_months",
+        ),
+        description="현재 거주지 거주 개월 수",
+    ),
+    ConditionKeySpec(
+        key="finance.monthly_income_amount",
+        context_paths=(
+            "finance.monthly_income_amount",
+            "category_answers.finance.monthly_income_amount",
+        ),
+        description="월 평균 소득",
+    ),
+    ConditionKeySpec(
+        key="finance.annual_income_amount",
+        context_paths=(
+            "finance.annual_income_amount",
+            "category_answers.finance.annual_income_amount",
+        ),
+        description="연 소득",
+    ),
+    ConditionKeySpec(
+        key="finance.total_asset_amount",
+        context_paths=(
+            "finance.total_asset_amount",
+            "category_answers.finance.total_asset_amount",
+        ),
+        description="총 자산가액",
+    ),
+    ConditionKeySpec(
+        key="finance.total_debt_amount",
+        context_paths=(
+            "finance.total_debt_amount",
+            "category_answers.finance.total_debt_amount",
+        ),
+        description="총 부채액",
+    ),
+    ConditionKeySpec(
+        key="finance.fixed_monthly_expense_amount",
+        context_paths=(
+            "finance.fixed_monthly_expense_amount",
+            "category_answers.finance.fixed_monthly_expense_amount",
+        ),
+        description="월 고정 지출(월세, 대출상환 등)",
+    ),
+    ConditionKeySpec(
+        key="welfare.is_basic_livelihood_recipient",
+        context_paths=(
+            "welfare.is_basic_livelihood_recipient",
+            "category_answers.welfare.is_basic_livelihood_recipient",
+        ),
+        description="기초생활수급자 여부",
+    ),
+    ConditionKeySpec(
+        key="welfare.is_near_poverty_household",
+        context_paths=(
+            "welfare.is_near_poverty_household",
+            "category_answers.welfare.is_near_poverty_household",
+        ),
+        description="차상위계층 해당 여부",
+    ),
 )
 
 CONDITION_KEY_REGISTRY: Mapping[str, ConditionKeySpec] = MappingProxyType(
@@ -213,6 +332,8 @@ def evaluate_rule(
     operator: RuleOperator | str | Enum,
     actual_value: object,
     expected_value: object,
+    *,
+    condition_key: str | None = None,
 ) -> bool:
     """Evaluate a validated operator against an actual and expected value."""
 
@@ -234,8 +355,12 @@ def evaluate_rule(
     if normalised_operator is RuleOperator.NE:
         return not _equal(actual_value, _scalar(expected))
     if normalised_operator is RuleOperator.IN:
+        if condition_key == "profile.region_code":
+            return _region_prefix_in(actual_value, _values(expected))
         return any(_equal(actual_value, item) for item in _values(expected))
     if normalised_operator is RuleOperator.NOT_IN:
+        if condition_key == "profile.region_code":
+            return not _region_prefix_in(actual_value, _values(expected))
         return not any(_equal(actual_value, item) for item in _values(expected))
     if normalised_operator is RuleOperator.GT:
         return _compare(actual_value, _scalar(expected)) > 0
@@ -309,6 +434,21 @@ def _range(value: object) -> tuple[object, object]:
     ):
         return value[0], value[1]
     raise RuleEvaluationError("BETWEEN 기대값은 min/max 또는 길이 2 목록이어야 합니다.")
+
+
+def _region_prefix_in(actual: object, values: tuple[object, ...]) -> bool:
+    """Compare region codes by their leading 2 digits (시/도 단위).
+
+    Policy conditions store fine-grained 시/군/구 codes (5 digits) while user
+    profiles only collect the coarser 시/도 code (2 digits), so an exact
+    match is never possible. Matching on the shared 시/도 prefix keeps the
+    condition meaningful without requiring a full district-level catalog.
+    """
+
+    actual_prefix = str(actual).strip()[:2]
+    if not actual_prefix:
+        return False
+    return any(str(item).strip()[:2] == actual_prefix for item in values)
 
 
 def _equal(left: object, right: object) -> bool:

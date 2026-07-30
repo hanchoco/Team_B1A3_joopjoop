@@ -292,3 +292,150 @@ export interface WelfareSimulatorRequest {
   monthly_benefit_amount: number
   support_months?: number
 }
+
+// Checklist DTOs (see backend/app/schemas/checklist.py).
+
+export type PreparationStatus = 'NOT_STARTED' | 'PREPARING' | 'READY' | 'SUBMITTED'
+
+// Cached condition-check result for the checklist screen. This is a
+// separate, English-valued cache enum from the live ConditionStatus used on
+// the policy detail page (see AGENTS.md 4번) — do not conflate the two.
+export type ConditionResultStatus = 'SATISFIED' | 'NEEDS_REVIEW' | 'UNSATISFIED'
+
+export interface ChecklistConditionItem {
+  condition_id: number
+  condition_key: string
+  description: string
+  result_status: ConditionResultStatus
+  reason: string
+  is_user_confirmed: boolean
+  confirmed_at: string | null
+}
+
+export interface ChecklistDocumentItem {
+  document_id: number
+  document_code: string
+  document_name: string
+  required_reason: string | null
+  issuing_organization: string | null
+  issuing_method: string | null
+  issuing_url: string | null
+  submission_format: string | null
+  is_required: boolean
+  preparation_status: PreparationStatus
+  is_checked: boolean
+  checked_at: string | null
+  note: string | null
+}
+
+export interface ChecklistResponse {
+  state_id: number
+  policy_id: number
+  policy_title: string
+  preparation_status: PreparationStatus
+  progress_percent: number
+  conditions: ChecklistConditionItem[]
+  documents: ChecklistDocumentItem[]
+}
+
+export interface DocumentProgressUpdate {
+  preparation_status: PreparationStatus
+  is_checked: boolean
+  note?: string | null
+}
+
+export interface ConditionConfirmationUpdate {
+  confirmed: boolean
+}
+
+// Chatbot DTOs (see backend/app/schemas/chatbot.py). Stateless — no chat
+// history is persisted server-side.
+
+export interface PolicyQuestionRequest {
+  question: string
+}
+
+export interface PolicyQuestionResponse {
+  answer: string
+  suggested_questions: string[]
+}
+
+// User profile DTOs (see backend/app/schemas/user.py, models/user.py).
+
+export type IncomeBandCode =
+  | 'BELOW_50'
+  | 'BETWEEN_50_75'
+  | 'BETWEEN_75_100'
+  | 'BETWEEN_100_120'
+  | 'BETWEEN_120_150'
+  | 'ABOVE_150'
+  | 'UNKNOWN'
+
+export type EmploymentStatusCode =
+  | 'EMPLOYED'
+  | 'SELF_EMPLOYED'
+  | 'UNEMPLOYED'
+  | 'JOB_SEEKER'
+  | 'STUDENT'
+  | 'ON_LEAVE'
+  | 'OTHER'
+
+export type HouseholdTypeCode =
+  | 'SINGLE'
+  | 'COUPLE'
+  | 'WITH_PARENTS'
+  | 'SINGLE_PARENT'
+  | 'MULTI_PERSON'
+  | 'OTHER'
+
+export type HousingTypeCode =
+  | 'OWNED'
+  | 'JEONSE'
+  | 'MONTHLY_RENT'
+  | 'PUBLIC_RENTAL'
+  | 'DORMITORY'
+  | 'WITH_FAMILY'
+  | 'OTHER'
+
+export interface UserProfileFields {
+  birth_year?: number | null
+  region_code?: string | null
+  region_sido?: string | null
+  region_sigungu?: string | null
+  income_band_code?: IncomeBandCode | null
+  employment_status_code?: EmploymentStatusCode | null
+  household_type_code?: HouseholdTypeCode | null
+  household_size?: number | null
+  housing_type_code?: HousingTypeCode | null
+}
+
+export interface UserProfileUpdate extends UserProfileFields {
+  onboarding_completed?: boolean | null
+}
+
+export interface UserProfileResponse extends UserProfileFields {
+  user_id: number
+  onboarding_completed: boolean
+  created_at: string
+  updated_at: string
+}
+
+// My Policies DTOs (see backend/app/schemas/checklist.py: UserPolicyItemResponse).
+
+export type MyPoliciesTab = 'bookmarked' | 'preparing' | 'applied'
+
+export interface UserPolicyItemResponse {
+  state_id: number
+  policy_id: number
+  title: string
+  summary: string | null
+  application_end_date: string | null
+  is_bookmarked: boolean
+  preparation_status: PreparationStatus
+  progress_percent: number
+  application_status: string
+  application_date: string | null
+  match_score: number | string | null
+  eligibility_status: EligibilityStatus | null
+  updated_at: string
+}

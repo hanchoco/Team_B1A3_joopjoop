@@ -5,7 +5,7 @@ confined to ``app.crud`` as required by the project architecture.
 """
 
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date
 from decimal import Decimal
 
@@ -86,6 +86,8 @@ def evaluate_policy_for_user(
         raise NotFoundError("정책을 찾을 수 없습니다.")
     user_context = dict(context) if context is not None else build_user_context(db, user_id)
     evaluation = evaluate_policy(bundle.conditions, user_context)
+    if _is_application_closed(bundle.policy):
+        evaluation = replace(evaluation, status=EligibilityStatus.INELIGIBLE)
     estimated_benefit = _estimate_max_benefit(bundle.benefits)
     total = evaluation.total_condition_count
     score = (
@@ -265,6 +267,15 @@ def get_policy_entity(db: Session, policy_id: int) -> Policy:
     if policy is None:
         raise NotFoundError("정책을 찾을 수 없습니다.")
     return policy
+
+
+def _is_application_closed(policy: Policy) -> bool:
+    """A policy whose application window has passed is never ELIGIBLE/NEEDS_REVIEW,
+    regardless of how well the user's profile matches its conditions."""
+
+    if policy.is_ongoing:
+        return False
+    return policy.application_end_date is not None and policy.application_end_date < date.today()
 
 
 def _estimate_max_benefit(benefits: list[object]) -> Decimal:

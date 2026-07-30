@@ -67,6 +67,50 @@ def test_supported_operators_can_satisfy(
     assert result.status is ConditionStatus.SATISFIED
 
 
+def test_region_code_in_matches_by_sido_prefix() -> None:
+    """User profiles only store a 2-digit 시/도 code; policy conditions store
+    5-digit 시/군/구 codes. IN/NOT_IN must compare by the shared prefix."""
+
+    context = {"profile.region_code": "11"}
+    condition = _condition(
+        key="profile.region_code",
+        operator="IN",
+        expected={"values": ["11110", "11140", "41111"]},
+    )
+
+    result = evaluate_condition(condition, context)
+
+    assert result.status is ConditionStatus.SATISFIED
+
+
+def test_region_code_in_does_not_match_other_sido_prefix() -> None:
+    context = {"profile.region_code": "26"}
+    condition = _condition(
+        key="profile.region_code",
+        operator="IN",
+        expected={"values": ["11110", "11140", "41111"]},
+    )
+
+    result = evaluate_condition(condition, context)
+
+    assert result.status is ConditionStatus.UNSATISFIED
+
+
+def test_other_in_conditions_still_require_exact_match() -> None:
+    """The 시/도 prefix rule must stay scoped to profile.region_code only."""
+
+    context = {"profile.income_band_code": "BETWEEN_50_75"}
+    condition = _condition(
+        key="profile.income_band_code",
+        operator="IN",
+        expected={"values": ["BELOW_50", "BETWEEN_75_100"]},
+    )
+
+    result = evaluate_condition(condition, context)
+
+    assert result.status is ConditionStatus.UNSATISFIED
+
+
 def test_json_expected_value_and_derived_age_are_supported() -> None:
     condition = _condition(
         key="profile.age",
@@ -198,3 +242,45 @@ def test_alternate_eligibility_paths_use_or_across_groups() -> None:
     result = evaluate_policy(conditions, context)
 
     assert result.status is EligibilityStatus.ELIGIBLE
+
+
+def test_finance_monthly_income_condition_matches_category_answer() -> None:
+    """`finance.*` keys must resolve from nested category-answer context, the
+    same shape `policy_service.build_user_context()` produces."""
+
+    condition = _condition(
+        key="finance.monthly_income_amount",
+        operator="GTE",
+        expected=2000000,
+    )
+    context = {"finance": {"monthly_income_amount": 2500000}}
+
+    result = evaluate_condition(condition, context)
+
+    assert result.status is ConditionStatus.SATISFIED
+
+
+def test_housing_has_lease_contract_condition_matches_category_answer() -> None:
+    condition = _condition(
+        key="housing.has_lease_contract",
+        operator="EQ",
+        expected=True,
+    )
+    context = {"housing": {"has_lease_contract": True}}
+
+    result = evaluate_condition(condition, context)
+
+    assert result.status is ConditionStatus.SATISFIED
+
+
+def test_welfare_condition_key_is_registered() -> None:
+    condition = _condition(
+        key="welfare.is_basic_livelihood_recipient",
+        operator="EQ",
+        expected=False,
+    )
+    context = {"welfare": {"is_basic_livelihood_recipient": True}}
+
+    result = evaluate_condition(condition, context)
+
+    assert result.status is ConditionStatus.UNSATISFIED

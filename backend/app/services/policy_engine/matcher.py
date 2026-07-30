@@ -190,7 +190,12 @@ def evaluate_condition(
 
     try:
         expected_value = parse_expected_value(raw_expected)
-        is_satisfied = evaluate_rule(operator, actual_value, expected_value)
+        is_satisfied = evaluate_rule(
+            operator,
+            actual_value,
+            expected_value,
+            condition_key=condition_key,
+        )
     except (RuleEvaluationError, TypeError, ValueError, ArithmeticError) as exc:
         return _review_result(
             condition_key=condition_key,
