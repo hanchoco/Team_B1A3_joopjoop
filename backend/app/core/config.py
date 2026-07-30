@@ -12,6 +12,11 @@ import os
 from dataclasses import dataclass, field
 from functools import lru_cache
 from typing import Final
+from pathlib import Path
+from dotenv import load_dotenv
+
+BACKEND_DIR = Path(__file__).resolve().parents[2]
+load_dotenv(BACKEND_DIR / ".env")
 
 DEFAULT_DATABASE_URL: Final[str] = "sqlite:///./joopjoop.db"
 DEFAULT_SECRET_KEY: Final[str] = "change-this-secret-in-production"
@@ -86,7 +91,9 @@ class Settings:
     upstage_api_key: str | None = field(
         default_factory=lambda: os.getenv("UPSTAGE_API_KEY") or os.getenv("SOLAR_API_KEY") or None
     )
-    solar_model: str = field(default_factory=lambda: os.getenv("SOLAR_MODEL", "solar-pro2"))
+    solar_model: str = field(
+        default_factory=lambda: os.getenv("UPSTAGE_SOLAR_MODEL", "solar-pro2")
+    )
     youth_policy_api_key: str | None = field(
         default_factory=lambda: os.getenv("YOUTH_POLICY_API_KEY") or None
     )
