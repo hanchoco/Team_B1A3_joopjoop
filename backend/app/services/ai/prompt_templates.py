@@ -38,8 +38,8 @@ CONDITION_SYSTEM_PROMPT = """당신은 한국 청년 정책 원문에서 자격�
 절대 condition_key 자리에 넣지 마세요.
   profile.income_band_code, profile.housing_type_code, profile.household_type_code,
   profile.employment_status_code, profile.household_size,
-  employment.company_size, employment.contract_type, employment.tenure_months,
-  employment.insurance_enrolled, employment.job_field
+  employment.company_size_code, employment.contract_type_code, employment.tenure_months,
+  employment.insurance_enrolled, employment.job_field_code
 
 각 조건: {"condition_key": "...", "operator": "...", "expected_value": {...},
           "is_required": true/false, "description": "화면 표시용 조건 설명",

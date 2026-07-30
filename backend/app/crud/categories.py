@@ -47,16 +47,139 @@ def ensure_default_categories(db: Session) -> list[Category]:
     return list_categories(db)
 
 
-# Only EMPLOYMENT has category-specific structured questions today: these are
-# the sole `employment.*` condition keys registered in
-# ``services/policy_engine/rules.py``'s matching registry. Other categories
-# rely on ``user_profiles`` fields collected during onboarding, so they get no
-# extra questions here (inventing ones with no matching condition_key would
-# just be unusable UI).
+# EMPLOYMENT, HOUSING, FINANCE, and WELFARE have category-specific structured
+# questions; every `question_key` below is registered as a matching condition
+# key in ``services/policy_engine/rules.py``'s ``CONDITION_KEY_REGISTRY``, so
+# answers here actually feed into policy matching (not just displayed UI).
+# TRANSPORT/TAX/PARTICIPATION/ETC have no registered condition keys yet, so
+# they intentionally have no extra questions (inventing ones with no matching
+# condition_key would just be unusable UI).
 DEFAULT_CATEGORY_QUESTIONS: dict[str, tuple[dict[str, object], ...]] = {
+    "HOUSING": (
+        {
+            "question_key": "housing.deposit_amount",
+            "label": "임차 보증금을 알려주세요",
+            "description": None,
+            "answer_type": "NUMBER",
+            "unit": "원",
+            "is_required": False,
+            "is_used_for_matching": True,
+            "display_order": 1,
+        },
+        {
+            "question_key": "housing.monthly_rent_amount",
+            "label": "월세액을 알려주세요",
+            "description": None,
+            "answer_type": "NUMBER",
+            "unit": "원",
+            "is_required": False,
+            "is_used_for_matching": True,
+            "display_order": 2,
+        },
+        {
+            "question_key": "housing.is_household_head",
+            "label": "본인이 세대주인가요?",
+            "description": None,
+            "answer_type": "BOOLEAN",
+            "is_required": False,
+            "is_used_for_matching": True,
+            "display_order": 3,
+        },
+        {
+            "question_key": "housing.has_lease_contract",
+            "label": "임대차 계약서를 제출할 수 있나요?",
+            "description": None,
+            "answer_type": "BOOLEAN",
+            "is_required": False,
+            "is_used_for_matching": True,
+            "display_order": 4,
+        },
+        {
+            "question_key": "housing.residence_months",
+            "label": "현재 거주지에 거주한 개월 수를 알려주세요",
+            "description": None,
+            "answer_type": "NUMBER",
+            "unit": "개월",
+            "is_required": False,
+            "is_used_for_matching": True,
+            "display_order": 5,
+        },
+    ),
+    "FINANCE": (
+        {
+            "question_key": "finance.monthly_income_amount",
+            "label": "월 평균 소득을 알려주세요",
+            "description": None,
+            "answer_type": "NUMBER",
+            "unit": "원",
+            "is_required": False,
+            "is_used_for_matching": True,
+            "display_order": 1,
+        },
+        {
+            "question_key": "finance.annual_income_amount",
+            "label": "연 소득을 알려주세요",
+            "description": None,
+            "answer_type": "NUMBER",
+            "unit": "원",
+            "is_required": False,
+            "is_used_for_matching": True,
+            "display_order": 2,
+        },
+        {
+            "question_key": "finance.total_asset_amount",
+            "label": "총 자산가액을 알려주세요",
+            "description": None,
+            "answer_type": "NUMBER",
+            "unit": "원",
+            "is_required": False,
+            "is_used_for_matching": True,
+            "display_order": 3,
+        },
+        {
+            "question_key": "finance.total_debt_amount",
+            "label": "총 부채액을 알려주세요",
+            "description": None,
+            "answer_type": "NUMBER",
+            "unit": "원",
+            "is_required": False,
+            "is_used_for_matching": True,
+            "display_order": 4,
+        },
+        {
+            "question_key": "finance.fixed_monthly_expense_amount",
+            "label": "월 고정 지출(월세, 대출상환 등)을 알려주세요",
+            "description": None,
+            "answer_type": "NUMBER",
+            "unit": "원",
+            "is_required": False,
+            "is_used_for_matching": True,
+            "display_order": 5,
+        },
+    ),
+    "WELFARE": (
+        {
+            "question_key": "welfare.is_basic_livelihood_recipient",
+            "label": "기초생활수급자이신가요?",
+            "description": None,
+            "answer_type": "BOOLEAN",
+            "is_required": False,
+            "is_used_for_matching": True,
+            "display_order": 1,
+        },
+        {
+            "question_key": "welfare.is_near_poverty_household",
+            "label": "차상위계층에 해당하시나요?",
+            "description": None,
+            "answer_type": "BOOLEAN",
+            "is_required": False,
+            "is_used_for_matching": True,
+            "display_order": 2,
+        },
+    ),
     "EMPLOYMENT": (
         {
-            "question_key": "employment.company_size",
+            "question_key": "employment.company_size_code",
             "label": "다니시는 회사 규모가 어떻게 되나요?",
             "description": "회사 규모에 따라 지원 가능한 정책이 달라져요.",
             "answer_type": "SINGLE_SELECT",
@@ -66,7 +189,7 @@ DEFAULT_CATEGORY_QUESTIONS: dict[str, tuple[dict[str, object], ...]] = {
             "display_order": 1,
         },
         {
-            "question_key": "employment.contract_type",
+            "question_key": "employment.contract_type_code",
             "label": "고용 형태가 어떻게 되나요?",
             "description": None,
             "answer_type": "SINGLE_SELECT",
@@ -95,7 +218,7 @@ DEFAULT_CATEGORY_QUESTIONS: dict[str, tuple[dict[str, object], ...]] = {
             "display_order": 4,
         },
         {
-            "question_key": "employment.job_field",
+            "question_key": "employment.job_field_code",
             "label": "직무 분야가 어떻게 되나요?",
             "description": None,
             "answer_type": "SINGLE_SELECT",

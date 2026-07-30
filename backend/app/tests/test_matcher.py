@@ -55,7 +55,7 @@ def test_supported_operators_can_satisfy(
     key = (
         "profile.region_code"
         if operator in {"IN", "NOT_IN"}
-        else "employment.job_field" if operator == "CONTAINS" else "profile.household_size"
+        else "employment.job_field_code" if operator == "CONTAINS" else "profile.household_size"
     )
     context = {key: actual}
 
@@ -220,7 +220,7 @@ def test_manual_check_condition_makes_card_need_review() -> None:
     result = evaluate_policy(
         [
             _condition(key="profile.employment_status_code", expected="EMPLOYED"),
-            _condition(key="housing.rental_contract_verified", operator="MANUAL_CHECK",
+            _condition(key="housing.has_lease_contract", operator="MANUAL_CHECK",
                        expected=None, check_mode="DOCUMENT"),
         ],
         {"profile": {"employment_status_code": "EMPLOYED", "household_size": 1}},
@@ -242,3 +242,45 @@ def test_alternate_eligibility_paths_use_or_across_groups() -> None:
     result = evaluate_policy(conditions, context)
 
     assert result.status is EligibilityStatus.ELIGIBLE
+
+
+def test_finance_monthly_income_condition_matches_category_answer() -> None:
+    """`finance.*` keys must resolve from nested category-answer context, the
+    same shape `policy_service.build_user_context()` produces."""
+
+    condition = _condition(
+        key="finance.monthly_income_amount",
+        operator="GTE",
+        expected=2000000,
+    )
+    context = {"finance": {"monthly_income_amount": 2500000}}
+
+    result = evaluate_condition(condition, context)
+
+    assert result.status is ConditionStatus.SATISFIED
+
+
+def test_housing_has_lease_contract_condition_matches_category_answer() -> None:
+    condition = _condition(
+        key="housing.has_lease_contract",
+        operator="EQ",
+        expected=True,
+    )
+    context = {"housing": {"has_lease_contract": True}}
+
+    result = evaluate_condition(condition, context)
+
+    assert result.status is ConditionStatus.SATISFIED
+
+
+def test_welfare_condition_key_is_registered() -> None:
+    condition = _condition(
+        key="welfare.is_basic_livelihood_recipient",
+        operator="EQ",
+        expected=False,
+    )
+    context = {"welfare": {"is_basic_livelihood_recipient": True}}
+
+    result = evaluate_condition(condition, context)
+
+    assert result.status is ConditionStatus.UNSATISFIED

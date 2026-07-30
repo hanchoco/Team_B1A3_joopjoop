@@ -113,9 +113,11 @@ export default function PolicyDetail() {
   const chance = policy.card_status ? CARD_STATUS_LABEL[policy.card_status] : '확인 필요'
   const deadlineText = policy.is_ongoing
     ? '상시 모집'
-    : policy.application_end_date
-      ? policy.application_end_date
-      : '정보 없음'
+    : !policy.application_end_date
+      ? '정보 없음'
+      : policy.days_until_deadline !== null && policy.days_until_deadline < 0
+        ? `마감됨 (${policy.application_end_date})`
+        : policy.application_end_date
 
   return (
     <section>

@@ -73,21 +73,19 @@ _CONDITION_SPECS = (
     _profile_spec("household_type_code", "가구 형태 코드"),
     _profile_spec("household_size", "가구원 수"),
     _profile_spec("housing_type_code", "주거 형태 코드"),
-    _profile_spec("monthly_income_amount", "월 소득"),
-    _profile_spec("monthly_fixed_expense_amount", "월 고정 지출"),
     ConditionKeySpec(
-        key="employment.company_size",
+        key="employment.company_size_code",
         context_paths=(
-            "employment.company_size",
-            "category_answers.employment.company_size",
+            "employment.company_size_code",
+            "category_answers.employment.company_size_code",
         ),
         description="기업 규모",
     ),
     ConditionKeySpec(
-        key="employment.contract_type",
+        key="employment.contract_type_code",
         context_paths=(
-            "employment.contract_type",
-            "category_answers.employment.contract_type",
+            "employment.contract_type_code",
+            "category_answers.employment.contract_type_code",
         ),
         description="근로 계약 형태",
     ),
@@ -108,20 +106,108 @@ _CONDITION_SPECS = (
         description="고용보험 가입 여부",
     ),
     ConditionKeySpec(
-        key="employment.job_field",
+        key="employment.job_field_code",
         context_paths=(
-            "employment.job_field",
-            "category_answers.employment.job_field",
+            "employment.job_field_code",
+            "category_answers.employment.job_field_code",
         ),
         description="직무 분야",
     ),
     ConditionKeySpec(
-        key="housing.rental_contract_verified",
+        key="housing.has_lease_contract",
         context_paths=(
-            "housing.rental_contract_verified",
-            "category_answers.housing.rental_contract_verified",
+            "housing.has_lease_contract",
+            "category_answers.housing.has_lease_contract",
         ),
         description="임대차 계약 서류 확인 여부",
+    ),
+    ConditionKeySpec(
+        key="housing.deposit_amount",
+        context_paths=(
+            "housing.deposit_amount",
+            "category_answers.housing.deposit_amount",
+        ),
+        description="임차 보증금",
+    ),
+    ConditionKeySpec(
+        key="housing.monthly_rent_amount",
+        context_paths=(
+            "housing.monthly_rent_amount",
+            "category_answers.housing.monthly_rent_amount",
+        ),
+        description="월세액",
+    ),
+    ConditionKeySpec(
+        key="housing.is_household_head",
+        context_paths=(
+            "housing.is_household_head",
+            "category_answers.housing.is_household_head",
+        ),
+        description="세대주 여부",
+    ),
+    ConditionKeySpec(
+        key="housing.residence_months",
+        context_paths=(
+            "housing.residence_months",
+            "category_answers.housing.residence_months",
+        ),
+        description="현재 거주지 거주 개월 수",
+    ),
+    ConditionKeySpec(
+        key="finance.monthly_income_amount",
+        context_paths=(
+            "finance.monthly_income_amount",
+            "category_answers.finance.monthly_income_amount",
+        ),
+        description="월 평균 소득",
+    ),
+    ConditionKeySpec(
+        key="finance.annual_income_amount",
+        context_paths=(
+            "finance.annual_income_amount",
+            "category_answers.finance.annual_income_amount",
+        ),
+        description="연 소득",
+    ),
+    ConditionKeySpec(
+        key="finance.total_asset_amount",
+        context_paths=(
+            "finance.total_asset_amount",
+            "category_answers.finance.total_asset_amount",
+        ),
+        description="총 자산가액",
+    ),
+    ConditionKeySpec(
+        key="finance.total_debt_amount",
+        context_paths=(
+            "finance.total_debt_amount",
+            "category_answers.finance.total_debt_amount",
+        ),
+        description="총 부채액",
+    ),
+    ConditionKeySpec(
+        key="finance.fixed_monthly_expense_amount",
+        context_paths=(
+            "finance.fixed_monthly_expense_amount",
+            "category_answers.finance.fixed_monthly_expense_amount",
+        ),
+        description="월 고정 지출(월세, 대출상환 등)",
+    ),
+    ConditionKeySpec(
+        key="welfare.is_basic_livelihood_recipient",
+        context_paths=(
+            "welfare.is_basic_livelihood_recipient",
+            "category_answers.welfare.is_basic_livelihood_recipient",
+        ),
+        description="기초생활수급자 여부",
+    ),
+    ConditionKeySpec(
+        key="welfare.is_near_poverty_household",
+        context_paths=(
+            "welfare.is_near_poverty_household",
+            "category_answers.welfare.is_near_poverty_household",
+        ),
+        description="차상위계층 해당 여부",
     ),
 )
 

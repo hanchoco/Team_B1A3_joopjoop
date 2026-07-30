@@ -65,8 +65,8 @@ ALLOWED_CONDITION_KEYS = {
     "profile.age", "profile.region_code",
     "profile.income_band_code", "profile.housing_type_code", "profile.household_type_code",
     "profile.employment_status_code", "profile.household_size",
-    "employment.company_size", "employment.contract_type", "employment.tenure_months",
-    "employment.insurance_enrolled", "employment.job_field",
+    "employment.company_size_code", "employment.contract_type_code", "employment.tenure_months",
+    "employment.insurance_enrolled", "employment.job_field_code",
 }
 CHECKBOX_ONLY_CONDITION_KEYS = {"participation_limit"}
 
