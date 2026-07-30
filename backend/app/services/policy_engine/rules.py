@@ -62,6 +62,15 @@ def _profile_spec(field_name: str, description: str) -> ConditionKeySpec:
     )
 
 
+def _category_spec(namespace: str, field_name: str, description: str) -> ConditionKeySpec:
+    key = f"{namespace}.{field_name}"
+    return ConditionKeySpec(
+        key=key,
+        context_paths=(key, f"category_answers.{key}"),
+        description=description,
+    )
+
+
 _CONDITION_SPECS = (
     _profile_spec("age", "기준 연도의 만 나이 대체값(기준 연도 - 출생 연도)"),
     _profile_spec("birth_year", "출생 연도"),
@@ -73,56 +82,23 @@ _CONDITION_SPECS = (
     _profile_spec("household_type_code", "가구 형태 코드"),
     _profile_spec("household_size", "가구원 수"),
     _profile_spec("housing_type_code", "주거 형태 코드"),
-    _profile_spec("monthly_income_amount", "월 소득"),
-    _profile_spec("monthly_fixed_expense_amount", "월 고정 지출"),
-    ConditionKeySpec(
-        key="employment.company_size",
-        context_paths=(
-            "employment.company_size",
-            "category_answers.employment.company_size",
-        ),
-        description="기업 규모",
-    ),
-    ConditionKeySpec(
-        key="employment.contract_type",
-        context_paths=(
-            "employment.contract_type",
-            "category_answers.employment.contract_type",
-        ),
-        description="근로 계약 형태",
-    ),
-    ConditionKeySpec(
-        key="employment.tenure_months",
-        context_paths=(
-            "employment.tenure_months",
-            "category_answers.employment.tenure_months",
-        ),
-        description="근속 개월 수",
-    ),
-    ConditionKeySpec(
-        key="employment.insurance_enrolled",
-        context_paths=(
-            "employment.insurance_enrolled",
-            "category_answers.employment.insurance_enrolled",
-        ),
-        description="고용보험 가입 여부",
-    ),
-    ConditionKeySpec(
-        key="employment.job_field",
-        context_paths=(
-            "employment.job_field",
-            "category_answers.employment.job_field",
-        ),
-        description="직무 분야",
-    ),
-    ConditionKeySpec(
-        key="housing.rental_contract_verified",
-        context_paths=(
-            "housing.rental_contract_verified",
-            "category_answers.housing.rental_contract_verified",
-        ),
-        description="임대차 계약 서류 확인 여부",
-    ),
+    _category_spec("employment", "company_size_code", "기업 규모 코드"),
+    _category_spec("employment", "contract_type_code", "근로 계약 형태 코드"),
+    _category_spec("employment", "tenure_months", "근속 개월 수"),
+    _category_spec("employment", "insurance_enrolled", "고용보험 가입 여부"),
+    _category_spec("employment", "job_field_code", "직무 분야 코드"),
+    _category_spec("housing", "deposit_amount", "임차 보증금"),
+    _category_spec("housing", "monthly_rent_amount", "월세액"),
+    _category_spec("housing", "is_household_head", "세대주 여부"),
+    _category_spec("housing", "has_lease_contract", "임대차 계약서 제출 가능 여부"),
+    _category_spec("housing", "residence_months", "현재 거주지 거주 개월 수"),
+    _category_spec("finance", "monthly_income_amount", "월 평균 소득"),
+    _category_spec("finance", "annual_income_amount", "연 소득"),
+    _category_spec("finance", "total_asset_amount", "총 자산가액"),
+    _category_spec("finance", "total_debt_amount", "총 부채액"),
+    _category_spec("finance", "fixed_monthly_expense_amount", "월 고정 지출"),
+    _category_spec("welfare", "is_basic_livelihood_recipient", "기초생활수급자 여부"),
+    _category_spec("welfare", "is_near_poverty_household", "차상위계층 해당 여부"),
 )
 
 CONDITION_KEY_REGISTRY: Mapping[str, ConditionKeySpec] = MappingProxyType(

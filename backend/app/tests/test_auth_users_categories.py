@@ -460,7 +460,7 @@ def test_categories_questions_and_answer_upsert(client: TestClient) -> None:
         assert category is not None
         question = CategoryQuestion(
             category_id=category.id,
-            question_key="employment.insurance_enrolled",
+            question_key="employment.test_probe_question",
             label="고용보험 가입 여부",
             description="현재 고용보험 가입 상태를 선택하세요.",
             answer_type=AnswerType.SINGLE_SELECT,
@@ -468,7 +468,7 @@ def test_categories_questions_and_answer_upsert(client: TestClient) -> None:
             unit=None,
             is_required=True,
             is_used_for_matching=True,
-            display_order=1,
+            display_order=99,
             is_active=True,
         )
         db.add(question)
@@ -511,22 +511,24 @@ def test_categories_questions_and_answer_upsert(client: TestClient) -> None:
 
     questions_response = client.get(f"/api/v1/categories/{category_id}/questions")
     assert questions_response.status_code == 200, questions_response.text
-    assert questions_response.json() == [
-        {
-            "id": question_id,
-            "category_id": category_id,
-            "question_key": "employment.insurance_enrolled",
-            "label": "고용보험 가입 여부",
-            "description": "현재 고용보험 가입 상태를 선택하세요.",
-            "answer_type": "SINGLE_SELECT",
-            "options_json": options,
-            "unit": None,
-            "is_required": True,
-            "is_used_for_matching": True,
-            "display_order": 1,
-            "is_active": True,
-        }
-    ]
+    questions_payload = questions_response.json()
+    # 5 seeded EMPLOYMENT default questions + the manually created probe question above.
+    assert len(questions_payload) == 6
+    manual_question = next(item for item in questions_payload if item["id"] == question_id)
+    assert manual_question == {
+        "id": question_id,
+        "category_id": category_id,
+        "question_key": "employment.test_probe_question",
+        "label": "고용보험 가입 여부",
+        "description": "현재 고용보험 가입 상태를 선택하세요.",
+        "answer_type": "SINGLE_SELECT",
+        "options_json": options,
+        "unit": None,
+        "is_required": True,
+        "is_used_for_matching": True,
+        "display_order": 99,
+        "is_active": True,
+    }
 
     missing_category_response = client.get("/api/v1/categories/999999/questions")
     assert missing_category_response.status_code == 404
@@ -626,3 +628,27 @@ def test_categories_questions_and_answer_upsert(client: TestClient) -> None:
         assert len(stored_answers) == 1
         assert stored_answers[0].id == created_answer["id"]
         assert stored_answers[0].answer_json == {"value": "NOT_ENROLLED"}
+
+
+def test_default_category_questions_are_seeded(client: TestClient) -> None:
+    """ensure_default_category_questions() seeds one onboarding question set per category."""
+
+    categories_response = client.get("/api/v1/categories")
+    assert categories_response.status_code == 200, categories_response.text
+    categories_by_code = {item["code"]: item["id"] for item in categories_response.json()}
+
+    expected_counts = {
+        "EMPLOYMENT": 5,
+        "HOUSING": 5,
+        "FINANCE": 5,
+        "WELFARE": 2,
+    }
+    for code, expected_count in expected_counts.items():
+        category_id = categories_by_code[code]
+        questions_response = client.get(f"/api/v1/categories/{category_id}/questions")
+        assert questions_response.status_code == 200, questions_response.text
+        questions = questions_response.json()
+        assert len(questions) == expected_count, code
+        assert all(question["is_required"] is False for question in questions)
+        assert all(question["is_used_for_matching"] is True for question in questions)
+        assert all(question["is_active"] is True for question in questions)

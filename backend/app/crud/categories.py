@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.user_category_profile import (
+    AnswerType,
     Category,
     CategoryQuestion,
     UserCategoryAnswer,
@@ -22,6 +23,127 @@ DEFAULT_CATEGORIES = (
     ("PARTICIPATION", "참여", "청년 활동과 참여 정책", 7),
     ("ETC", "기타", "그 밖의 청년 지원 정책", 8),
 )
+
+DEFAULT_CATEGORY_QUESTIONS: dict[
+    str, tuple[tuple[str, str, AnswerType, list[dict[str, str]] | None, str | None], ...]
+] = {
+    "EMPLOYMENT": (
+        (
+            "employment.company_size_code",
+            "현재 근무 중인 회사의 규모를 알려주세요",
+            AnswerType.SINGLE_SELECT,
+            [
+                {"label": "5인 미만", "value": "MICRO"},
+                {"label": "5~49인", "value": "SMALL"},
+                {"label": "50~299인", "value": "MEDIUM"},
+                {"label": "300인 이상", "value": "LARGE"},
+                {"label": "공공기관/공기업", "value": "PUBLIC"},
+                {"label": "해당 없음", "value": "UNKNOWN"},
+            ],
+            None,
+        ),
+        (
+            "employment.contract_type_code",
+            "현재 근로계약 형태를 알려주세요",
+            AnswerType.SINGLE_SELECT,
+            [
+                {"label": "정규직", "value": "PERMANENT"},
+                {"label": "계약직(기간제)", "value": "FIXED_TERM"},
+                {"label": "파견직", "value": "DISPATCHED"},
+                {"label": "프리랜서", "value": "FREELANCER"},
+                {"label": "일용직", "value": "DAILY"},
+                {"label": "해당 없음", "value": "UNKNOWN"},
+            ],
+            None,
+        ),
+        (
+            "employment.tenure_months",
+            "현재 직장에서 근속한 개월 수를 알려주세요",
+            AnswerType.NUMBER,
+            None,
+            "개월",
+        ),
+        (
+            "employment.insurance_enrolled",
+            "고용보험에 가입되어 있나요?",
+            AnswerType.BOOLEAN,
+            None,
+            None,
+        ),
+        (
+            "employment.job_field_code",
+            "현재(또는 희망) 직무 분야를 모두 선택해주세요",
+            AnswerType.MULTI_SELECT,
+            [
+                {"label": "IT/개발", "value": "IT"},
+                {"label": "마케팅", "value": "MARKETING"},
+                {"label": "디자인", "value": "DESIGN"},
+                {"label": "영업", "value": "SALES"},
+                {"label": "생산/제조", "value": "MANUFACTURING"},
+                {"label": "서비스/고객응대", "value": "SERVICE"},
+                {"label": "교육", "value": "EDUCATION"},
+                {"label": "의료/보건", "value": "MEDICAL"},
+                {"label": "사무/행정", "value": "ADMIN"},
+                {"label": "기타", "value": "OTHER"},
+            ],
+            None,
+        ),
+    ),
+    "HOUSING": (
+        ("housing.deposit_amount", "임차 보증금을 알려주세요", AnswerType.NUMBER, None, "원"),
+        ("housing.monthly_rent_amount", "월세액을 알려주세요", AnswerType.NUMBER, None, "원"),
+        ("housing.is_household_head", "본인이 세대주인가요?", AnswerType.BOOLEAN, None, None),
+        (
+            "housing.has_lease_contract",
+            "임대차 계약서를 제출할 수 있나요?",
+            AnswerType.BOOLEAN,
+            None,
+            None,
+        ),
+        (
+            "housing.residence_months",
+            "현재 거주지에 거주한 개월 수를 알려주세요",
+            AnswerType.NUMBER,
+            None,
+            "개월",
+        ),
+    ),
+    "FINANCE": (
+        (
+            "finance.monthly_income_amount",
+            "월 평균 소득을 알려주세요",
+            AnswerType.NUMBER,
+            None,
+            "원",
+        ),
+        ("finance.annual_income_amount", "연 소득을 알려주세요", AnswerType.NUMBER, None, "원"),
+        ("finance.total_asset_amount", "총 자산가액을 알려주세요", AnswerType.NUMBER, None, "원"),
+        ("finance.total_debt_amount", "총 부채액을 알려주세요", AnswerType.NUMBER, None, "원"),
+        (
+            "finance.fixed_monthly_expense_amount",
+            "월 고정 지출(월세, 대출상환 등)을 알려주세요",
+            AnswerType.NUMBER,
+            None,
+            "원",
+        ),
+    ),
+    "WELFARE": (
+        (
+            "welfare.is_basic_livelihood_recipient",
+            "기초생활수급자이신가요?",
+            AnswerType.BOOLEAN,
+            None,
+            None,
+        ),
+        (
+            "welfare.is_near_poverty_household",
+            "차상위계층에 해당하시나요?",
+            AnswerType.BOOLEAN,
+            None,
+            None,
+        ),
+    ),
+}
 
 
 def ensure_default_categories(db: Session) -> list[Category]:
@@ -45,6 +167,44 @@ def ensure_default_categories(db: Session) -> list[Category]:
     if changed:
         db.commit()
     return list_categories(db)
+
+
+def ensure_default_category_questions(db: Session) -> list[CategoryQuestion]:
+    """Create the stable onboarding-question registry once and return it."""
+
+    categories_by_code = {str(category.code.value): category for category in list_categories(db)}
+    existing_keys = {
+        (question.category_id, question.question_key)
+        for question in db.scalars(select(CategoryQuestion)).all()
+    }
+    changed = False
+    for code, questions in DEFAULT_CATEGORY_QUESTIONS.items():
+        category = categories_by_code.get(code)
+        if category is None:
+            continue
+        for order, (question_key, label, answer_type, options_json, unit) in enumerate(
+            questions, start=1
+        ):
+            if (category.id, question_key) in existing_keys:
+                continue
+            db.add(
+                CategoryQuestion(
+                    category_id=category.id,
+                    question_key=question_key,
+                    label=label,
+                    answer_type=answer_type,
+                    options_json=options_json,
+                    unit=unit,
+                    is_required=False,
+                    is_used_for_matching=True,
+                    display_order=order,
+                    is_active=True,
+                )
+            )
+            changed = True
+    if changed:
+        db.commit()
+    return list(db.scalars(select(CategoryQuestion)).all())
 
 
 def list_categories(db: Session, *, active_only: bool = True) -> list[Category]:

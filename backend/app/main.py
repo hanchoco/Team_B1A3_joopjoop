@@ -11,7 +11,7 @@ import app.models  # noqa: F401 - registers all ORM tables on Base.metadata.
 from app.api.v1 import chatbot, checklist, notification, policies, simulator, users
 from app.core.config import settings
 from app.core.database import Base, engine
-from app.crud.categories import ensure_default_categories
+from app.crud.categories import ensure_default_categories, ensure_default_category_questions
 from app.db.session import SessionLocal
 from app.services.errors import ServiceError
 
@@ -24,6 +24,7 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         Base.metadata.create_all(bind=engine)
         with SessionLocal() as db:
             ensure_default_categories(db)
+            ensure_default_category_questions(db)
     yield
 
 

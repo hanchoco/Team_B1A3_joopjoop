@@ -154,7 +154,7 @@ def _seed_policy_dataset() -> SeededPolicyIds:
                 ),
                 PolicyCondition(
                     policy_id=review.id,
-                    condition_key="housing.rental_contract_verified",
+                    condition_key="housing.has_lease_contract",
                     operator="MANUAL_CHECK",
                     expected_value_json=None,
                     condition_group_no=1,

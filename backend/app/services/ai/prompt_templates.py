@@ -38,8 +38,13 @@ CONDITION_SYSTEM_PROMPT = """당신은 한국 청년 정책 원문에서 자격�
 절대 condition_key 자리에 넣지 마세요.
   profile.income_band_code, profile.housing_type_code, profile.household_type_code,
   profile.employment_status_code, profile.household_size,
-  employment.company_size, employment.contract_type, employment.tenure_months,
-  employment.insurance_enrolled, employment.job_field
+  employment.company_size_code, employment.contract_type_code, employment.tenure_months,
+  employment.insurance_enrolled, employment.job_field_code,
+  housing.deposit_amount, housing.monthly_rent_amount, housing.is_household_head,
+  housing.has_lease_contract, housing.residence_months,
+  finance.monthly_income_amount, finance.annual_income_amount, finance.total_asset_amount,
+  finance.total_debt_amount, finance.fixed_monthly_expense_amount,
+  welfare.is_basic_livelihood_recipient, welfare.is_near_poverty_household
 
 각 조건: {"condition_key": "...", "operator": "...", "expected_value": {...},
           "is_required": true/false, "description": "화면 표시용 조건 설명",
@@ -50,6 +55,10 @@ operator는 다음 중 하나: EQ, NE, IN, NOT_IN, GT, GTE, LT, LTE, BETWEEN, CO
   housing_type_code: OWNED, JEONSE, MONTHLY_RENT, PUBLIC_RENTAL, DORMITORY, WITH_FAMILY, OTHER
   household_type_code: SINGLE, COUPLE, WITH_PARENTS, SINGLE_PARENT, MULTI_PERSON, OTHER
   employment_status_code: EMPLOYED, SELF_EMPLOYED, UNEMPLOYED, JOB_SEEKER, STUDENT, ON_LEAVE, OTHER
+  company_size_code: MICRO, SMALL, MEDIUM, LARGE, PUBLIC, UNKNOWN
+  contract_type_code: PERMANENT, FIXED_TERM, DISPATCHED, FREELANCER, DAILY, UNKNOWN
+  job_field_code: IT, MARKETING, DESIGN, SALES, MANUFACTURING, SERVICE, EDUCATION, MEDICAL,
+    ADMIN, OTHER
 
 중요 - 조건을 만들지 말아야 하는 경우:
 - 원문에서 구체적인 값(코드값 중 일부, 또는 명확한 숫자)을 확정할 수 없으면 조건 자체를

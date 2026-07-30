@@ -54,7 +54,7 @@ def test_supported_operators_can_satisfy(
     key = (
         "profile.region_code"
         if operator in {"IN", "NOT_IN"}
-        else "employment.job_field" if operator == "CONTAINS" else "profile.household_size"
+        else "employment.job_field_code" if operator == "CONTAINS" else "profile.household_size"
     )
     context = {key: actual}
 
@@ -175,7 +175,7 @@ def test_manual_check_condition_makes_card_need_review() -> None:
     result = evaluate_policy(
         [
             _condition(key="profile.employment_status_code", expected="EMPLOYED"),
-            _condition(key="housing.rental_contract_verified", operator="MANUAL_CHECK",
+            _condition(key="housing.has_lease_contract", operator="MANUAL_CHECK",
                        expected=None, check_mode="DOCUMENT"),
         ],
         {"profile": {"employment_status_code": "EMPLOYED", "household_size": 1}},

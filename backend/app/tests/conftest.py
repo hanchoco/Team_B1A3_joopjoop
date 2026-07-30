@@ -12,7 +12,7 @@ from fastapi.testclient import TestClient
 
 import app.models  # noqa: F401
 from app.core.database import Base, engine
-from app.crud.categories import ensure_default_categories
+from app.crud.categories import ensure_default_categories, ensure_default_category_questions
 from app.db.session import SessionLocal
 from app.main import app
 
@@ -25,6 +25,7 @@ def reset_database() -> Generator[None, None, None]:
     Base.metadata.create_all(bind=engine)
     with SessionLocal() as db:
         ensure_default_categories(db)
+        ensure_default_category_questions(db)
     yield
     Base.metadata.drop_all(bind=engine)
 

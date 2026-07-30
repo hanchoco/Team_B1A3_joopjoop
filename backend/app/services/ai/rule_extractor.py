@@ -64,8 +64,13 @@ INCOME_BAND_UPPER_BOUND = {
 ALLOWED_CONDITION_KEYS = {
     "profile.income_band_code", "profile.housing_type_code", "profile.household_type_code",
     "profile.employment_status_code", "profile.household_size",
-    "employment.company_size", "employment.contract_type", "employment.tenure_months",
-    "employment.insurance_enrolled", "employment.job_field",
+    "employment.company_size_code", "employment.contract_type_code", "employment.tenure_months",
+    "employment.insurance_enrolled", "employment.job_field_code",
+    "housing.deposit_amount", "housing.monthly_rent_amount", "housing.is_household_head",
+    "housing.has_lease_contract", "housing.residence_months",
+    "finance.monthly_income_amount", "finance.annual_income_amount", "finance.total_asset_amount",
+    "finance.total_debt_amount", "finance.fixed_monthly_expense_amount",
+    "welfare.is_basic_livelihood_recipient", "welfare.is_near_poverty_household",
 }
 CHECKBOX_ONLY_CONDITION_KEYS = {"participation_limit"}
 
@@ -73,6 +78,14 @@ CODE_REGISTRY_VALUES = {
     "housing_type_code": {"OWNED", "JEONSE", "MONTHLY_RENT", "PUBLIC_RENTAL", "DORMITORY", "WITH_FAMILY", "OTHER"},
     "household_type_code": {"SINGLE", "COUPLE", "WITH_PARENTS", "SINGLE_PARENT", "MULTI_PERSON", "OTHER"},
     "employment_status_code": {"EMPLOYED", "SELF_EMPLOYED", "UNEMPLOYED", "JOB_SEEKER", "STUDENT", "ON_LEAVE", "OTHER"},
+    "company_size_code": {"MICRO", "SMALL", "MEDIUM", "LARGE", "PUBLIC", "UNKNOWN"},
+    "contract_type_code": {
+        "PERMANENT", "FIXED_TERM", "DISPATCHED", "FREELANCER", "DAILY", "UNKNOWN",
+    },
+    "job_field_code": {
+        "IT", "MARKETING", "DESIGN", "SALES", "MANUFACTURING",
+        "SERVICE", "EDUCATION", "MEDICAL", "ADMIN", "OTHER",
+    },
 }
 
 NO_RESTRICTION_PHRASES = ["제한 없음", "모든", "무관", "관계없이", "누구나", "가능(모든"]
