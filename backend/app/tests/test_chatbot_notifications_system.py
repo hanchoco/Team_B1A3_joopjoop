@@ -3,7 +3,6 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
 from datetime import UTC, date, datetime, timedelta
 
 import pytest
@@ -13,6 +12,7 @@ from app.db.session import SessionLocal
 from app.models.policy import Policy
 from app.models.policy_condition import PolicyCondition
 from app.models.user_policy import UserPolicyState
+from app.services.ai.prompt_templates import QA_SYSTEM_PROMPT
 from app.services.ai.solar_client import SolarClient, SolarClientError
 from app.services.notification_service import create_due_deadline_notifications
 
@@ -175,20 +175,17 @@ def test_chatbot_uses_mocked_solar_and_only_selected_policy(
         title="다른 정책의 비밀 제목",
         application_end_date=date(2026, 11, 30),
     )
-    captured_messages: list[dict[str, str]] = []
+    captured_calls: list[tuple[str, str]] = []
 
-    async def fake_complete(
+    async def fake_complete_text(
         _solar_client: SolarClient,
-        messages: Sequence[Mapping[str, str]],
-        *,
-        temperature: float = 0.1,
-        max_tokens: int = 2_048,
+        system_prompt: str,
+        user_content: str,
     ) -> str:
-        del temperature, max_tokens
-        captured_messages.extend(dict(message) for message in messages)
+        captured_calls.append((system_prompt, user_content))
         return "선택한 정책만 사용한 모의 답변입니다."
 
-    monkeypatch.setattr(SolarClient, "complete", fake_complete)
+    monkeypatch.setattr(SolarClient, "complete_text", fake_complete_text)
     response = client.post(
         f"/api/v1/policies/{selected_policy_id}/questions",
         headers=_headers(token),
@@ -200,11 +197,9 @@ def test_chatbot_uses_mocked_solar_and_only_selected_policy(
         "answer": "선택한 정책만 사용한 모의 답변입니다.",
         "suggested_questions": _SUGGESTED_QUESTIONS,
     }
-    assert [message["role"] for message in captured_messages] == [
-        "system",
-        "user",
-    ]
-    user_prompt = captured_messages[1]["content"]
+    assert len(captured_calls) == 1
+    system_prompt, user_prompt = captured_calls[0]
+    assert system_prompt == QA_SYSTEM_PROMPT
     assert "선택한 청년 주거 정책" in user_prompt
     assert "만 19세부터 34세" in user_prompt
     assert "지원 대상과 신청 방법을 알려주세요." in user_prompt
@@ -222,17 +217,14 @@ def test_chatbot_maps_solar_failure_to_503(
         application_end_date=date(2026, 12, 31),
     )
 
-    async def fail_complete(
+    async def fail_complete_text(
         _solar_client: SolarClient,
-        _messages: Sequence[Mapping[str, str]],
-        *,
-        temperature: float = 0.1,
-        max_tokens: int = 2_048,
+        _system_prompt: str,
+        _user_content: str,
     ) -> str:
-        del temperature, max_tokens
         raise SolarClientError("mocked upstream failure")
 
-    monkeypatch.setattr(SolarClient, "complete", fail_complete)
+    monkeypatch.setattr(SolarClient, "complete_text", fail_complete_text)
     response = client.post(
         f"/api/v1/policies/{policy_id}/questions",
         headers=_headers(token),
@@ -253,19 +245,16 @@ def test_chatbot_missing_policy_returns_404_without_solar(
     token, _user_id = _signup(client, email="chatbot-missing@example.com")
     solar_called = False
 
-    async def forbidden_complete(
+    async def forbidden_complete_text(
         _solar_client: SolarClient,
-        _messages: Sequence[Mapping[str, str]],
-        *,
-        temperature: float = 0.1,
-        max_tokens: int = 2_048,
+        _system_prompt: str,
+        _user_content: str,
     ) -> str:
         nonlocal solar_called
-        del temperature, max_tokens
         solar_called = True
         return "호출되면 안 됩니다."
 
-    monkeypatch.setattr(SolarClient, "complete", forbidden_complete)
+    monkeypatch.setattr(SolarClient, "complete_text", forbidden_complete_text)
     response = client.post(
         "/api/v1/policies/999999/questions",
         headers=_headers(token),

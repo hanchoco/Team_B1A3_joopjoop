@@ -47,6 +47,119 @@ def ensure_default_categories(db: Session) -> list[Category]:
     return list_categories(db)
 
 
+# Only EMPLOYMENT has category-specific structured questions today: these are
+# the sole `employment.*` condition keys registered in
+# ``services/policy_engine/rules.py``'s matching registry. Other categories
+# rely on ``user_profiles`` fields collected during onboarding, so they get no
+# extra questions here (inventing ones with no matching condition_key would
+# just be unusable UI).
+DEFAULT_CATEGORY_QUESTIONS: dict[str, tuple[dict[str, object], ...]] = {
+    "EMPLOYMENT": (
+        {
+            "question_key": "employment.company_size",
+            "label": "다니시는 회사 규모가 어떻게 되나요?",
+            "description": "회사 규모에 따라 지원 가능한 정책이 달라져요.",
+            "answer_type": "SINGLE_SELECT",
+            "options_json": ["소기업", "중소기업", "중견기업", "대기업", "공공기관", "비영리/기타"],
+            "is_required": False,
+            "is_used_for_matching": True,
+            "display_order": 1,
+        },
+        {
+            "question_key": "employment.contract_type",
+            "label": "고용 형태가 어떻게 되나요?",
+            "description": None,
+            "answer_type": "SINGLE_SELECT",
+            "options_json": ["정규직", "계약직", "일용직", "프리랜서", "기타"],
+            "is_required": False,
+            "is_used_for_matching": True,
+            "display_order": 2,
+        },
+        {
+            "question_key": "employment.tenure_months",
+            "label": "근속 기간이 얼마나 되셨나요?",
+            "description": "개월 수로 입력해주세요.",
+            "answer_type": "NUMBER",
+            "unit": "개월",
+            "is_required": False,
+            "is_used_for_matching": True,
+            "display_order": 3,
+        },
+        {
+            "question_key": "employment.insurance_enrolled",
+            "label": "고용보험에 가입되어 있나요?",
+            "description": None,
+            "answer_type": "BOOLEAN",
+            "is_required": False,
+            "is_used_for_matching": True,
+            "display_order": 4,
+        },
+        {
+            "question_key": "employment.job_field",
+            "label": "직무 분야가 어떻게 되나요?",
+            "description": None,
+            "answer_type": "SINGLE_SELECT",
+            "options_json": [
+                "IT/개발",
+                "경영/사무",
+                "영업/마케팅",
+                "생산/제조",
+                "서비스",
+                "교육",
+                "의료/복지",
+                "기타",
+            ],
+            "is_required": False,
+            "is_used_for_matching": True,
+            "display_order": 5,
+        },
+    ),
+}
+
+
+def ensure_default_category_questions(db: Session) -> list[CategoryQuestion]:
+    """Create the stable question registry once and return it (idempotent)."""
+
+    categories_by_code = {
+        str(category.code.value): category for category in list_categories(db, active_only=False)
+    }
+    changed = False
+    for code, questions in DEFAULT_CATEGORY_QUESTIONS.items():
+        category = categories_by_code.get(code)
+        if category is None:
+            continue
+        existing_keys = {
+            question.question_key
+            for question in list_category_questions(db, category.id, active_only=False)
+        }
+        for spec in questions:
+            if spec["question_key"] in existing_keys:
+                continue
+            db.add(
+                CategoryQuestion(
+                    category_id=category.id,
+                    question_key=spec["question_key"],
+                    label=spec["label"],
+                    description=spec.get("description"),
+                    answer_type=spec["answer_type"],
+                    options_json=spec.get("options_json"),
+                    unit=spec.get("unit"),
+                    is_required=spec["is_required"],
+                    is_used_for_matching=spec["is_used_for_matching"],
+                    display_order=spec["display_order"],
+                    is_active=True,
+                )
+            )
+            changed = True
+    if changed:
+        db.commit()
+    return [
+        question
+        for category in categories_by_code.values()
+        for question in list_category_questions(db, category.id, active_only=False)
+    ]
+
+
 def list_categories(db: Session, *, active_only: bool = True) -> list[Category]:
     """Return categories in their configured display order."""
 

@@ -16,7 +16,7 @@ from app.crud import policies as policy_crud
 from app.crud import user_policies as state_crud
 from app.crud import users as user_crud
 from app.models.policy import Policy
-from app.models.user_policy import UserPolicyMatch
+from app.models.user_policy import EligibilityStatus, UserPolicyMatch
 from app.services.errors import NotFoundError
 from app.services.policy_engine.matcher import PolicyEvaluation, evaluate_policy
 
@@ -112,7 +112,7 @@ def evaluate_policy_for_user(
         db,
         user_id=user_id,
         policy_id=policy_id,
-        eligibility_status=_card_db_status(evaluation.status),
+        eligibility_status=evaluation.status.value,
         match_score=score,
         satisfied_condition_count=evaluation.satisfied_condition_count,
         review_condition_count=evaluation.review_condition_count,
@@ -257,16 +257,8 @@ def _condition_db_status(status: object) -> str:
     }.get(name, "NEEDS_REVIEW")
 
 
-def _card_db_status(status: object) -> str:
-    name = str(getattr(status, "name", status)).split(".")[-1]
-    if name in {"HIGH_PROBABILITY", "LIKELY_ELIGIBLE"}:
-        return "ELIGIBLE"
-    if name == "INELIGIBLE":
-        return "INELIGIBLE"
-    return "NEEDS_REVIEW"
-
 def _is_high_probability(item: EvaluatedPolicy) -> int:
-    return 1 if _card_db_status(item.evaluation.status) == "ELIGIBLE" else 0
+    return 1 if item.evaluation.status is EligibilityStatus.ELIGIBLE else 0
 
 
 def _json_safe(value: object) -> object:

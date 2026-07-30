@@ -1,1 +1,51 @@
-services: {}
+services:
+  db:
+    image: mysql:8.0
+    container_name: joopjoop-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-joopjoop}
+      MYSQL_USER: ${MYSQL_USER:-joopjoop_app}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Set MYSQL_PASSWORD in .env}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: joopjoop-backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+
+volumes:
+  db_data:
+
+# frontend는 아직 구현되지 않아 이 compose 파일에서 제외했습니다.
+# frontend/Dockerfile, frontend/package.json이 채워지면 여기에
+# 다음과 같은 서비스를 추가하세요:
+#
+#   frontend:
+#     build:
+#       context: ./frontend
+#       dockerfile: Dockerfile
+#     container_name: joopjoop-frontend
+#     restart: unless-stopped
+#     env_file:
+#       - ./frontend/.env
+#     depends_on:
+#       - backend
+#     ports:
+#       - "80:80"

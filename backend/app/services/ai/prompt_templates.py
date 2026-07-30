@@ -113,8 +113,41 @@ DOCUMENT_SYSTEM_PROMPT = """당신은 한국 청년 정책 원문에서 제출�
 
 
 # ============================================================
-# checklist_generator.py의 generate_application_checklist()에서 사용
-# (S10 실시간 화면용, A02 파이프라인과 무관)
+# benefit_extractor.py 에서 사용 (extract_benefits - 지원 혜택 금액만)
+# ============================================================
+BENEFIT_SYSTEM_PROMPT = """당신은 한국 청년 정책 원문에서 지원 혜택(금액)을 추출하는 도우미입니다.
+반드시 JSON으로만 답하세요. 없는 내용은 만들어내지 말고 null/빈 배열로 두세요.
+
+지원 내용 텍스트에서 실제로 지급되는 금액·한도 정보만 추출하세요. 확실한 숫자가 없으면
+해당 필드를 null로 두거나, 혜택 자체를 만들지 마세요.
+
+각 항목: {"benefit_type": "...", "amount_type": "...", "min_amount": 숫자 또는 null,
+          "max_amount": 숫자 또는 null, "payment_cycle": "..." 또는 null,
+          "duration_months": 숫자 또는 null, "max_total_amount": 숫자 또는 null,
+          "display_text": "화면에 보여줄 한 줄 요약"}
+
+benefit_type은 다음 중 하나: CASH, DISCOUNT, LOAN, SAVINGS, TAX_REDUCTION, SERVICE, OTHER
+amount_type은 다음 중 하나: FIXED, RANGE, FORMULA, VARIABLE
+payment_cycle은 다음 중 하나 또는 null: ONCE, MONTHLY, YEARLY, MATURITY, VARIABLE
+
+중요:
+- 정책 하나에는 보통 혜택이 1개입니다. 명확히 서로 다른 혜택(예: 지원금과 별도의 대출 이자
+  감면)이 함께 있을 때만 2개 이상으로 나누세요.
+- 소득 구간별 차등 지급처럼 단순 숫자로 표현할 수 없는 계산식은 min_amount/max_amount를
+  null로 두고 display_text에 원문 요약만 남기세요. 임의로 숫자를 지어내지 마세요.
+- 지원 내용이 비금전적 서비스(상담, 컨설팅 등)뿐이면 benefit_type을 SERVICE로 하고 금액
+  필드는 전부 null로 두세요.
+- 지원 내용 자체가 없으면 benefits를 빈 배열로 두세요.
+
+출력 형식:
+{"benefits": [...]}
+"""
+
+
+# ============================================================
+# (미사용) checklist_generator.py의 generate_application_checklist()에서 사용.
+# 체크리스트 화면에 AI 설명을 붙이는 기능이 기획에서 제외되어, 이 프롬프트를
+# 실제로 호출하는 코드는 현재 없습니다.
 # ============================================================
 CHECKLIST_SYSTEM_PROMPT = """당신은 civiclens의 신청 준비 체크리스트 도우미입니다.
 Backend가 이미 판정한 조건별 상태와 필요서류를 받아서, 화면에 그대로 뿌릴 수 있는
