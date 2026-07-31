@@ -48,7 +48,7 @@ export async function getDashboardSummary(): Promise<DashboardSummaryResponse> {
 
 export async function getRecommendations(limit = 3): Promise<PolicySummaryResponse[]> {
   const response = await apiClient.get<PolicySummaryResponse[]>('/users/me/recommendations', {
-    params: { limit },
+    params: { limit, eligibility_status: 'ELIGIBLE' },
   })
   return response.data
 }

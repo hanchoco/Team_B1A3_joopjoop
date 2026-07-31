@@ -162,6 +162,7 @@ def list_recommendations(
     db: DbSession,
     current_user: CurrentUser,
     limit: int = Query(default=20, ge=1, le=100),
+    eligibility_status: str | None = Query(default=None, pattern="^(ELIGIBLE|NEEDS_REVIEW)$"),
 ) -> list[PolicySummaryResponse]:
     """Return category-independent recommendations in match order."""
 
@@ -171,6 +172,7 @@ def list_recommendations(
             db,
             user_id=current_user.id,
             limit=limit,
+            eligibility_status=eligibility_status,
         )
     ]
 
