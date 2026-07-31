@@ -76,13 +76,21 @@ export default function CategorySelect() {
             return (
               <button
                 key={category.id}
-                onClick={() => navigate(`/categories/${category.id}/questions`)}
+                onClick={() =>
+                  navigate(
+                    category.code === 'TRANSPORT'
+                      ? `/policies?category=${encodeURIComponent(category.name)}`
+                      : `/categories/${category.id}/questions`,
+                  )
+                }
                 className="rounded-xl border border-gray-200 bg-white p-6 text-left transition hover:border-blue-300 hover:bg-blue-50"
               >
                 <Icon size={27} className="text-gray-500" />
                 <h2 className="mt-5 font-bold">{category.name}</h2>
                 <p className="mt-1 text-sm text-gray-500">{category.description}</p>
-                <p className="mt-4 text-xs font-semibold text-blue-600">추가 질문 시작</p>
+                <p className="mt-4 text-xs font-semibold text-blue-600">
+                  {category.code === 'TRANSPORT' ? '맞춤 정책 보기' : '추가 질문 시작'}
+                </p>
               </button>
             )
           })}
