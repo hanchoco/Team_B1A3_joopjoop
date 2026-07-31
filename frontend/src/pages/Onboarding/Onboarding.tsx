@@ -95,11 +95,17 @@ export default function Onboarding() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [yearListOpen, setYearListOpen] = useState(false)
+  const [customRegion, setCustomRegion] = useState('')
   const yearListRef = useRef<HTMLDivElement>(null)
   const defaultYearRef = useRef<HTMLButtonElement>(null)
   const question = questions[step]
   const selectedValue = answers[question.key]
   const isLast = step === questions.length - 1
+  const hasValidAnswer =
+    Boolean(selectedValue) &&
+    (question.key !== 'region_code' ||
+      selectedValue !== NO_REGION_CODE ||
+      Boolean(customRegion.trim()))
 
   useEffect(() => {
     if (yearListOpen && yearListRef.current && defaultYearRef.current) {
@@ -118,6 +124,7 @@ export default function Onboarding() {
       const payload: UserProfileUpdate = {
         birth_year: Number(answers.birth_year),
         region_code: answers.region_code === NO_REGION_CODE ? null : answers.region_code,
+        region_sido: answers.region_code === NO_REGION_CODE ? customRegion.trim() : null,
         income_band_code: answers.income_band_code as UserProfileUpdate['income_band_code'],
         employment_status_code:
           answers.employment_status_code as UserProfileUpdate['employment_status_code'],
@@ -136,7 +143,7 @@ export default function Onboarding() {
   }
 
   function next() {
-    if (!selectedValue) return
+    if (!hasValidAnswer) return
     if (isLast) void finish()
     else setStep((current) => current + 1)
   }
@@ -217,25 +224,41 @@ export default function Onboarding() {
             </div>
           </div>
         ) : (
-          <div className="mt-8 grid gap-3 sm:grid-cols-2">
-            {question.options?.map((option) => {
-              const selected = selectedValue === option.value
-              return (
-                <button
-                  type="button"
-                  key={option.value}
-                  onClick={() => saveAnswer(option.value)}
-                  className={`flex min-h-16 items-center justify-between rounded-lg border p-4 text-left font-semibold ${
-                    selected
-                      ? 'border-blue-600 bg-blue-50 text-blue-700'
-                      : 'border-gray-200 bg-white hover:border-blue-300'
-                  }`}
-                >
-                  {option.label}
-                  {selected && <CheckCircle2 size={18} />}
-                </button>
-              )
-            })}
+          <div className="mt-8">
+            <div className="grid gap-3 sm:grid-cols-2">
+              {question.options?.map((option) => {
+                const selected = selectedValue === option.value
+                return (
+                  <button
+                    type="button"
+                    key={option.value}
+                    onClick={() => saveAnswer(option.value)}
+                    className={`flex min-h-16 items-center justify-between rounded-lg border p-4 text-left font-semibold ${
+                      selected
+                        ? 'border-blue-600 bg-blue-50 text-blue-700'
+                        : 'border-gray-200 bg-white hover:border-blue-300'
+                    }`}
+                  >
+                    {option.label}
+                    {selected && <CheckCircle2 size={18} />}
+                  </button>
+                )
+              })}
+            </div>
+            {question.key === 'region_code' && selectedValue === NO_REGION_CODE && (
+              <label className="mt-4 block text-sm font-bold">
+                거주지역 직접 입력
+                <input
+                  autoFocus
+                  type="text"
+                  maxLength={30}
+                  value={customRegion}
+                  onChange={(event) => setCustomRegion(event.target.value)}
+                  placeholder="예: 울산"
+                  className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3.5 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                />
+              </label>
+            )}
           </div>
         )}
 
@@ -254,7 +277,7 @@ export default function Onboarding() {
           </button>
           <button
             type="button"
-            disabled={!selectedValue || submitting}
+            disabled={!hasValidAnswer || submitting}
             onClick={next}
             className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-sm font-bold text-white disabled:opacity-40"
           >
