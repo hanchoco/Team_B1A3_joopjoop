@@ -24,6 +24,49 @@ interface AmountRange {
   representativeValue: number
 }
 
+interface AssetBreakdown {
+  housingDeposit?: number
+  carValue?: number
+  debt?: number
+  savings?: number
+  generalAssets?: number
+}
+
+const ASSET_BREAKDOWN_FIELDS: {
+  key: keyof AssetBreakdown
+  label: string
+  hint: string
+  optional?: boolean
+}[] = [
+  {
+    key: 'housingDeposit',
+    label: '현재 거주 중인 집의 보증금은 얼마인가요?',
+    hint: '보유 자산 중 가장 큰 금액을 적어주세요.',
+  },
+  {
+    key: 'carValue',
+    label: '보유한 자동차가 있다면 현재 차량 가격은 얼마인가요?',
+    hint: '자동차가 없다면 비워두거나 0원을 입력해주세요.',
+    optional: true,
+  },
+  {
+    key: 'savings',
+    label: '예적금이나 주식 등 모아둔 돈은 대략 얼마인가요?',
+    hint: '현재 보유한 금융자산의 대략적인 금액을 적어주세요.',
+  },
+  {
+    key: 'generalAssets',
+    label: '그 밖에 보유한 일반자산은 대략 얼마인가요?',
+    hint: '토지, 상가, 귀금속 등 그 밖의 자산이 없다면 비워두거나 0원을 입력해주세요.',
+    optional: true,
+  },
+  {
+    key: 'debt',
+    label: '학자금 대출이나 전·월세 대출이 있나요?',
+    hint: '현재 남아 있는 대출 원금을 적어주세요. 없다면 0원을 입력해주세요.',
+  },
+]
+
 const AMOUNT_RANGES: Record<string, AmountRange[]> = {
   'housing.deposit_amount': [
     { label: '1천만원 미만', min: 0, max: 10_000_000, representativeValue: 5_000_000 },
@@ -73,9 +116,32 @@ const AMOUNT_RANGES: Record<string, AmountRange[]> = {
       representativeValue: 48_000_000,
     },
   ],
+  'finance.fixed_monthly_expense_amount': [
+    { label: '50만원 미만', min: 0, max: 500_000, representativeValue: 250_000 },
+    { label: '50만~100만원', min: 500_000, max: 1_000_000, representativeValue: 750_000 },
+    {
+      label: '100만~200만원',
+      min: 1_000_000,
+      max: 2_000_000,
+      representativeValue: 1_500_000,
+    },
+    {
+      label: '200만~300만원',
+      min: 2_000_000,
+      max: 3_000_000,
+      representativeValue: 2_500_000,
+    },
+    {
+      label: '300만원 이상',
+      min: 3_000_000,
+      max: null,
+      representativeValue: 3_000_000,
+    },
+  ],
 }
 
 const RESIDENCE_MONTH_OPTIONS = Array.from({ length: 240 }, (_, index) => index + 1)
+const HIDDEN_QUESTION_KEYS = new Set(['finance.total_debt_amount'])
 const QUICK_AMOUNT_OPTIONS = [
   { label: '+10만', value: 100_000 },
   { label: '+100만', value: 1_000_000 },
@@ -125,6 +191,7 @@ export default function CategoryQuestions() {
   const [step, setStep] = useState(0)
   const [answers, setAnswers] = useState<Record<number, unknown>>({})
   const [monthListOpen, setMonthListOpen] = useState(false)
+  const [assetBreakdown, setAssetBreakdown] = useState<AssetBreakdown>({})
 
   useEffect(() => {
     let cancelled = false
@@ -166,6 +233,34 @@ export default function CategoryQuestions() {
       }
       return { ...current, [questionId]: value }
     })
+  }
+
+  function setAssetBreakdownValue(
+    questionId: number,
+    key: keyof AssetBreakdown,
+    value: number | undefined,
+  ) {
+    const nextBreakdown = { ...assetBreakdown, [key]: value }
+    setAssetBreakdown(nextBreakdown)
+
+    const { housingDeposit, carValue, debt, savings, generalAssets } = nextBreakdown
+    const debtQuestion = questions.find((item) => item.question_key === 'finance.total_debt_amount')
+    if (debtQuestion) {
+      setAnswerValue(debtQuestion.id, debt)
+    }
+
+    if (
+      typeof housingDeposit === 'number' &&
+      typeof debt === 'number' &&
+      typeof savings === 'number'
+    ) {
+      setAnswerValue(
+        questionId,
+        Math.max(0, housingDeposit + (carValue ?? 0) + savings + (generalAssets ?? 0) - debt),
+      )
+    } else {
+      setAnswerValue(questionId, undefined)
+    }
   }
 
   async function finish(answerValues: Record<number, unknown> = answers) {
@@ -250,11 +345,13 @@ export default function CategoryQuestions() {
     )
   }
 
-  const question = questions[step]
-  const remaining = questions.length - step - 1
-  const isLast = step === questions.length - 1
+  const visibleQuestions = questions.filter((item) => !HIDDEN_QUESTION_KEYS.has(item.question_key))
+  const question = visibleQuestions[step]
+  const remaining = visibleQuestions.length - step - 1
+  const isLast = step === visibleQuestions.length - 1
   const answered = question.id in answers
   const isHousing = categoryCode === 'HOUSING'
+  const canSkipQuestion = isHousing || categoryCode === 'FINANCE'
   const isHomeOwnershipQuestion = question.question_key === 'housing.home_ownership_status_code'
   const amountRanges = AMOUNT_RANGES[question.question_key]
   const isResidenceMonths = question.question_key === 'housing.residence_months'
@@ -273,12 +370,11 @@ export default function CategoryQuestions() {
         type="button"
         onClick={() => {
           setMonthListOpen(false)
-          if (step > 0) setStep(step - 1)
-          else navigate(previousPath)
+          navigate(previousPath)
         }}
         className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500"
       >
-        <ArrowLeft size={16} /> {step > 0 ? '이전 질문' : previousLabel}
+        <ArrowLeft size={16} /> {previousLabel}
       </button>
 
       <div className="mt-6 rounded-xl border border-blue-200 bg-blue-50 px-5 py-4">
@@ -296,7 +392,7 @@ export default function CategoryQuestions() {
       </div>
 
       <div className="mt-5 flex gap-2">
-        {questions.map((item, index) => (
+        {visibleQuestions.map((item, index) => (
           <span
             key={item.id}
             className={`h-1.5 flex-1 rounded-full ${index <= step ? 'bg-blue-600' : 'bg-gray-200'}`}
@@ -306,7 +402,7 @@ export default function CategoryQuestions() {
 
       <div className="mt-5 rounded-xl border border-gray-200 bg-white p-6 sm:p-10">
         <p className="text-sm font-bold text-blue-600">
-          {categoryName} 추가 질문 · {step + 1}/{questions.length}
+          {categoryName} 추가 질문 · {step + 1}/{visibleQuestions.length}
         </p>
         <h1 className="mt-4 text-2xl font-black sm:text-3xl">{question.label}</h1>
         {question.description && (
@@ -320,6 +416,10 @@ export default function CategoryQuestions() {
             </p>
             <p className="mt-2 text-sm font-bold text-blue-800">
               총자산가액 = (부동산 + 자동차 + 금융자산 + 일반자산) - 부채
+            </p>
+            <p className="mt-2 text-xs leading-5 text-gray-500">
+              여기서는 간편 확인을 위해 주요 항목인 보증금과 모아둔 돈에서 대출금을 빼서 예상 금액을
+              계산해요.
             </p>
           </div>
         )}
@@ -350,6 +450,51 @@ export default function CategoryQuestions() {
                   </button>
                 )
               })}
+            </div>
+          ) : isTotalAssetQuestion ? (
+            <div className="space-y-5">
+              {ASSET_BREAKDOWN_FIELDS.map((field) => {
+                const value = assetBreakdown[field.key]
+                return (
+                  <label key={field.key} className="block text-sm font-semibold">
+                    {field.label}
+                    <span className="mt-1 block text-xs font-normal text-gray-500">
+                      {field.hint}
+                    </span>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      required={!field.optional}
+                      value={formatAmountInput(value)}
+                      onChange={(event) => {
+                        const digits = event.target.value.replace(/\D/g, '')
+                        setAssetBreakdownValue(
+                          question.id,
+                          field.key,
+                          digits === '' ? undefined : Number(digits),
+                        )
+                      }}
+                      placeholder="예: 20,000,000"
+                      className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3.5 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    />
+                    {typeof value === 'number' && (
+                      <span className="mt-1 block text-xs font-bold text-blue-600">
+                        {formatKoreanWon(value)}
+                      </span>
+                    )}
+                  </label>
+                )
+              })}
+              {typeof answers[question.id] === 'number' && (
+                <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+                  <p className="text-xs font-semibold text-emerald-700">
+                    보증금 + 자동차 + 모아둔 돈 + 일반자산 - 대출금
+                  </p>
+                  <p className="mt-1 text-lg font-black text-emerald-800">
+                    예상 총자산가액 {formatKoreanWon(answers[question.id])}
+                  </p>
+                </div>
+              )}
             </div>
           ) : question.answer_type === 'NUMBER' ? (
             <div className="block text-sm font-semibold">
@@ -544,8 +689,19 @@ export default function CategoryQuestions() {
 
         {error && <p className="mt-4 text-sm font-semibold text-rose-600">{error}</p>}
 
-        <div className={`mt-8 grid gap-3 ${isHousing ? 'sm:grid-cols-2' : ''}`}>
-          {isHousing && (
+        <div className={`mt-8 grid gap-3 ${canSkipQuestion ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}>
+          <button
+            type="button"
+            disabled={step === 0 || submitting}
+            onClick={() => {
+              setMonthListOpen(false)
+              setStep((current) => current - 1)
+            }}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 px-5 py-3.5 font-bold text-gray-600 transition hover:border-gray-400 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <ArrowLeft size={18} /> 이전 질문
+          </button>
+          {canSkipQuestion && (
             <button
               type="button"
               disabled={submitting}
