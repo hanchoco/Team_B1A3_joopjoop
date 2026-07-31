@@ -51,7 +51,7 @@ export const HOUSING_TYPE_OPTIONS: { code: HousingTypeCode; label: string }[] = 
   { code: 'OWNED', label: '자가' },
   { code: 'PUBLIC_RENTAL', label: '공공임대' },
   { code: 'DORMITORY', label: '기숙사·시설' },
-  { code: 'WITH_FAMILY', label: '가족과 함께 거주' },
+  { code: 'WITH_FAMILY', label: '가족과 거주(가족 소유)' },
   { code: 'OTHER', label: '기타' },
 ]
 

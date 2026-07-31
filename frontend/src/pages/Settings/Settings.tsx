@@ -1,13 +1,4 @@
-import {
-  Bell,
-  CalendarClock,
-  ChevronRight,
-  KeyRound,
-  Mail,
-  ShieldCheck,
-  UserRound,
-  X,
-} from 'lucide-react'
+import { Bell, CalendarClock, ChevronRight, KeyRound, Mail, ShieldCheck, X } from 'lucide-react'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -15,7 +6,7 @@ import { useApp } from '../../store/useApp'
 
 const menuItems = [
   { id: 'notifications', label: '알림 설정', icon: Bell },
-  { id: 'account', label: '회원 정보', icon: UserRound },
+  { id: 'account', label: '비밀번호 변경', icon: KeyRound },
   { id: 'privacy', label: '개인정보 처리 안내', icon: ShieldCheck },
   { id: 'logout', label: '로그아웃' },
   { id: 'withdraw', label: '회원 탈퇴' },
@@ -173,7 +164,7 @@ export default function Settings() {
               비밀번호 확인
             </h2>
             <p className="mt-2 text-sm leading-6 text-gray-500">
-              회원 정보를 안전하게 보호하기 위해 현재 비밀번호를 입력해주세요.
+              비밀번호를 안전하게 변경하기 위해 현재 비밀번호를 입력해주세요.
             </p>
             <label className="mt-5 block text-sm font-bold">
               현재 비밀번호

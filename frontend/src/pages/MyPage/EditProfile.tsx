@@ -1,7 +1,7 @@
 import { Camera, UserRound, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { getMyProfile } from '../../api/users'
 import { extractErrorMessage } from '../../api/client'
 import {
@@ -31,6 +31,7 @@ const emptyForm = {
 
 export default function EditProfile() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { updateProfile, avatarUrl, updateAvatarUrl } = useApp()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [nextAvatarUrl, setNextAvatarUrl] = useState(avatarUrl)
@@ -78,18 +79,17 @@ export default function EditProfile() {
       const payload: UserProfileUpdate = {
         birth_year: form.birth_year ? Number(form.birth_year) : null,
         region_code: form.region_code === NO_REGION_CODE ? null : form.region_code || null,
-        income_band_code:
-          (form.income_band_code || null) as UserProfileUpdate['income_band_code'],
-        employment_status_code:
-          (form.employment_status_code || null) as UserProfileUpdate['employment_status_code'],
-        household_type_code:
-          (form.household_type_code || null) as UserProfileUpdate['household_type_code'],
-        housing_type_code:
-          (form.housing_type_code || null) as UserProfileUpdate['housing_type_code'],
+        income_band_code: (form.income_band_code || null) as UserProfileUpdate['income_band_code'],
+        employment_status_code: (form.employment_status_code ||
+          null) as UserProfileUpdate['employment_status_code'],
+        household_type_code: (form.household_type_code ||
+          null) as UserProfileUpdate['household_type_code'],
+        housing_type_code: (form.housing_type_code ||
+          null) as UserProfileUpdate['housing_type_code'],
       }
       await updateProfile(payload)
       updateAvatarUrl(nextAvatarUrl)
-      navigate('/mypage')
+      navigate(searchParams.get('from') === 'home' ? '/' : '/mypage')
     } catch (err) {
       setError(extractErrorMessage(err))
     } finally {
@@ -269,9 +269,7 @@ export default function EditProfile() {
             ))}
           </select>
         </label>
-        {error && (
-          <p className="text-sm font-semibold text-rose-600 sm:col-span-2">{error}</p>
-        )}
+        {error && <p className="text-sm font-semibold text-rose-600 sm:col-span-2">{error}</p>}
         <button
           disabled={submitting}
           className="w-full rounded-lg bg-blue-600 py-3.5 font-bold text-white disabled:opacity-60 sm:col-span-2"

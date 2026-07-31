@@ -6,10 +6,13 @@ import { extractErrorMessage } from '../../api/client'
 import BrandLogo from '../../components/common/BrandLogo'
 import { useApp } from '../../store/useApp'
 
+const EXAMPLE_LOGIN_ID = 'nara@example.com'
+
 export default function Login() {
   const navigate = useNavigate()
-  const { accountId, login } = useApp()
-  const [loginId, setLoginId] = useState(accountId)
+  const { login } = useApp()
+  const [loginId, setLoginId] = useState(EXAMPLE_LOGIN_ID)
+  const [isExampleLoginId, setIsExampleLoginId] = useState(true)
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -48,10 +51,23 @@ export default function Login() {
               required
               type="email"
               value={loginId}
-              onChange={(event) => setLoginId(event.target.value)}
+              onFocus={(event) => {
+                if (isExampleLoginId) {
+                  setLoginId('')
+                  setIsExampleLoginId(false)
+                }
+                event.target.setSelectionRange(0, 0)
+              }}
+              onChange={(event) => {
+                setLoginId(event.target.value)
+                setIsExampleLoginId(false)
+                setError('')
+              }}
               autoComplete="username"
               placeholder="이메일 아이디"
-              className="w-full rounded-lg border border-gray-300 py-3.5 pl-11 pr-4 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className={`w-full rounded-lg border border-gray-300 py-3.5 pl-11 pr-4 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 ${
+                isExampleLoginId ? 'text-gray-400' : 'text-gray-950'
+              }`}
             />
           </span>
         </label>
