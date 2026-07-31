@@ -14,7 +14,6 @@ import MyPolicies from '../pages/MyPolicies/MyPolicies'
 import Onboarding from '../pages/Onboarding/Onboarding'
 import PolicyDetail from '../pages/PolicyDetail/PolicyDetail'
 import PolicyList from '../pages/PolicyList/PolicyList'
-import ImpactView from '../pages/Simulator/ImpactView'
 import Simulator from '../pages/Simulator/Simulator'
 import Settings from '../pages/Settings/Settings'
 import AccountSettings from '../pages/Settings/AccountSettings'
@@ -128,8 +127,6 @@ function AppLayout() {
               </RequireAuth>
             }
           />
-          <Route path="/policies/:id/impact" element={<ImpactView />} />
-          <Route path="/impact" element={<ImpactView />} />
           <Route
             path="/policies/:id/prepare"
             element={
