@@ -130,7 +130,7 @@ export default function CategoryQuestions() {
         </button>
         <div className="mt-6 rounded-xl border border-gray-200 bg-white p-10 text-center">
           <p className="text-lg font-bold">
-            {categoryName || '이 카테고리'}는 추가로 확인할 게 없어요
+            {categoryName || '이 카테고리'}은(는) 추가로 확인할 게 없어요
           </p>
           <p className="mt-2 text-sm text-gray-500">
             기본 정보만으로 바로 맞춤 정책을 확인할 수 있어요.
