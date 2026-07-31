@@ -123,7 +123,7 @@ def _path_inside_review_dir(path: Path, review_dir: Path) -> Path:
     return resolved
 
 
-def _load_json_file(path: Path) -> Mapping[str, object]:
+def load_json_file(path: Path) -> Mapping[str, object]:
     if not path.is_file():
         raise SeedDraftError(f"review draft not found: {path}")
     if path.stat().st_size > _MAX_DRAFT_BYTES:
@@ -228,15 +228,24 @@ def _validate_category_codes(raw_bundle: Mapping[str, object]) -> list[str]:
     return codes
 
 
-def _validated_bundles(
+def validated_bundles(
     payload: Mapping[str, object],
+    *,
+    expected_status: str = "pending_review",
 ) -> list[dict[str, object]]:
+    """Validate a draft batch and return its normalized policy bundles.
+
+    ``expected_status`` defaults to ``"pending_review"`` for the CLI approval
+    flow. ``app.services.policy_seed_loader`` passes ``"approved"`` to load
+    drafts that already finished human review and were committed to git.
+    """
+
     if payload.get("schema_version") != 1:
         raise SeedDraftError("unsupported seed draft schema_version")
     if payload.get("kind") != "policy_seed_batch":
         raise SeedDraftError("draft kind must be policy_seed_batch")
-    if payload.get("status") != "pending_review":
-        raise SeedDraftError("only pending_review drafts can be approved")
+    if payload.get("status") != expected_status:
+        raise SeedDraftError(f"draft status must be {expected_status!r}")
     raw_policies = payload.get("policies")
     if (
         not isinstance(raw_policies, Sequence)
@@ -268,7 +277,7 @@ def _validated_bundles(
     return bundles
 
 
-def _database_ready_bundle(bundle: Mapping[str, object]) -> dict[str, object]:
+def database_ready_bundle(bundle: Mapping[str, object]) -> dict[str, object]:
     ready = dict(bundle)
     for field in _POLICY_DATE_FIELDS:
         value = ready.get(field)
@@ -303,6 +312,34 @@ def _default_persistence_dependencies() -> tuple[SessionFactory, UpsertFunction]
     )
 
 
+def _known_external_ids(source: str) -> set[str]:
+    """Look up already-persisted external_ids so collection can skip them.
+
+    This is a read-only query (no writes), used only so repeated collection
+    runs page past prior results instead of returning the same first page.
+    """
+
+    try:
+        session_module = importlib.import_module("app.db.session")
+        crud_module = importlib.import_module("app.crud.policies")
+    except ImportError as exc:
+        raise RuntimeError("collection requires app.db.session and app.crud.policies") from exc
+    session_factory = getattr(session_module, "SessionLocal", None)
+    list_external_ids = getattr(crud_module, "list_external_ids", None)
+    if not callable(session_factory):
+        raise RuntimeError("app.db.session.SessionLocal is not callable")
+    if not callable(list_external_ids):
+        raise RuntimeError("app.crud.policies.list_external_ids is not callable")
+
+    session = session_factory()
+    try:
+        return cast(set[str], list_external_ids(session, source=source))
+    finally:
+        close_method = getattr(session, "close", None)
+        if callable(close_method):
+            close_method()
+
+
 async def _call_upsert(
     upsert_function: UpsertFunction,
     session: object,
@@ -327,8 +364,8 @@ async def approve_seed_draft(
         Path(draft_path),
         resolved_review_dir,
     )
-    payload = _load_json_file(approved_path)
-    bundles = _validated_bundles(payload)
+    payload = load_json_file(approved_path)
+    bundles = validated_bundles(payload)
 
     if session_factory is None or upsert_function is None:
         default_factory, default_upsert = _default_persistence_dependencies()
@@ -341,7 +378,7 @@ async def approve_seed_draft(
             await _call_upsert(
                 upsert_function,
                 session,
-                _database_ready_bundle(bundle),
+                database_ready_bundle(bundle),
             )
     finally:
         close_method = getattr(session, "close", None)
@@ -364,25 +401,43 @@ async def create_seed_draft(
     filters: Mapping[str, str] | None = None,
     youth_client: YouthPolicyClient | None = None,
     solar_client: SolarClient | None = None,
+    known_external_ids: set[str] | None = None,
 ) -> Path:
-    """Run collect -> extract -> checklist and write a pending review batch."""
+    """Run collect -> extract -> checklist and write a pending review batch.
+
+    Policies already persisted (matched by source + external_id) are skipped
+    before any AI call is made, so repeated runs page past what was already
+    seeded instead of re-fetching the same first page every time. Pass
+    ``known_external_ids`` explicitly (e.g. an empty set) to opt out, such as
+    in tests that never touch a real database.
+    """
 
     owns_youth_client = youth_client is None
     owns_solar_client = solar_client is None
     policy_client = youth_client or YouthPolicyClient()
     ai_client = solar_client or SolarClient()
+    if known_external_ids is None:
+        known_external_ids = _known_external_ids("ONTONG_YOUTH")
     try:
         policies = await policy_client.collect(
             page_size=page_size,
             max_pages=max_pages,
             limit=limit,
             filters=filters,
+            exclude_external_ids=known_external_ids,
         )
         if not policies:
-            raise SeedDraftError("the youth policy API returned no policies")
+            raise SeedDraftError(
+                "the youth policy API returned no new policies "
+                "(everything matched was already seeded, or there were no results)"
+            )
+        total = len(policies)
+        print(f"수집 완료: 새 정책 {total}건 발견, AI 추출 시작", flush=True)
         bundles: list[dict[str, object]] = []
-        for policy in policies:
+        for index, policy in enumerate(policies, start=1):
             policy_payload = policy.to_dict()
+            title = policy_payload.get("title") or policy_payload.get("external_id") or "?"
+            print(f"[{index}/{total}] 처리 중: {title}", flush=True)
             raw = policy_payload.get("raw_payload") or policy_payload
             conditions = await extract_conditions(
                 policy_payload,
@@ -405,6 +460,11 @@ async def create_seed_draft(
                     "benefits": [benefit.to_dict() for benefit in benefits],
                     "category_codes": category_codes,
                 }
+            )
+            print(
+                f"[{index}/{total}] 완료: {title} "
+                f"(조건 {len(conditions)}개, 서류 {len(documents)}개, 혜택 {len(benefits)}개)",
+                flush=True,
             )
     finally:
         if owns_youth_client:

@@ -109,6 +109,8 @@ class PolicyCondition(TimestampMixin, Base):
     )
     description: Mapped[str] = mapped_column(String(500), nullable=False)
     failure_message: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    # 불충족 시 failure_message 대신 우선 사용할 예외조항 요약. 없으면 NULL.
+    exception_note: Mapped[str | None] = mapped_column(String(500), nullable=True)
     sort_order: Mapped[int] = mapped_column(
         SmallInteger,
         nullable=False,

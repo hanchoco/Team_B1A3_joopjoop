@@ -87,6 +87,16 @@ operator는 다음 중 하나: EQ, NE, IN, NOT_IN, GT, GTE, LT, LTE, BETWEEN,
 percent_threshold는 "중위소득 OO% 이하"에서 OO 숫자만 뽑으세요. 여러 기준(청년독립가구/원가구)이
 있으면 더 엄격한(작은) 쪽 숫자를 쓰고 summary에 전체 내용을 설명하세요.
 
+[조건별 예외조항 - condition_exceptions]
+나이/지역을 포함해 이미 정해진 조건 하나가 원문에서 예외적으로 완화·연장되는 경우
+(예: "군필자는 만 32세까지 인정", "타 지역 거주자도 재직지가 관내면 신청 가능")를
+찾아 리스트로 뽑으세요. condition_key는 위 레지스트리 값뿐 아니라 profile.age,
+profile.region_code도 쓸 수 있습니다(이 둘은 [조건 추출 - conditions]에서는 못 만들지만
+예외조항의 대상은 될 수 있습니다).
+[{"condition_key": "profile.age", "summary": "화면에 보여줄 예외조항 한 문장",
+  "evidence": "원문 근거 문장"}, ...]
+원문에 명시적 근거가 없으면 절대 만들지 마세요 - 애매하면 빈 배열([])로 두세요.
+
 [참여제한/중복수혜 안내 - participation_notes]
 condition_key 레지스트리에 안 맞아서 조건으로 못 만든 내용(중복수혜 제한, 친족 임차 제외,
 과거 수혜 이력 등)을 리스트로 뽑으세요. 한 정책에 여러 개 있으면 각각 따로 담으세요.
@@ -97,6 +107,7 @@ condition_key 레지스트리에 안 맞아서 조건으로 못 만든 내용(�
 {
   "conditions": [...],
   "income_note": {...},
+  "condition_exceptions": [...],
   "participation_notes": [...]
 }
 """

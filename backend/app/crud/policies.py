@@ -155,6 +155,20 @@ def list_policies(
     return list(db.scalars(statement).all()), total
 
 
+def list_external_ids(db: Session, *, source: str) -> set[str]:
+    """Return the external_id of every persisted policy for one source.
+
+    Used by the seed collection script to skip policies already stored so
+    repeated runs page past prior results instead of re-fetching them.
+    """
+
+    statement = select(Policy.external_id).where(
+        Policy.source == source,
+        Policy.external_id.is_not(None),
+    )
+    return {external_id for external_id in db.scalars(statement).all() if external_id}
+
+
 def list_policies_by_ids(db: Session, policy_ids: Sequence[int]) -> list[Policy]:
     """Return policies while preserving the input ordering."""
 

@@ -141,14 +141,17 @@ def _application_dates(
         "rqutPrdCn",
     )
     is_ongoing = any(keyword in period_text for keyword in ("상시", "수시", "예산 소진"))
+    # aplyYmd/rqutYmd(신청·모집기간)가 실제 마감 기준이다. bizPrdYmd(사업 운영기간)는
+    # 신청기간이 아예 없는 정책에서만 최후 대체값으로 쓴다 - 운영기간을 신청기간보다
+    # 먼저 채택하면 신청 마감/알림 스케줄이 실제 마감일과 어긋난다.
     start = _parse_date_text(
         _first_value(
             record,
             "applicationStartDate",
             "application_start_date",
             "aplyBgngYmd",
-            "bizPrdBgngYmd",
             "rqutBgngYmd",
+            "bizPrdBgngYmd",
         )
     )
     end = _parse_date_text(
@@ -157,8 +160,8 @@ def _application_dates(
             "applicationEndDate",
             "application_end_date",
             "aplyEndYmd",
-            "bizPrdEndYmd",
             "rqutEndYmd",
+            "bizPrdEndYmd",
         )
     )
     period_matches = list(_DATE_PATTERN.finditer(period_text))
@@ -554,14 +557,23 @@ class YouthPolicyClient:
         max_pages: int = 100,
         limit: int | None = None,
         filters: Mapping[str, str] | None = None,
+        exclude_external_ids: Sequence[str] | None = None,
     ) -> list[NormalizedPolicy]:
-        """Collect and normalize policy pages with explicit safety bounds."""
+        """Collect and normalize policy pages with explicit safety bounds.
+
+        ``exclude_external_ids`` skips records already known to the caller
+        (e.g. policies already persisted), so a repeated collection run
+        pages past prior results instead of returning the same first page
+        every time.
+        """
 
         if max_pages < 1:
             raise ValueError("max_pages must be positive")
         if limit is not None and limit < 1:
             raise ValueError("limit must be positive")
+        excluded = set(exclude_external_ids) if exclude_external_ids else set()
         collected: list[NormalizedPolicy] = []
+        records_seen = 0
         observed_at = datetime.now(timezone.utc)
         for page_index in range(1, max_pages + 1):
             records, total = await self.fetch_page(
@@ -569,13 +581,17 @@ class YouthPolicyClient:
                 page_size=page_size,
                 filters=filters,
             )
+            records_seen += len(records)
             for record in records:
-                collected.append(normalize_policy(record, fetched_at=observed_at))
+                normalized = normalize_policy(record, fetched_at=observed_at)
+                if normalized.external_id in excluded:
+                    continue
+                collected.append(normalized)
                 if limit is not None and len(collected) >= limit:
                     return collected
             if not records or len(records) < page_size:
                 break
-            if total is not None and len(collected) >= total:
+            if total is not None and records_seen >= total:
                 break
         return collected
 

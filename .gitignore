@@ -10,6 +10,5 @@ __pycache__/
 .mypy_cache/
 
 *.db
-review_drafts/
 
 .venv/

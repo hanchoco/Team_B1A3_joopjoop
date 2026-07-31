@@ -35,6 +35,7 @@ class ExtractedCondition:
     check_mode: str = "MANUAL"
     description: str = None
     failure_message: str = None
+    exception_note: str = None
     sort_order: int = 0
 
     def to_dict(self) -> dict:
@@ -75,6 +76,12 @@ ALLOWED_CONDITION_KEYS = {
 }
 CHECKBOX_ONLY_CONDITION_KEYS = {"participation_limit"}
 
+# profile.age/profile.region_code는 extract_conditions()의 하드코딩 경로(나이/지역 숫자
+# 필드 직접 매핑)에서만 만들어져야 한다. AI가 이 키로 조건을 제출하면 - 프롬프트가
+# "지역/나이는 만들지 마세요"라고 지시해도 가끔 무시하고 만들어내는데, 실제 지역코드가
+# 아닌 값을 지어내 넣는 경우가 있었다(예: "BUPYEONG") - 무조건 드롭한다.
+AI_FORBIDDEN_CONDITION_KEYS = {"profile.age", "profile.region_code"}
+
 CODE_REGISTRY_VALUES = {
     "housing_type_code": {"OWNED", "JEONSE", "MONTHLY_RENT", "PUBLIC_RENTAL", "DORMITORY", "WITH_FAMILY", "OTHER"},
     "household_type_code": {"SINGLE", "COUPLE", "WITH_PARENTS", "SINGLE_PARENT", "MULTI_PERSON", "OTHER"},
@@ -92,6 +99,15 @@ CODE_REGISTRY_VALUES = {
 NO_RESTRICTION_PHRASES = ["제한 없음", "모든", "무관", "관계없이", "누구나", "가능(모든"]
 ENUM_COVERAGE_DROP_THRESHOLD = 0.8
 
+# operator가 MANUAL_CHECK가 아니면 matcher.evaluate_rule()이 자동 판정할 수 있으므로
+# AUTO로 저장한다. condition_key는 이미 validate_conditions()에서 ALLOWED_CONDITION_KEYS로
+# 걸러졌고, ALLOWED_CONDITION_KEYS는 전부 policy_engine.rules의 자동판정 레지스트리에 등록돼
+# 있다. 값 파싱이 잘못돼도 matcher.evaluate_condition()이 NEEDS_REVIEW로 안전하게 낮춘다.
+AUTO_EVALUABLE_OPERATORS = {
+    "EQ", "NE", "IN", "NOT_IN", "GT", "GTE", "LT", "LTE", "BETWEEN",
+    "CONTAINS_ANY", "CONTAINS_ALL", "EXISTS",
+}
+
 TOPIC_KEYWORDS = {
     "employment.insurance_enrolled": ["보험"],
 }
@@ -106,6 +122,60 @@ def categorize_policy(lclsf_nm: str, mclsf_nm: str) -> list:
 def income_threshold_to_bands(percent: float) -> list:
     bands = [code for code in INCOME_BAND_ORDER if percent <= (INCOME_BAND_UPPER_BOUND[code] or 9999)]
     return bands or ["UNKNOWN"]
+
+
+def _parse_positive_amount(value: object) -> int | None:
+    """Parse earnMinAmt/earnMaxAmt into a positive int, or None if absent/zero.
+
+    ``0``/``"0"``/blank means "해당 없음" in this API, not a real zero cap.
+    """
+    try:
+        amount = int(str(value).strip())
+    except (TypeError, ValueError):
+        return None
+    return amount if amount > 0 else None
+
+
+def _format_manwon(amount: int) -> str:
+    return f"{amount:,}만원"
+
+
+def structured_income_condition(raw: dict) -> dict | None:
+    """Map raw 온통청년 income fields (earnMinAmt/earnMaxAmt) directly - no AI.
+
+    earnEtcCn(자유서술)이 비어 있어도 이 필드들엔 실제 소득 상한/하한이 숫자로
+    들어있는 경우가 있다(예: 자산형성지원류 정책). check_mode는 AUTO로 두지 않는다 -
+    금액 단위(만원 가정)를 API 문서로 확정할 수 없어서, 사람이 승인 전에 확인하도록
+    기존 income_note 조건과 동일하게 MANUAL로 둔다.
+    """
+    min_amt = _parse_positive_amount(raw.get("earnMinAmt"))
+    max_amt = _parse_positive_amount(raw.get("earnMaxAmt"))
+    if min_amt is None and max_amt is None:
+        return None
+
+    if min_amt is not None and max_amt is not None:
+        operator = "BETWEEN"
+        expected_value_json = {"min": min_amt * 10000, "max": max_amt * 10000}
+        description = f"연 소득 {_format_manwon(min_amt)} ~ {_format_manwon(max_amt)} (단위 확인 필요)"
+    elif max_amt is not None:
+        operator = "LTE"
+        expected_value_json = {"value": max_amt * 10000}
+        description = f"연 소득 {_format_manwon(max_amt)} 이하 (단위 확인 필요)"
+    else:
+        operator = "GTE"
+        expected_value_json = {"value": min_amt * 10000}
+        description = f"연 소득 {_format_manwon(min_amt)} 이상 (단위 확인 필요)"
+
+    return {
+        "condition_key": "finance.annual_income_amount",
+        "operator": operator,
+        "expected_value_json": expected_value_json,
+        "condition_group_no": 1,
+        "is_required": False,
+        "check_mode": "MANUAL",
+        "description": description,
+        "failure_message": "소득 조건은 정확한 확인이 필요합니다.",
+    }
 
 
 def _normalize_expected_value(operator: str, expected_value):
@@ -137,6 +207,12 @@ def validate_conditions(raw_conditions: list) -> tuple:
         if key not in ALLOWED_CONDITION_KEYS:
             dropped += [{**c, "_drop_reason": f"허용되지 않은 condition_key: {key}"} for c in items]
             continue
+        if key in AI_FORBIDDEN_CONDITION_KEYS:
+            dropped += [
+                {**c, "_drop_reason": f"{key}는 하드코딩 경로 전용 - AI 제출은 항상 거부"}
+                for c in items
+            ]
+            continue
 
         suffix = key.split(".")[-1]
         registry = CODE_REGISTRY_VALUES.get(suffix)
@@ -164,6 +240,21 @@ def validate_conditions(raw_conditions: list) -> tuple:
             cleaned.append(c)
 
     return cleaned, dropped
+
+
+def _extract_exception_notes(ai_result: dict) -> dict:
+    """condition_exceptions를 {condition_key: 예외조항 요약} 딕셔너리로 정리.
+
+    허용되지 않은 condition_key나 빈 summary는 조용히 무시한다 (validate_conditions()와
+    같은 보수적 원칙 - 애매하면 반영하지 않는다).
+    """
+    notes = {}
+    for item in ai_result.get("condition_exceptions", []) or []:
+        key = item.get("condition_key")
+        summary = item.get("summary")
+        if key in ALLOWED_CONDITION_KEYS and isinstance(summary, str) and summary.strip():
+            notes[key] = summary.strip()
+    return notes
 
 
 # ============================================================
@@ -233,16 +324,23 @@ async def extract_conditions(policy_payload: dict, *, client: SolarClient) -> li
             "failure_message": "소득 조건은 정확한 확인이 필요합니다.",
         })
 
+    # 소득 상한/하한 - earnMinAmt/earnMaxAmt 숫자 필드 직접 매핑 (AI 없음, MANUAL)
+    # earnEtcCn(자유서술)이 비어 있어도 이 필드들엔 실제 값이 들어있는 경우가 있다.
+    structured_income = structured_income_condition(raw)
+    if structured_income:
+        conditions.append(structured_income)
+
     # AI가 자유텍스트에서 뽑은 조건들 - 검증 통과한 것만
     valid_ai_conditions, dropped_ai_conditions = validate_conditions(ai_result.get("conditions", []))
     for c in valid_ai_conditions:
+        operator = c.get("operator", "MANUAL_CHECK")
         conditions.append({
             "condition_key": c.get("condition_key"),
-            "operator": c.get("operator", "MANUAL_CHECK"),
+            "operator": operator,
             "expected_value_json": c.get("expected_value"),
             "condition_group_no": 1,
             "is_required": c.get("is_required", False),
-            "check_mode": "MANUAL",
+            "check_mode": "AUTO" if operator in AUTO_EVALUABLE_OPERATORS else "MANUAL",
             "description": c.get("description"),
             "failure_message": c.get("failure_message"),
         })
@@ -259,6 +357,13 @@ async def extract_conditions(policy_payload: dict, *, client: SolarClient) -> li
             "description": note.get("summary"),
             "failure_message": None,
         })
+
+    # 조건별 예외조항 - 나이/지역/소득/AI 조건 전부 condition_key로 일괄 매칭
+    exception_notes = _extract_exception_notes(ai_result)
+    for c in conditions:
+        note = exception_notes.get(c.get("condition_key"))
+        if note:
+            c["exception_note"] = note
 
     for i, c in enumerate(conditions):
         c["sort_order"] = i + 1

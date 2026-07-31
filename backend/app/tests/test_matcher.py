@@ -221,9 +221,70 @@ def test_unknown_condition_key_needs_review() -> None:
     assert result.status is ConditionStatus.NEEDS_REVIEW
 
 
+def test_manual_mode_unregistered_key_shows_manual_reason_not_unregistered_key() -> None:
+    """participation_limit is a deliberate sentinel condition_key that is never
+    registered for auto-evaluation (it's an informational notice, not a real
+    matching field). It must read as a manual-review item, not as if the data
+    were broken."""
+
+    result = evaluate_condition(
+        _condition(
+            key="participation_limit",
+            operator="MANUAL_CHECK",
+            expected=None,
+            check_mode="MANUAL",
+        ),
+        {"profile": {}},
+    )
+
+    assert result.status is ConditionStatus.NEEDS_REVIEW
+    assert result.reason == "수동 확인이 필요한 조건입니다."
+
+
+def test_unknown_key_in_auto_mode_still_flagged_as_unregistered() -> None:
+    """A genuinely mistyped/hallucinated key with check_mode AUTO should still
+    surface the unregistered-key reason - only MANUAL/DOCUMENT skip it."""
+
+    result = evaluate_condition(
+        _condition(key="profile.made_up_key", check_mode="AUTO"),
+        {"profile": {"made_up_key": 1}},
+    )
+
+    assert result.status is ConditionStatus.NEEDS_REVIEW
+    assert "등록되지 않은" in result.reason
+
+
 def test_failed_condition_is_unsatisfied_and_uses_failure_message() -> None:
     result = evaluate_condition(
         _condition(expected=2, failure_message="가구원 수 기준을 충족하지 않습니다."),
+        {"profile": {"household_size": 1}},
+    )
+
+    assert result.status is ConditionStatus.UNSATISFIED
+    assert result.reason == "가구원 수 기준을 충족하지 않습니다."
+
+
+def test_failed_condition_with_exception_note_needs_review_instead() -> None:
+    result = evaluate_condition(
+        _condition(
+            expected=2,
+            failure_message="가구원 수 기준을 충족하지 않습니다.",
+            exception_note="1인 가구도 예외적으로 인정됩니다.",
+        ),
+        {"profile": {"household_size": 1}},
+    )
+
+    assert result.status is ConditionStatus.NEEDS_REVIEW
+    assert result.reason == "1인 가구도 예외적으로 인정됩니다."
+
+
+def test_failed_condition_without_exception_note_keeps_original_behaviour() -> None:
+    result = evaluate_condition(
+        _condition(
+            expected=2,
+            failure_message="가구원 수 기준을 충족하지 않습니다.",
+            exception_note=None,
+        ),
         {"profile": {"household_size": 1}},
     )
 
@@ -291,6 +352,89 @@ def test_alternate_eligibility_paths_use_or_across_groups() -> None:
     result = evaluate_policy(conditions, context)
 
     assert result.status is EligibilityStatus.ELIGIBLE
+
+
+def test_optional_needs_review_conditions_push_card_to_needs_review() -> None:
+    """Regression: is_required=False conditions (income, participation_limit,
+    most AI-extracted conditions) used to be skipped entirely from card-level
+    aggregation, so a policy with age/region satisfied but five unresolved
+    optional conditions still showed as ELIGIBLE. They must now count."""
+
+    conditions = [
+        _condition(key="profile.age", operator="BETWEEN", expected={"min": 19, "max": 34}),
+        _condition(key="profile.region_code", operator="IN", expected={"values": ["11"]}),
+        _condition(
+            key="profile.income_band_code",
+            operator="IN",
+            expected={"values": ["BELOW_50"]},
+            is_required=False,
+            check_mode="MANUAL",
+        ),
+        _condition(
+            key="participation_limit",
+            operator="MANUAL_CHECK",
+            expected=None,
+            is_required=False,
+            check_mode="MANUAL",
+        ),
+    ]
+    context = {"profile": {"age": 25, "region_code": "11"}}
+
+    result = evaluate_policy(conditions, context)
+
+    assert result.status is EligibilityStatus.NEEDS_REVIEW
+
+
+def test_optional_unsatisfied_condition_without_exception_makes_card_ineligible() -> None:
+    """An optional (is_required=False) condition that genuinely fails - and
+    has no exception_note - must block the card, not just be ignored."""
+
+    conditions = [
+        _condition(key="profile.age", operator="BETWEEN", expected={"min": 19, "max": 34}),
+        _condition(key="profile.region_code", operator="IN", expected={"values": ["11"]}),
+        _condition(
+            key="housing.is_household_head",
+            operator="EQ",
+            expected=True,
+            is_required=False,
+            failure_message="세대주만 신청할 수 있습니다.",
+        ),
+    ]
+    context = {
+        "profile": {"age": 25, "region_code": "11"},
+        "housing": {"is_household_head": False},
+    }
+
+    result = evaluate_policy(conditions, context)
+
+    assert result.status is EligibilityStatus.INELIGIBLE
+
+
+def test_optional_unsatisfied_condition_with_exception_note_stays_needs_review() -> None:
+    """The same failing optional condition, but with an exception_note, must
+    NOT drag the card down to INELIGIBLE - evaluate_condition() already
+    downgraded it to NEEDS_REVIEW, and the card should follow that."""
+
+    conditions = [
+        _condition(key="profile.age", operator="BETWEEN", expected={"min": 19, "max": 34}),
+        _condition(key="profile.region_code", operator="IN", expected={"values": ["11"]}),
+        _condition(
+            key="housing.is_household_head",
+            operator="EQ",
+            expected=True,
+            is_required=False,
+            failure_message="세대주만 신청할 수 있습니다.",
+            exception_note="예외적으로 인정됩니다.",
+        ),
+    ]
+    context = {
+        "profile": {"age": 25, "region_code": "11"},
+        "housing": {"is_household_head": False},
+    }
+
+    result = evaluate_policy(conditions, context)
+
+    assert result.status is EligibilityStatus.NEEDS_REVIEW
 
 
 def test_finance_monthly_income_condition_matches_category_answer() -> None:

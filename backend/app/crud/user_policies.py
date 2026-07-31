@@ -343,7 +343,13 @@ def list_user_policy_states(
     if tab == "bookmarked":
         statement = statement.where(UserPolicyState.is_bookmarked.is_(True))
     elif tab == "preparing":
-        statement = statement.where(UserPolicyState.preparation_status == "IN_PROGRESS")
+        # 체크리스트가 100% 채워지면 preparation_status가 COMPLETED로 바뀌지만,
+        # "신청 완료" 버튼(프론트 미구현)을 실제로 누르기 전까지는 준비 중 탭에
+        # 계속 남아있어야 한다. NOT_STARTED만 제외.
+        statement = statement.where(
+            UserPolicyState.preparation_status != "NOT_STARTED",
+            UserPolicyState.application_status == "NOT_APPLIED",
+        )
     elif tab == "applied":
         statement = statement.where(UserPolicyState.application_status != "NOT_APPLIED")
 
@@ -375,7 +381,8 @@ def list_upcoming_deadline_states(
         .where(
             or_(
                 UserPolicyState.is_bookmarked.is_(True),
-                UserPolicyState.preparation_status == "IN_PROGRESS",
+                (UserPolicyState.preparation_status != "NOT_STARTED")
+                & (UserPolicyState.application_status == "NOT_APPLIED"),
             )
         )
         .where(Policy.is_active.is_(True))

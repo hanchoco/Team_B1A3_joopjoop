@@ -244,7 +244,13 @@ export default function Dashboard() {
                 </>
               )}
               <button
-                onClick={() => navigate('/mypage/policies?tab=interest&sort=deadline')}
+                onClick={() =>
+                  navigate(
+                    upcomingPolicy
+                      ? `/policies/${upcomingPolicy.policy_id}`
+                      : '/mypage/policies?tab=interest&sort=deadline',
+                  )
+                }
                 className="mt-4 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-bold transition hover:bg-slate-50"
               >
                 자세히 보기

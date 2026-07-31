@@ -26,6 +26,9 @@ function daysUntil(dateString: string | null): number | null {
   return Math.ceil(diffMs / (24 * 60 * 60 * 1000))
 }
 
+// 홈 대시보드의 dashboard-summary 기본 upcoming_within_days(30)와 동일한 기준
+const URGENT_WINDOW_DAYS = 30
+
 export default function MyPolicies() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -54,11 +57,16 @@ export default function MyPolicies() {
             for (const item of [...bookmarked, ...preparing]) {
               deduped.set(item.state_id, item)
             }
-            return [...deduped.values()].sort((a, b) => {
-              const left = daysUntil(a.application_end_date) ?? Infinity
-              const right = daysUntil(b.application_end_date) ?? Infinity
-              return left - right
-            })
+            return [...deduped.values()]
+              .filter((item) => {
+                const remaining = daysUntil(item.application_end_date)
+                return remaining !== null && remaining >= 0 && remaining <= URGENT_WINDOW_DAYS
+              })
+              .sort((a, b) => {
+                const left = daysUntil(a.application_end_date) ?? Infinity
+                const right = daysUntil(b.application_end_date) ?? Infinity
+                return left - right
+              })
           })
         }
         return listMyPolicies({
