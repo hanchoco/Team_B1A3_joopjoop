@@ -10,7 +10,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { listCategories } from '../../api/categories'
+import { listCategories, listCategoryQuestions } from '../../api/categories'
 import { extractErrorMessage } from '../../api/client'
 import type { CategoryResponse } from '../../types/api'
 
@@ -28,6 +28,7 @@ const ICON_BY_CODE: Record<string, typeof House> = {
 export default function CategorySelect() {
   const navigate = useNavigate()
   const [categories, setCategories] = useState<CategoryResponse[]>([])
+  const [categoriesWithQuestions, setCategoriesWithQuestions] = useState<Set<number>>(new Set())
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -38,11 +39,23 @@ export default function CategorySelect() {
         if (cancelled) return undefined
         setLoading(true)
         setError('')
-        return listCategories()
+        return listCategories().then(async (categoryItems) => {
+          const questionLists = await Promise.all(
+            categoryItems.map((category) => listCategoryQuestions(category.id)),
+          )
+          return { categoryItems, questionLists }
+        })
       })
-      .then((data) => {
-        if (cancelled || !data) return
-        setCategories(data)
+      .then((result) => {
+        if (cancelled || !result) return
+        setCategories(result.categoryItems)
+        setCategoriesWithQuestions(
+          new Set(
+            result.categoryItems.flatMap((category, index) =>
+              result.questionLists[index].length > 0 ? [category.id] : [],
+            ),
+          ),
+        )
       })
       .catch((err: unknown) => {
         if (!cancelled) setError(extractErrorMessage(err))
@@ -73,14 +86,15 @@ export default function CategorySelect() {
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {categories.map((category) => {
             const Icon = ICON_BY_CODE[category.code] ?? MoreHorizontal
+            const hasAdditionalQuestions = categoriesWithQuestions.has(category.id)
             return (
               <button
                 key={category.id}
                 onClick={() =>
                   navigate(
-                    category.code === 'TRANSPORT'
-                      ? `/policies?category=${encodeURIComponent(category.name)}`
-                      : `/categories/${category.id}/questions`,
+                    hasAdditionalQuestions
+                      ? `/categories/${category.id}/questions`
+                      : `/policies?category=${encodeURIComponent(category.name)}`,
                   )
                 }
                 className="rounded-xl border border-gray-200 bg-white p-6 text-left transition hover:border-blue-300 hover:bg-blue-50"
@@ -89,7 +103,7 @@ export default function CategorySelect() {
                 <h2 className="mt-5 font-bold">{category.name}</h2>
                 <p className="mt-1 text-sm text-gray-500">{category.description}</p>
                 <p className="mt-4 text-xs font-semibold text-blue-600">
-                  {category.code === 'TRANSPORT' ? '맞춤 정책 보기' : '추가 질문 시작'}
+                  {hasAdditionalQuestions ? '추가 질문 시작' : '바로 확인하기'}
                 </p>
               </button>
             )
