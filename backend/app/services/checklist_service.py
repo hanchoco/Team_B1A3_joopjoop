@@ -185,14 +185,23 @@ def list_my_policies(
     user_id: int,
     tab: str | None,
     sort: str,
+    upcoming_within_days: int | None = None,
 ) -> list[UserPolicyItem]:
     """Return My Page policy rows with cached match metadata."""
 
-    states = state_crud.list_user_policy_states(
-        db,
-        user_id=user_id,
-        tab=tab,
-        sort=sort,
+    states = (
+        state_crud.list_upcoming_deadline_states(
+            db,
+            user_id=user_id,
+            within_days=upcoming_within_days,
+        )
+        if upcoming_within_days is not None
+        else state_crud.list_user_policy_states(
+            db,
+            user_id=user_id,
+            tab=tab,
+            sort=sort,
+        )
     )
     policies = {
         policy.id: policy

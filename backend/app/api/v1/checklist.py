@@ -150,6 +150,7 @@ def list_my_policies(
         default="latest",
         pattern="^(recommendation|latest|deadline)$",
     ),
+    upcoming_within_days: int | None = Query(default=None, ge=1, le=365),
 ) -> list[UserPolicyItemResponse]:
     """List interest, preparation, and application states."""
 
@@ -160,6 +161,7 @@ def list_my_policies(
             user_id=current_user.id,
             tab=tab,
             sort=sort,
+            upcoming_within_days=upcoming_within_days,
         )
     ]
 

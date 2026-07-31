@@ -83,6 +83,7 @@ export async function recordPolicyApplication(
 export async function listMyPolicies(params?: {
   tab?: MyPoliciesTab
   sort?: 'recommendation' | 'latest' | 'deadline'
+  upcoming_within_days?: number
 }): Promise<UserPolicyItemResponse[]> {
   const response = await apiClient.get<UserPolicyItemResponse[]>('/users/me/policies', {
     params,
