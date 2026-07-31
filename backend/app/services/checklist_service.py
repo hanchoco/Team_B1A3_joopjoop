@@ -35,6 +35,7 @@ class UserPolicyItem:
     state: UserPolicyState
     policy: object
     match: UserPolicyMatch | None
+    category_code: str | None
 
 
 def start_checklist(
@@ -187,19 +188,24 @@ def list_my_policies(
             [state.policy_id for state in states],
         )
     }
-    return [
-        UserPolicyItem(
-            state=state,
-            policy=policies[state.policy_id],
-            match=state_crud.get_policy_match(
-                db,
-                user_id=user_id,
-                policy_id=state.policy_id,
-            ),
+    items: list[UserPolicyItem] = []
+    for state in states:
+        if state.policy_id not in policies:
+            continue
+        categories = policy_crud.list_policy_categories(db, state.policy_id)
+        items.append(
+            UserPolicyItem(
+                state=state,
+                policy=policies[state.policy_id],
+                match=state_crud.get_policy_match(
+                    db,
+                    user_id=user_id,
+                    policy_id=state.policy_id,
+                ),
+                category_code=(categories[0].code.value if categories else None),
+            )
         )
-        for state in states
-        if state.policy_id in policies
-    ]
+    return items
 
 
 def _assemble_checklist(

@@ -1,4 +1,18 @@
-import { ArrowRight, Bookmark, CheckCircle2, ClipboardList, Star } from 'lucide-react'
+import {
+  ArrowRight,
+  Bookmark,
+  BriefcaseBusiness,
+  Calculator,
+  CheckCircle2,
+  ClipboardList,
+  CreditCard,
+  Heart,
+  House,
+  MoreHorizontal,
+  Star,
+  TrainFront,
+  Users,
+} from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { listMyPolicies } from '../../api/checklist'
@@ -19,6 +33,17 @@ const tabs: { id: PolicyTab; label: string; icon: typeof Bookmark }[] = [
   { id: 'preparing', label: '준비 중', icon: ClipboardList },
   { id: 'completed', label: '신청 완료', icon: CheckCircle2 },
 ]
+
+const CATEGORY_ICON_BY_CODE: Record<string, typeof House> = {
+  HOUSING: House,
+  TRANSPORT: TrainFront,
+  FINANCE: CreditCard,
+  TAX: Calculator,
+  EMPLOYMENT: BriefcaseBusiness,
+  WELFARE: Heart,
+  PARTICIPATION: Users,
+  ETC: MoreHorizontal,
+}
 
 function daysUntil(dateString: string | null): number | null {
   if (!dateString) return null
@@ -164,8 +189,7 @@ export default function MyPolicies() {
                 ? 'interest'
                 : 'preparing'
               : tab
-            const currentTab = tabs.find((item) => item.id === currentState) || tabs[0]
-            const Icon = currentTab.icon
+            const Icon = CATEGORY_ICON_BY_CODE[policy.category_code ?? ''] ?? Bookmark
             const remaining = daysUntil(policy.application_end_date)
             const progress = policy.progress_percent
             const progressWidth =

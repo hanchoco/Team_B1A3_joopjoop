@@ -221,6 +221,7 @@ def _user_policy_response(
         policy_id=item.state.policy_id,
         title=policy.title,
         summary=policy.summary,
+        category_code=item.category_code,
         application_end_date=policy.application_end_date,
         is_bookmarked=item.state.is_bookmarked,
         preparation_status=_enum_value(item.state.preparation_status),

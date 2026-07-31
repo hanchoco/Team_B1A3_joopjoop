@@ -80,6 +80,7 @@ class UserPolicyItemResponse(BaseModel):
     policy_id: int
     title: str
     summary: str | None
+    category_code: str | None
     application_end_date: date | None
     is_bookmarked: bool
     preparation_status: str

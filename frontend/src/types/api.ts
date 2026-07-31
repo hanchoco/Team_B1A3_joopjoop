@@ -453,6 +453,7 @@ export interface UserPolicyItemResponse {
   policy_id: number
   title: string
   summary: string | null
+  category_code: string | null
   application_end_date: string | null
   is_bookmarked: boolean
   preparation_status: PreparationStatus
