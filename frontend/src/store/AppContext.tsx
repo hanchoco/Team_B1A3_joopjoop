@@ -21,7 +21,7 @@ export function AppProvider({ children }: PropsWithChildren) {
     threeDaysBefore: true,
     deadlineDay: true,
   })
-  const [accountId, setAccountId] = useState('nara@example.com')
+  const [accountId] = useState('nara@example.com')
   const [optionalPrivacyConsent, setOptionalPrivacyConsent] = useState(true)
 
   useEffect(() => {
@@ -97,7 +97,6 @@ export function AppProvider({ children }: PropsWithChildren) {
       notificationSettings,
       updateNotificationSettings: setNotificationSettings,
       accountId,
-      updateAccountId: setAccountId,
       optionalPrivacyConsent,
       updateOptionalPrivacyConsent: setOptionalPrivacyConsent,
     }),

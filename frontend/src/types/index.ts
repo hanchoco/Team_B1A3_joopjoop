@@ -22,7 +22,6 @@ export interface AppContextValue {
   notificationSettings: NotificationSettings
   updateNotificationSettings: (settings: NotificationSettings) => void
   accountId: string
-  updateAccountId: (accountId: string) => void
   optionalPrivacyConsent: boolean
   updateOptionalPrivacyConsent: (consented: boolean) => void
 }

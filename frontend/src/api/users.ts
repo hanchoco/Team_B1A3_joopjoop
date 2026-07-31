@@ -17,3 +17,12 @@ export async function updateMyProfile(
   const response = await apiClient.patch<UserProfileResponse>('/users/me/profile', payload)
   return response.data
 }
+
+export async function changePassword(payload: {
+  current_password: string
+  new_password: string
+  new_password_confirm: string
+}): Promise<UserResponse> {
+  const response = await apiClient.patch<UserResponse>('/users/me/account', payload)
+  return response.data
+}
