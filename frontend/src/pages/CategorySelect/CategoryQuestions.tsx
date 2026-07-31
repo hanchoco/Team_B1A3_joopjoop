@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, CheckCircle2, Clock3 } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CheckCircle2, ChevronDown, Clock3 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { listCategories, listCategoryQuestions, saveCategoryAnswers } from '../../api/categories'
@@ -17,6 +17,38 @@ function policiesLinkFor(categoryName: string): string {
   return `/policies?${params.toString()}`
 }
 
+interface AmountRange {
+  label: string
+  min: number
+  max: number | null
+  representativeValue: number
+}
+
+const HOUSING_AMOUNT_RANGES: Record<string, AmountRange[]> = {
+  'housing.deposit_amount': [
+    { label: '1천만원 미만', min: 0, max: 10_000_000, representativeValue: 5_000_000 },
+    { label: '1천만~3천만원', min: 10_000_000, max: 30_000_000, representativeValue: 20_000_000 },
+    { label: '3천만~5천만원', min: 30_000_000, max: 50_000_000, representativeValue: 40_000_000 },
+    { label: '5천만~1억원', min: 50_000_000, max: 100_000_000, representativeValue: 75_000_000 },
+    { label: '1억원 이상', min: 100_000_000, max: null, representativeValue: 100_000_000 },
+  ],
+  'housing.monthly_rent_amount': [
+    { label: '30만원 미만', min: 0, max: 300_000, representativeValue: 150_000 },
+    { label: '30만~50만원', min: 300_000, max: 500_000, representativeValue: 400_000 },
+    { label: '50만~70만원', min: 500_000, max: 700_000, representativeValue: 600_000 },
+    { label: '70만~100만원', min: 700_000, max: 1_000_000, representativeValue: 850_000 },
+    { label: '100만원 이상', min: 1_000_000, max: null, representativeValue: 1_000_000 },
+  ],
+}
+
+const RESIDENCE_MONTH_OPTIONS = Array.from({ length: 240 }, (_, index) => index + 1)
+
+function formatAmountInput(value: unknown): string {
+  return typeof value === 'number' && Number.isFinite(value)
+    ? Math.trunc(value).toLocaleString('ko-KR')
+    : ''
+}
+
 export default function CategoryQuestions() {
   const { categoryId: categoryIdParam } = useParams()
   const navigate = useNavigate()
@@ -24,7 +56,7 @@ export default function CategoryQuestions() {
   const categoryId = Number(categoryIdParam)
   const isFromHome = searchParams.get('from') === 'home'
   const previousPath = isFromHome ? '/' : '/categories'
-  const previousLabel = isFromHome ? '돌아가기' : '카테고리 선택'
+  const previousLabel = '돌아가기'
 
   const [categoryName, setCategoryName] = useState('')
   const [categoryCode, setCategoryCode] = useState('')
@@ -34,6 +66,7 @@ export default function CategoryQuestions() {
   const [submitting, setSubmitting] = useState(false)
   const [step, setStep] = useState(0)
   const [answers, setAnswers] = useState<Record<number, unknown>>({})
+  const [monthListOpen, setMonthListOpen] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -94,6 +127,7 @@ export default function CategoryQuestions() {
   function skipQuestion(questionId: number, isLast: boolean) {
     const nextAnswers = { ...answers, [questionId]: null }
     setAnswers(nextAnswers)
+    setMonthListOpen(false)
     if (isLast) {
       void finish(nextAnswers)
     } else {
@@ -157,12 +191,18 @@ export default function CategoryQuestions() {
   const answered = question.id in answers
   const isHousing = categoryCode === 'HOUSING'
   const isHomeOwnershipQuestion = question.question_key === 'housing.home_ownership_status_code'
+  const amountRanges = HOUSING_AMOUNT_RANGES[question.question_key]
+  const isResidenceMonths = question.question_key === 'housing.residence_months'
 
   return (
     <section className="mx-auto max-w-3xl">
       <button
         type="button"
-        onClick={() => (step > 0 ? setStep(step - 1) : navigate(previousPath))}
+        onClick={() => {
+          setMonthListOpen(false)
+          if (step > 0) setStep(step - 1)
+          else navigate(previousPath)
+        }}
         className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500"
       >
         <ArrowLeft size={16} /> {step > 0 ? '이전 질문' : previousLabel}
@@ -228,24 +268,124 @@ export default function CategoryQuestions() {
               })}
             </div>
           ) : question.answer_type === 'NUMBER' ? (
-            <label className="block text-sm font-semibold">
-              숫자로 입력해주세요{question.unit ? ` (${question.unit})` : ''}
-              <input
-                type="number"
-                min={isHousing ? 0 : undefined}
-                value={
-                  typeof answers[question.id] === 'number' ? (answers[question.id] as number) : ''
-                }
-                onChange={(event) => {
-                  const value = event.target.value
-                  setAnswerValue(
-                    question.id,
-                    value === '' ? undefined : Math.max(isHousing ? 0 : -Infinity, Number(value)),
-                  )
-                }}
-                className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3.5 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-              />
-            </label>
+            <div className="block text-sm font-semibold">
+              <label htmlFor={`question-${question.id}`}>
+                숫자로 입력해주세요{question.unit ? ` (${question.unit})` : ''}
+              </label>
+              <div className="relative mt-2">
+                <input
+                  id={`question-${question.id}`}
+                  type={amountRanges ? 'text' : 'number'}
+                  inputMode={amountRanges ? 'numeric' : undefined}
+                  min={!amountRanges && isHousing ? 0 : undefined}
+                  value={
+                    amountRanges
+                      ? formatAmountInput(answers[question.id])
+                      : typeof answers[question.id] === 'number'
+                        ? (answers[question.id] as number)
+                        : ''
+                  }
+                  onChange={(event) => {
+                    if (amountRanges) {
+                      const digits = event.target.value.replace(/\D/g, '')
+                      setAnswerValue(question.id, digits === '' ? undefined : Number(digits))
+                    } else {
+                      const value = event.target.value
+                      setAnswerValue(
+                        question.id,
+                        value === ''
+                          ? undefined
+                          : Math.max(isHousing ? 0 : -Infinity, Number(value)),
+                      )
+                    }
+                  }}
+                  placeholder={
+                    amountRanges
+                      ? '예: 100,000,000'
+                      : isResidenceMonths
+                        ? '개월 수 입력'
+                        : undefined
+                  }
+                  className={`w-full rounded-lg border border-gray-300 px-4 py-3.5 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 ${
+                    isResidenceMonths
+                      ? 'pr-12 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none'
+                      : ''
+                  }`}
+                />
+                {isResidenceMonths && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setMonthListOpen((current) => !current)}
+                      className="absolute right-0 top-0 grid h-full w-12 place-items-center text-gray-500"
+                      aria-label="거주 개월 수 목록 열기"
+                      aria-expanded={monthListOpen}
+                    >
+                      <ChevronDown
+                        size={19}
+                        className={`transition ${monthListOpen ? 'rotate-180' : ''}`}
+                      />
+                    </button>
+                    {monthListOpen && (
+                      <div className="absolute z-20 mt-2 max-h-60 w-full overflow-y-auto rounded-lg border border-gray-200 bg-white p-1 shadow-lg">
+                        {RESIDENCE_MONTH_OPTIONS.map((month) => {
+                          const selected = answers[question.id] === month
+                          return (
+                            <button
+                              key={month}
+                              type="button"
+                              onClick={() => {
+                                setAnswerValue(question.id, month)
+                                setMonthListOpen(false)
+                              }}
+                              className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm font-normal ${
+                                selected
+                                  ? 'bg-blue-50 font-bold text-blue-700'
+                                  : 'text-gray-700 hover:bg-slate-50'
+                              }`}
+                            >
+                              {month}개월
+                              {selected && <CheckCircle2 size={16} />}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+              {amountRanges && (
+                <>
+                  <span className="mt-5 block text-sm font-bold text-gray-700">또는 구간 선택</span>
+                  <span className="mt-1 block text-xs font-normal text-gray-500">
+                    구간을 선택하면 대표 금액이 입력돼요. 정확한 금액을 알면 직접 수정할 수 있어요.
+                  </span>
+                  <span className="mt-3 grid gap-2 sm:grid-cols-2">
+                    {amountRanges.map((range) => {
+                      const answer = answers[question.id]
+                      const selected =
+                        typeof answer === 'number' &&
+                        answer >= range.min &&
+                        (range.max === null || answer < range.max)
+                      return (
+                        <button
+                          key={range.label}
+                          type="button"
+                          onClick={() => setAnswerValue(question.id, range.representativeValue)}
+                          className={`rounded-lg border px-4 py-3 text-left text-sm font-semibold transition ${
+                            selected
+                              ? 'border-blue-600 bg-blue-50 text-blue-700'
+                              : 'border-gray-200 bg-white hover:border-blue-300'
+                          }`}
+                        >
+                          {range.label}
+                        </button>
+                      )
+                    })}
+                  </span>
+                </>
+              )}
+            </div>
           ) : parseOptions(question.options_json).length > 0 ? (
             <div className="grid gap-3 sm:grid-cols-2">
               {parseOptions(question.options_json).map((option) => {
@@ -294,7 +434,14 @@ export default function CategoryQuestions() {
           <button
             type="button"
             disabled={!answered || submitting}
-            onClick={isLast ? () => void finish() : () => setStep((current) => current + 1)}
+            onClick={
+              isLast
+                ? () => void finish()
+                : () => {
+                    setMonthListOpen(false)
+                    setStep((current) => current + 1)
+                  }
+            }
             className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 py-3.5 font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
           >
             {isLast ? (submitting ? '저장 중...' : '답변 저장하고 맞춤 정책 보기') : '다음 질문'}{' '}
