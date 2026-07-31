@@ -1,8 +1,6 @@
 import {
   BriefcaseBusiness,
-  ChevronDown,
   CreditCard,
-  Filter,
   Heart,
   House,
   ReceiptText,
@@ -65,7 +63,6 @@ function formatDeadline(days: number | null): string {
 export default function PolicyList() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
-  const [filterOpen, setFilterOpen] = useState(false)
   const { currentUser } = useApp()
   const [policies, setPolicies] = useState<PolicySummaryResponse[]>([])
   const [total, setTotal] = useState(0)
@@ -143,6 +140,16 @@ export default function PolicyList() {
     setSearchParams(nextParams)
   }
 
+  function toggleDeadlineSort(checked: boolean) {
+    const nextParams = new URLSearchParams(searchParams)
+    if (checked) {
+      nextParams.set('sort', 'deadline')
+    } else {
+      nextParams.delete('sort')
+    }
+    setSearchParams(nextParams)
+  }
+
   return (
     <section>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -160,12 +167,15 @@ export default function PolicyList() {
               : '가능성이 높은 정책부터 간결하게 모았어요.'}
           </p>
         </div>
-        <button
-          onClick={() => setFilterOpen(!filterOpen)}
-          className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold"
-        >
-          <Filter size={17} /> 필터 <ChevronDown size={15} />
-        </button>
+        <label className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold">
+          <input
+            type="checkbox"
+            checked={activeSort === 'deadline'}
+            onChange={(event) => toggleDeadlineSort(event.target.checked)}
+            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          />
+          마감임박순으로 보기
+        </label>
       </div>
       <div className="mt-6 flex gap-2 overflow-x-auto border-b border-gray-200">
         {possibilityFilters.map(({ value, label }) => (
@@ -179,46 +189,6 @@ export default function PolicyList() {
           </button>
         ))}
       </div>
-      {filterOpen && (
-        <div className="mt-5 grid gap-5 rounded-xl border border-gray-200 bg-white p-5 sm:grid-cols-2">
-          <label className="text-sm font-semibold">
-            카테고리
-            <select
-              value={selectedCategory || '전체'}
-              onChange={(event) => {
-                const nextParams = new URLSearchParams(searchParams)
-                if (event.target.value === '전체') nextParams.delete('category')
-                else nextParams.set('category', event.target.value)
-                setSearchParams(nextParams)
-              }}
-              className="mt-2 w-full rounded-lg border border-gray-300 p-3 font-normal"
-            >
-              <option>전체</option>
-              <option>주거</option>
-              <option>금융</option>
-              <option>교통</option>
-              <option>세금</option>
-              <option>고용</option>
-              <option>복지</option>
-            </select>
-          </label>
-          <label className="text-sm font-semibold">
-            정렬
-            <select
-              value={activeSort}
-              onChange={(event) => {
-                const nextParams = new URLSearchParams(searchParams)
-                nextParams.set('sort', event.target.value)
-                setSearchParams(nextParams)
-              }}
-              className="mt-2 w-full rounded-lg border border-gray-300 p-3 font-normal"
-            >
-              <option value="recommended">추천순</option>
-              <option value="deadline">마감순</option>
-            </select>
-          </label>
-        </div>
-      )}
       {error && (
         <p className="mt-5 rounded-lg bg-rose-50 p-4 text-sm font-semibold text-rose-600">
           {error}
