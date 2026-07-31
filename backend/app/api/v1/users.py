@@ -14,6 +14,7 @@ from app.schemas.auth import (
 )
 from app.schemas.user import (
     ConsentResponse,
+    DisplayNameUpdate,
     UserCreate,
     UserLogin,
     UserProfileResponse,
@@ -90,6 +91,18 @@ def patch_my_profile(
         values=payload.model_dump(exclude_unset=True),
     )
     return UserProfileResponse.model_validate(profile)
+
+
+@router.patch("/me/display-name", response_model=UserResponse)
+def patch_my_display_name(
+    payload: DisplayNameUpdate,
+    db: DbSession,
+    current_user: CurrentUser,
+) -> UserResponse:
+    """Update the non-sensitive name shown throughout the service."""
+
+    user = auth_service.update_display_name(db, user=current_user, nickname=payload.nickname)
+    return UserResponse.model_validate(user)
 
 
 @router.post("/me/verify-password", response_model=MessageResponse)

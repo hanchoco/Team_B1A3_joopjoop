@@ -97,6 +97,12 @@ def change_account(
     )
 
 
+def update_display_name(db: Session, *, user: User, nickname: str) -> User:
+    """Update the non-sensitive name displayed throughout the service."""
+
+    return user_crud.update_account(db, user=user, nickname=nickname)
+
+
 def withdraw_account(db: Session, *, user: User, current_password: str) -> None:
     """Permanently delete an account after final password confirmation."""
 

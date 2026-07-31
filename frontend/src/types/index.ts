@@ -17,6 +17,7 @@ export interface AppContextValue {
   profile: UserProfileResponse | null
   refreshProfile: () => Promise<void>
   updateProfile: (payload: UserProfileUpdate) => Promise<void>
+  updateDisplayName: (nickname: string) => Promise<void>
   avatarUrl?: string
   updateAvatarUrl: (avatarUrl: string | undefined) => void
   notificationSettings: NotificationSettings

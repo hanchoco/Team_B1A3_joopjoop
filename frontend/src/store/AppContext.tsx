@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { PropsWithChildren } from 'react'
 import { login as apiLogin, signup as apiSignup } from '../api/auth'
 import { clearToken, getToken, setToken as persistToken } from '../api/client'
-import { getCurrentUser, getMyProfile, updateMyProfile } from '../api/users'
+import { getCurrentUser, getMyProfile, updateDisplayName as apiUpdateDisplayName, updateMyProfile } from '../api/users'
 import type { NotificationSettings } from '../types'
 import type { SignupRequest, UserProfileResponse, UserProfileUpdate, UserResponse } from '../types/api'
 import { AppContext } from './context'
@@ -74,6 +74,10 @@ export function AppProvider({ children }: PropsWithChildren) {
     setProfile(await updateMyProfile(payload))
   }
 
+  async function updateDisplayName(nickname: string) {
+    setCurrentUser(await apiUpdateDisplayName(nickname))
+  }
+
   function updateAvatarUrl(next: string | undefined) {
     if (next) localStorage.setItem('joopjoop-profile-avatar', next)
     else localStorage.removeItem('joopjoop-profile-avatar')
@@ -91,6 +95,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       profile,
       refreshProfile,
       updateProfile,
+      updateDisplayName,
       avatarUrl,
       updateAvatarUrl,
       notificationSettings,

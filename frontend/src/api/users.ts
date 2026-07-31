@@ -18,6 +18,11 @@ export async function updateMyProfile(
   return response.data
 }
 
+export async function updateDisplayName(nickname: string): Promise<UserResponse> {
+  const response = await apiClient.patch<UserResponse>('/users/me/display-name', { nickname })
+  return response.data
+}
+
 export async function changePassword(payload: {
   current_password: string
   new_password: string

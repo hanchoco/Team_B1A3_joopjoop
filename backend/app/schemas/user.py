@@ -111,6 +111,20 @@ class UserResponse(SchemaModel):
     updated_at: datetime
 
 
+class DisplayNameUpdate(SchemaModel):
+    """Editable non-sensitive account display name."""
+
+    nickname: str = Field(min_length=1, max_length=50)
+
+    @field_validator("nickname")
+    @classmethod
+    def normalize_nickname(cls, value: str) -> str:
+        nickname = value.strip()
+        if not nickname:
+            raise ValueError("이름을 입력해 주세요.")
+        return nickname
+
+
 class TokenResponse(SchemaModel):
     """Bearer token returned after signup/login."""
 
@@ -272,6 +286,7 @@ __all__ = [
     "CategoryResponse",
     "ConsentCreate",
     "ConsentResponse",
+    "DisplayNameUpdate",
     "NotificationReadResponse",
     "NotificationResponse",
     "NotificationSettingResponse",

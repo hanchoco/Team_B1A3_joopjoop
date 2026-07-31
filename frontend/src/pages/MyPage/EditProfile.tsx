@@ -32,6 +32,7 @@ const NO_REGION_CODE = '__none__'
 const EMPTY = ''
 
 const emptyForm = {
+  nickname: EMPTY,
   birth_year: EMPTY,
   region_code: EMPTY,
   income_band_code: EMPTY,
@@ -185,7 +186,7 @@ function CategoryQuestionField({
 export default function EditProfile() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { updateProfile, avatarUrl, updateAvatarUrl } = useApp()
+  const { currentUser, updateProfile, updateDisplayName, avatarUrl, updateAvatarUrl } = useApp()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [nextAvatarUrl, setNextAvatarUrl] = useState(avatarUrl)
   const [avatarError, setAvatarError] = useState('')
@@ -210,6 +211,7 @@ export default function EditProfile() {
       .then((data) => {
         if (cancelled) return
         setForm({
+          nickname: currentUser?.nickname ?? EMPTY,
           birth_year: data.birth_year ? String(data.birth_year) : EMPTY,
           region_code: data.region_code ?? NO_REGION_CODE,
           income_band_code: data.income_band_code ?? EMPTY,
@@ -227,7 +229,7 @@ export default function EditProfile() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [currentUser?.nickname])
 
   useEffect(() => {
     let cancelled = false
@@ -275,7 +277,7 @@ export default function EditProfile() {
         housing_type_code: (form.housing_type_code ||
           null) as UserProfileUpdate['housing_type_code'],
       }
-      await updateProfile(payload)
+      await Promise.all([updateProfile(payload), updateDisplayName(form.nickname.trim())])
       updateAvatarUrl(nextAvatarUrl)
       navigate(searchParams.get('from') === 'home' ? '/' : '/mypage')
     } catch (err) {
@@ -501,6 +503,17 @@ export default function EditProfile() {
             </p>
           </div>
         </div>
+        <label className="block text-sm font-semibold sm:col-span-2">
+          이름
+          <input
+            type="text"
+            required
+            maxLength={50}
+            value={form.nickname}
+            onChange={(event) => setForm({ ...form, nickname: event.target.value })}
+            className={fieldClass}
+          />
+        </label>
         <label className="block text-sm font-semibold">
           출생연도
           <input
