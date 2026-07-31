@@ -37,6 +37,49 @@ export async function confirmChecklistCondition(
   return response.data
 }
 
+export async function resetChecklistProgress(
+  checklist: ChecklistResponse,
+): Promise<ChecklistResponse> {
+  let updatedChecklist = checklist
+
+  for (const condition of checklist.conditions) {
+    if (condition.is_user_confirmed) {
+      updatedChecklist = await confirmChecklistCondition(
+        checklist.state_id,
+        condition.condition_id,
+        false,
+      )
+    }
+  }
+
+  for (const document of checklist.documents) {
+    if (document.is_checked || document.preparation_status !== 'NOT_STARTED') {
+      updatedChecklist = await updateChecklistDocument(checklist.state_id, document.document_id, {
+        preparation_status: 'NOT_STARTED',
+        is_checked: false,
+        note: document.note,
+      })
+    }
+  }
+
+  return updatedChecklist
+}
+
+export async function recordPolicyApplication(
+  policyId: number,
+  applicationDate: string,
+): Promise<UserPolicyItemResponse> {
+  const response = await apiClient.post<UserPolicyItemResponse>(
+    `/policies/${policyId}/applications`,
+    {
+      application_date: applicationDate,
+      application_status: 'SUBMITTED',
+      application_note: null,
+    },
+  )
+  return response.data
+}
+
 export async function listMyPolicies(params?: {
   tab?: MyPoliciesTab
   sort?: 'recommendation' | 'latest' | 'deadline'
