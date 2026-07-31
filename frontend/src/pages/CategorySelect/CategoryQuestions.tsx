@@ -24,7 +24,7 @@ interface AmountRange {
   representativeValue: number
 }
 
-const HOUSING_AMOUNT_RANGES: Record<string, AmountRange[]> = {
+const AMOUNT_RANGES: Record<string, AmountRange[]> = {
   'housing.deposit_amount': [
     { label: '1천만원 미만', min: 0, max: 10_000_000, representativeValue: 5_000_000 },
     { label: '1천만~3천만원', min: 10_000_000, max: 30_000_000, representativeValue: 20_000_000 },
@@ -38,6 +38,40 @@ const HOUSING_AMOUNT_RANGES: Record<string, AmountRange[]> = {
     { label: '50만~70만원', min: 500_000, max: 700_000, representativeValue: 600_000 },
     { label: '70만~100만원', min: 700_000, max: 1_000_000, representativeValue: 850_000 },
     { label: '100만원 이상', min: 1_000_000, max: null, representativeValue: 1_000_000 },
+  ],
+  'finance.monthly_income_amount': [
+    { label: '100만원 미만', min: 0, max: 1_000_000, representativeValue: 500_000 },
+    { label: '100만~200만원', min: 1_000_000, max: 2_000_000, representativeValue: 1_500_000 },
+    { label: '200만~300만원', min: 2_000_000, max: 3_000_000, representativeValue: 2_500_000 },
+    { label: '300만~400만원', min: 3_000_000, max: 4_000_000, representativeValue: 3_500_000 },
+    { label: '400만원 이상', min: 4_000_000, max: null, representativeValue: 4_000_000 },
+  ],
+  'finance.annual_income_amount': [
+    { label: '1,200만원 미만', min: 0, max: 12_000_000, representativeValue: 6_000_000 },
+    {
+      label: '1,200만~2,400만원',
+      min: 12_000_000,
+      max: 24_000_000,
+      representativeValue: 18_000_000,
+    },
+    {
+      label: '2,400만~3,600만원',
+      min: 24_000_000,
+      max: 36_000_000,
+      representativeValue: 30_000_000,
+    },
+    {
+      label: '3,600만~4,800만원',
+      min: 36_000_000,
+      max: 48_000_000,
+      representativeValue: 42_000_000,
+    },
+    {
+      label: '4,800만원 이상',
+      min: 48_000_000,
+      max: null,
+      representativeValue: 48_000_000,
+    },
   ],
 }
 
@@ -222,8 +256,16 @@ export default function CategoryQuestions() {
   const answered = question.id in answers
   const isHousing = categoryCode === 'HOUSING'
   const isHomeOwnershipQuestion = question.question_key === 'housing.home_ownership_status_code'
-  const amountRanges = HOUSING_AMOUNT_RANGES[question.question_key]
+  const amountRanges = AMOUNT_RANGES[question.question_key]
   const isResidenceMonths = question.question_key === 'housing.residence_months'
+  const isAnnualIncome = question.question_key === 'finance.annual_income_amount'
+  const isTotalAssetQuestion = question.question_key === 'finance.total_asset_amount'
+  const monthlyIncomeQuestion = questions.find(
+    (item) => item.question_key === 'finance.monthly_income_amount',
+  )
+  const monthlyIncomeAnswer = monthlyIncomeQuestion ? answers[monthlyIncomeQuestion.id] : undefined
+  const annualIncomeExample =
+    typeof monthlyIncomeAnswer === 'number' ? monthlyIncomeAnswer * 12 : null
 
   return (
     <section className="mx-auto max-w-3xl">
@@ -269,6 +311,17 @@ export default function CategoryQuestions() {
         <h1 className="mt-4 text-2xl font-black sm:text-3xl">{question.label}</h1>
         {question.description && (
           <p className="mt-2 text-sm text-gray-500">{question.description}</p>
+        )}
+        {isTotalAssetQuestion && (
+          <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
+            <p className="text-sm leading-6 text-gray-700">
+              총자산가액은 보유한 부동산, 자동차, 금융자산과 일반자산을 모두 합한 뒤 부채를 뺀
+              금액이에요.
+            </p>
+            <p className="mt-2 text-sm font-bold text-blue-800">
+              총자산가액 = (부동산 + 자동차 + 금융자산 + 일반자산) - 부채
+            </p>
+          </div>
         )}
 
         <div className="mt-8">
@@ -331,11 +384,15 @@ export default function CategoryQuestions() {
                     }
                   }}
                   placeholder={
-                    amountRanges
-                      ? '예: 100,000,000'
-                      : isResidenceMonths
-                        ? '개월 수 입력'
-                        : undefined
+                    isAnnualIncome
+                      ? annualIncomeExample === null
+                        ? '예: 월평균 소득 × 12'
+                        : `예: ${formatAmountInput(annualIncomeExample)} (월평균 × 12)`
+                      : amountRanges
+                        ? '예: 100,000,000'
+                        : isResidenceMonths
+                          ? '개월 수 입력'
+                          : undefined
                   }
                   className={`w-full rounded-lg border border-gray-300 px-4 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 ${
                     amountRanges
