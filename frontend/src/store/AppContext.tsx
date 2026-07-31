@@ -22,7 +22,6 @@ export function AppProvider({ children }: PropsWithChildren) {
     deadlineDay: true,
   })
   const [accountId] = useState('nara@example.com')
-  const [optionalPrivacyConsent, setOptionalPrivacyConsent] = useState(true)
 
   useEffect(() => {
     if (!token) return
@@ -97,10 +96,8 @@ export function AppProvider({ children }: PropsWithChildren) {
       notificationSettings,
       updateNotificationSettings: setNotificationSettings,
       accountId,
-      optionalPrivacyConsent,
-      updateOptionalPrivacyConsent: setOptionalPrivacyConsent,
     }),
-    [isLoggedIn, token, currentUser, profile, avatarUrl, notificationSettings, accountId, optionalPrivacyConsent],
+    [isLoggedIn, token, currentUser, profile, avatarUrl, notificationSettings, accountId],
   )
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>

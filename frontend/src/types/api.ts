@@ -31,6 +31,15 @@ export interface ConsentCreate {
   is_agreed: boolean
 }
 
+export interface ConsentResponse extends ConsentCreate {
+  id: number
+  user_id: number
+  agreed_at: string | null
+  withdrawn_at: string | null
+  created_at: string
+  updated_at: string
+}
+
 export interface SignupRequest {
   email: string
   password: string

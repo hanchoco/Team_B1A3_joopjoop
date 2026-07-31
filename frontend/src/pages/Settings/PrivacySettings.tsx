@@ -1,7 +1,10 @@
 import { ArrowLeft, Check, ChevronDown, Info, LockKeyhole } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useApp } from '../../store/useApp'
+import { listConsents, updateConsents } from '../../api/consents'
+import { extractErrorMessage } from '../../api/client'
+
+const MARKETING_CONSENT_VERSION = '1.0'
 
 const privacySections = [
   {
@@ -38,8 +41,48 @@ const privacySections = [
 
 export default function PrivacySettings() {
   const navigate = useNavigate()
-  const { optionalPrivacyConsent, updateOptionalPrivacyConsent } = useApp()
   const [openSection, setOpenSection] = useState<string | null>('collection')
+  const [optionalConsent, setOptionalConsent] = useState(false)
+  const [consentSaving, setConsentSaving] = useState(false)
+  const [consentError, setConsentError] = useState('')
+
+  useEffect(() => {
+    let cancelled = false
+    listConsents()
+      .then((consents) => {
+        if (cancelled) return
+        const marketing = consents.find((item) => item.consent_type === 'MARKETING_OPTIONAL')
+        setOptionalConsent(marketing?.is_agreed ?? false)
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) setConsentError(extractErrorMessage(err))
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  async function toggleOptionalConsent() {
+    const nextValue = !optionalConsent
+    const previousValue = optionalConsent
+    setOptionalConsent(nextValue)
+    setConsentSaving(true)
+    setConsentError('')
+    try {
+      await updateConsents([
+        {
+          consent_type: 'MARKETING_OPTIONAL',
+          consent_version: MARKETING_CONSENT_VERSION,
+          is_agreed: nextValue,
+        },
+      ])
+    } catch (err) {
+      setOptionalConsent(previousValue)
+      setConsentError(extractErrorMessage(err))
+    } finally {
+      setConsentSaving(false)
+    }
+  }
 
   return (
     <section className="mx-auto max-w-3xl">
@@ -110,7 +153,7 @@ export default function PrivacySettings() {
           <div className="flex items-start gap-4 p-5">
             <span
               className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${
-                optionalPrivacyConsent ? 'bg-blue-50 text-blue-600' : 'bg-gray-100 text-gray-400'
+                optionalConsent ? 'bg-blue-50 text-blue-600' : 'bg-gray-100 text-gray-400'
               }`}
             >
               <Info size={18} />
@@ -127,21 +170,26 @@ export default function PrivacySettings() {
             <button
               type="button"
               role="switch"
-              aria-checked={optionalPrivacyConsent}
+              aria-checked={optionalConsent}
               aria-label="추천 품질 개선을 위한 추가 활용 동의"
-              onClick={() => updateOptionalPrivacyConsent(!optionalPrivacyConsent)}
+              disabled={consentSaving}
+              onClick={() => void toggleOptionalConsent()}
               className={`relative mt-1 h-7 w-12 shrink-0 rounded-full transition ${
-                optionalPrivacyConsent ? 'bg-blue-600' : 'bg-gray-300'
-              }`}
+                optionalConsent ? 'bg-blue-600' : 'bg-gray-300'
+              } disabled:cursor-not-allowed disabled:opacity-60`}
             >
               <span
                 className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow-sm transition ${
-                  optionalPrivacyConsent ? 'left-6' : 'left-1'
+                  optionalConsent ? 'left-6' : 'left-1'
                 }`}
               />
             </button>
           </div>
         </div>
+
+        {consentError && (
+          <p className="mt-3 text-sm font-semibold text-rose-600">{consentError}</p>
+        )}
 
         <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
           <p className="text-sm font-bold text-amber-900">동의 철회 시 영향</p>
