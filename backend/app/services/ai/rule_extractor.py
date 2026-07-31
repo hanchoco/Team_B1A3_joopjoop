@@ -76,6 +76,12 @@ ALLOWED_CONDITION_KEYS = {
 }
 CHECKBOX_ONLY_CONDITION_KEYS = {"participation_limit"}
 
+# profile.age/profile.region_code는 extract_conditions()의 하드코딩 경로(나이/지역 숫자
+# 필드 직접 매핑)에서만 만들어져야 한다. AI가 이 키로 조건을 제출하면 - 프롬프트가
+# "지역/나이는 만들지 마세요"라고 지시해도 가끔 무시하고 만들어내는데, 실제 지역코드가
+# 아닌 값을 지어내 넣는 경우가 있었다(예: "BUPYEONG") - 무조건 드롭한다.
+AI_FORBIDDEN_CONDITION_KEYS = {"profile.age", "profile.region_code"}
+
 CODE_REGISTRY_VALUES = {
     "housing_type_code": {"OWNED", "JEONSE", "MONTHLY_RENT", "PUBLIC_RENTAL", "DORMITORY", "WITH_FAMILY", "OTHER"},
     "household_type_code": {"SINGLE", "COUPLE", "WITH_PARENTS", "SINGLE_PARENT", "MULTI_PERSON", "OTHER"},
@@ -118,6 +124,60 @@ def income_threshold_to_bands(percent: float) -> list:
     return bands or ["UNKNOWN"]
 
 
+def _parse_positive_amount(value: object) -> int | None:
+    """Parse earnMinAmt/earnMaxAmt into a positive int, or None if absent/zero.
+
+    ``0``/``"0"``/blank means "해당 없음" in this API, not a real zero cap.
+    """
+    try:
+        amount = int(str(value).strip())
+    except (TypeError, ValueError):
+        return None
+    return amount if amount > 0 else None
+
+
+def _format_manwon(amount: int) -> str:
+    return f"{amount:,}만원"
+
+
+def structured_income_condition(raw: dict) -> dict | None:
+    """Map raw 온통청년 income fields (earnMinAmt/earnMaxAmt) directly - no AI.
+
+    earnEtcCn(자유서술)이 비어 있어도 이 필드들엔 실제 소득 상한/하한이 숫자로
+    들어있는 경우가 있다(예: 자산형성지원류 정책). check_mode는 AUTO로 두지 않는다 -
+    금액 단위(만원 가정)를 API 문서로 확정할 수 없어서, 사람이 승인 전에 확인하도록
+    기존 income_note 조건과 동일하게 MANUAL로 둔다.
+    """
+    min_amt = _parse_positive_amount(raw.get("earnMinAmt"))
+    max_amt = _parse_positive_amount(raw.get("earnMaxAmt"))
+    if min_amt is None and max_amt is None:
+        return None
+
+    if min_amt is not None and max_amt is not None:
+        operator = "BETWEEN"
+        expected_value_json = {"min": min_amt * 10000, "max": max_amt * 10000}
+        description = f"연 소득 {_format_manwon(min_amt)} ~ {_format_manwon(max_amt)} (단위 확인 필요)"
+    elif max_amt is not None:
+        operator = "LTE"
+        expected_value_json = {"value": max_amt * 10000}
+        description = f"연 소득 {_format_manwon(max_amt)} 이하 (단위 확인 필요)"
+    else:
+        operator = "GTE"
+        expected_value_json = {"value": min_amt * 10000}
+        description = f"연 소득 {_format_manwon(min_amt)} 이상 (단위 확인 필요)"
+
+    return {
+        "condition_key": "finance.annual_income_amount",
+        "operator": operator,
+        "expected_value_json": expected_value_json,
+        "condition_group_no": 1,
+        "is_required": False,
+        "check_mode": "MANUAL",
+        "description": description,
+        "failure_message": "소득 조건은 정확한 확인이 필요합니다.",
+    }
+
+
 def _normalize_expected_value(operator: str, expected_value):
     if operator in ("IN", "NOT_IN") and isinstance(expected_value, dict) and "values" in expected_value:
         return expected_value["values"]
@@ -146,6 +206,12 @@ def validate_conditions(raw_conditions: list) -> tuple:
     for key, items in grouped.items():
         if key not in ALLOWED_CONDITION_KEYS:
             dropped += [{**c, "_drop_reason": f"허용되지 않은 condition_key: {key}"} for c in items]
+            continue
+        if key in AI_FORBIDDEN_CONDITION_KEYS:
+            dropped += [
+                {**c, "_drop_reason": f"{key}는 하드코딩 경로 전용 - AI 제출은 항상 거부"}
+                for c in items
+            ]
             continue
 
         suffix = key.split(".")[-1]
@@ -257,6 +323,12 @@ async def extract_conditions(policy_payload: dict, *, client: SolarClient) -> li
             "description": income_note.get("summary", "소득조건 확인 필요"),
             "failure_message": "소득 조건은 정확한 확인이 필요합니다.",
         })
+
+    # 소득 상한/하한 - earnMinAmt/earnMaxAmt 숫자 필드 직접 매핑 (AI 없음, MANUAL)
+    # earnEtcCn(자유서술)이 비어 있어도 이 필드들엔 실제 값이 들어있는 경우가 있다.
+    structured_income = structured_income_condition(raw)
+    if structured_income:
+        conditions.append(structured_income)
 
     # AI가 자유텍스트에서 뽑은 조건들 - 검증 통과한 것만
     valid_ai_conditions, dropped_ai_conditions = validate_conditions(ai_result.get("conditions", []))

@@ -117,14 +117,6 @@ def evaluate_condition(
             condition_id=condition_id,
         )
 
-    if not is_registered_condition_key(condition_key):
-        return _review_result(
-            condition_key=condition_key,
-            expected_value=_safe_expected(raw_expected),
-            reason="등록되지 않은 조건 키이므로 담당자 확인이 필요합니다.",
-            condition_id=condition_id,
-        )
-
     raw_check_mode = _field(condition, ("check_mode",), default=None)
     try:
         check_mode = normalise_check_mode(raw_check_mode)
@@ -140,11 +132,22 @@ def evaluate_condition(
         ConditionCheckMode.MANUAL,
         ConditionCheckMode.DOCUMENT,
     }:
+        # MANUAL/DOCUMENT는 애초에 자동판정을 시도하지 않으므로, condition_key가
+        # 자동판정 레지스트리에 없어도(예: participation_limit처럼 판정이 아닌 안내용
+        # sentinel key) "등록되지 않은 키" 오류로 잘못 보이지 않게 이 분기를 먼저 처리한다.
         mode_label = "서류" if check_mode is ConditionCheckMode.DOCUMENT else "수동"
         return _review_result(
             condition_key=condition_key,
             expected_value=_safe_expected(raw_expected),
             reason=f"{mode_label} 확인이 필요한 조건입니다.",
+            condition_id=condition_id,
+        )
+
+    if not is_registered_condition_key(condition_key):
+        return _review_result(
+            condition_key=condition_key,
+            expected_value=_safe_expected(raw_expected),
+            reason="등록되지 않은 조건 키이므로 담당자 확인이 필요합니다.",
             condition_id=condition_id,
         )
 
@@ -269,8 +272,11 @@ def evaluate_policy(
     from collections import defaultdict
     groups: dict[int, list[ConditionStatus]] = defaultdict(list)
     for condition, result in zip(condition_list, results):
-        if not _field(condition, ("is_required",), default=True):
-            continue  # 선택 조건은 그룹 판정에서 제외 (기존 로직 유지)
+        # is_required=False(소득/참여제한 안내 등 대부분의 세부 조건)도 카드 판정에
+        # 반영한다. 불충족 조건은(예외조항이 있었다면 evaluate_condition()이 이미
+        # NEEDS_REVIEW로 낮췄으므로 여기 남은 UNSATISFIED는 전부 "예외 없는 불충족") 하나만
+        # 있어도 그 그룹은 INELIGIBLE, 그렇지 않은데 확인 필요가 있으면 NEEDS_REVIEW로
+        # 집계한다 - is_required는 더 이상 그룹 판정에서 조건을 제외하는 용도로 쓰지 않는다.
         group_no = _field(condition, ("condition_group_no",), default=1)
         groups[group_no].append(result.status)
 

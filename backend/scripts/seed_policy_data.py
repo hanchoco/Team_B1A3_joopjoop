@@ -431,9 +431,13 @@ async def create_seed_draft(
                 "the youth policy API returned no new policies "
                 "(everything matched was already seeded, or there were no results)"
             )
+        total = len(policies)
+        print(f"수집 완료: 새 정책 {total}건 발견, AI 추출 시작", flush=True)
         bundles: list[dict[str, object]] = []
-        for policy in policies:
+        for index, policy in enumerate(policies, start=1):
             policy_payload = policy.to_dict()
+            title = policy_payload.get("title") or policy_payload.get("external_id") or "?"
+            print(f"[{index}/{total}] 처리 중: {title}", flush=True)
             raw = policy_payload.get("raw_payload") or policy_payload
             conditions = await extract_conditions(
                 policy_payload,
@@ -456,6 +460,11 @@ async def create_seed_draft(
                     "benefits": [benefit.to_dict() for benefit in benefits],
                     "category_codes": category_codes,
                 }
+            )
+            print(
+                f"[{index}/{total}] 완료: {title} "
+                f"(조건 {len(conditions)}개, 서류 {len(documents)}개, 혜택 {len(benefits)}개)",
+                flush=True,
             )
     finally:
         if owns_youth_client:
