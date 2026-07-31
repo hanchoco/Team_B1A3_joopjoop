@@ -238,26 +238,6 @@ export default function Checklist() {
               style={{ width: `${checklist.progress_percent}%` }}
             />
           </div>
-          {checklist.progress_percent === 100 && (
-            <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-              <button
-                type="button"
-                disabled={completionAction !== null}
-                onClick={() => void resetProgress()}
-                className="flex-1 rounded-lg border border-blue-600 px-4 py-3 text-sm font-bold text-blue-600 disabled:opacity-40"
-              >
-                {completionAction === 'reset' ? '초기화 중...' : '진행도 초기화하기'}
-              </button>
-              <button
-                type="button"
-                disabled={completionAction !== null}
-                onClick={() => void completeApplication()}
-                className="flex-1 rounded-lg bg-blue-600 px-4 py-3 text-sm font-bold text-white disabled:opacity-40"
-              >
-                {completionAction === 'complete' ? '이동 중...' : '신청 완료 칸으로 이동하기'}
-              </button>
-            </div>
-          )}
           <ul className="mt-5 space-y-2">
             {documents.map((document) => {
               const isSelected = selected?.document_id === document.document_id
@@ -358,6 +338,29 @@ export default function Checklist() {
           </aside>
         )}
       </div>
+
+      {checklist.progress_percent === 100 && (
+        <div className="mt-6 rounded-xl border border-gray-200 bg-white p-5">
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <button
+              type="button"
+              disabled={completionAction !== null}
+              onClick={() => void resetProgress()}
+              className="flex-1 rounded-lg border border-blue-600 px-4 py-3 text-sm font-bold text-blue-600 disabled:opacity-40"
+            >
+              {completionAction === 'reset' ? '초기화 중...' : '진행도 초기화하기'}
+            </button>
+            <button
+              type="button"
+              disabled={completionAction !== null}
+              onClick={() => void completeApplication()}
+              className="flex-1 rounded-lg bg-blue-600 px-4 py-3 text-sm font-bold text-white disabled:opacity-40"
+            >
+              {completionAction === 'complete' ? '이동 중...' : '신청 완료 칸으로 이동하기'}
+            </button>
+          </div>
+        </div>
+      )}
     </section>
   )
 }
