@@ -110,18 +110,6 @@ export default function CategorySelect() {
           })}
         </div>
       )}
-      <div className="mt-6 rounded-xl border border-blue-200 bg-blue-50 p-6">
-        <p className="font-bold">정확한 맞춤 추천을 받아보세요</p>
-        <p className="mt-2 text-sm text-gray-600">
-          몇 가지 추가 질문에 답하면 내 조건에 맞는 정책을 더 정확하게 보여드려요.
-        </p>
-        <button
-          onClick={() => navigate('/onboarding')}
-          className="mt-4 rounded-lg border border-blue-600 bg-white px-4 py-2.5 text-sm font-bold text-blue-600"
-        >
-          기본 정보 확인·수정하기
-        </button>
-      </div>
     </section>
   )
 }
