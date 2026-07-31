@@ -301,6 +301,26 @@ export default function CategoryQuestions() {
     })
   }
 
+  function toggleMultiSelectAnswer(questionId: number, optionValue: string) {
+    setAnswers((current) => {
+      const selectedValues = Array.isArray(current[questionId])
+        ? (current[questionId] as unknown[]).filter(
+            (value): value is string => typeof value === 'string',
+          )
+        : []
+      const nextValues = selectedValues.includes(optionValue)
+        ? selectedValues.filter((value) => value !== optionValue)
+        : [...selectedValues, optionValue]
+
+      if (nextValues.length === 0) {
+        const nextAnswers = { ...current }
+        delete nextAnswers[questionId]
+        return nextAnswers
+      }
+      return { ...current, [questionId]: nextValues }
+    })
+  }
+
   function setAssetBreakdownValue(
     questionId: number,
     key: keyof AssetBreakdown,
@@ -359,6 +379,22 @@ export default function CategoryQuestions() {
     } else {
       setStep((current) => current + 1)
     }
+  }
+
+  function goToNextQuestion() {
+    setMonthListOpen(false)
+
+    if (isContractTypeQuestion && answers[question.id] === 'UNKNOWN') {
+      const nextAnswers = { ...answers }
+      visibleQuestions.slice(step + 1).forEach((item) => {
+        nextAnswers[item.id] = null
+      })
+      setAnswers(nextAnswers)
+      void finish(nextAnswers)
+      return
+    }
+
+    setStep((current) => current + 1)
   }
 
   if (loading) {
@@ -759,24 +795,21 @@ export default function CategoryQuestions() {
           ) : parseOptions(question.options_json).length > 0 ? (
             <div className="grid gap-3 sm:grid-cols-2">
               {parseOptions(question.options_json).map((option) => {
-                const selected = answers[question.id] === option.value
+                const selected =
+                  question.answer_type === 'MULTI_SELECT'
+                    ? Array.isArray(answers[question.id]) &&
+                      (answers[question.id] as unknown[]).includes(option.value)
+                    : answers[question.id] === option.value
                 return (
                   <button
                     key={option.value}
                     type="button"
                     disabled={submitting}
-                    onClick={() => {
-                      if (isContractTypeQuestion && option.value === 'UNKNOWN') {
-                        const nextAnswers = { ...answers, [question.id]: option.value }
-                        visibleQuestions.slice(step + 1).forEach((item) => {
-                          nextAnswers[item.id] = null
-                        })
-                        setAnswers(nextAnswers)
-                        void finish(nextAnswers)
-                        return
-                      }
-                      setAnswerValue(question.id, option.value)
-                    }}
+                    onClick={() =>
+                      question.answer_type === 'MULTI_SELECT'
+                        ? toggleMultiSelectAnswer(question.id, option.value)
+                        : setAnswerValue(question.id, option.value)
+                    }
                     className={`flex min-h-16 items-center justify-between rounded-lg border px-5 py-4 text-left text-sm font-semibold transition ${selected ? 'border-blue-600 bg-blue-50 text-blue-700 ring-2 ring-blue-100' : 'border-gray-200 hover:border-blue-300'}`}
                   >
                     {isCompanySizeQuestion
@@ -834,10 +867,7 @@ export default function CategoryQuestions() {
             onClick={
               isLast
                 ? () => void finish()
-                : () => {
-                    setMonthListOpen(false)
-                    setStep((current) => current + 1)
-                  }
+                : goToNextQuestion
             }
             className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 py-3.5 font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
           >
