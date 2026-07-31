@@ -10,6 +10,7 @@ import {
 } from '../../api/checklist'
 import { extractErrorMessage } from '../../api/client'
 import type {
+  ChecklistConditionItem,
   ChecklistDocumentItem,
   ChecklistResponse,
   ConditionResultStatus,
@@ -87,12 +88,25 @@ export default function Checklist() {
     }
   }
 
-  async function confirmCondition(conditionId: number) {
+  async function confirmCondition(condition: ChecklistConditionItem) {
     if (!checklist) return
-    setBusyId(conditionId)
+    if (
+      condition.result_status === 'UNSATISFIED' &&
+      !window.confirm(
+        `“${condition.description}” 조건은 현재 불충족 상태입니다.\n\n불충족임을 인지했으며 그래도 준비를 계속하시겠어요?`,
+      )
+    ) {
+      return
+    }
+
+    setBusyId(condition.condition_id)
     setError('')
     try {
-      const data = await confirmChecklistCondition(checklist.state_id, conditionId, true)
+      const data = await confirmChecklistCondition(
+        checklist.state_id,
+        condition.condition_id,
+        true,
+      )
       setChecklist(data)
     } catch (err) {
       setError(extractErrorMessage(err))
@@ -118,6 +132,18 @@ export default function Checklist() {
 
   async function completeApplication() {
     if (!checklist) return
+    const unsatisfiedConditions = checklist.conditions.filter(
+      (condition) => condition.result_status === 'UNSATISFIED',
+    )
+    if (
+      unsatisfiedConditions.length > 0 &&
+      !window.confirm(
+        `이 정책에는 불충족 조건이 ${unsatisfiedConditions.length}개 있습니다.\n\n불충족 상태임을 인지했으며 신청 완료 칸으로 이동하시겠어요?`,
+      )
+    ) {
+      return
+    }
+
     setCompletionAction('complete')
     setError('')
     try {
@@ -207,7 +233,7 @@ export default function Checklist() {
                     <button
                       type="button"
                       disabled={busyId === condition.condition_id}
-                      onClick={() => void confirmCondition(condition.condition_id)}
+                      onClick={() => void confirmCondition(condition)}
                       className="rounded-lg border border-blue-600 px-3 py-1.5 text-xs font-bold text-blue-600 disabled:opacity-40"
                     >
                       확인 완료
