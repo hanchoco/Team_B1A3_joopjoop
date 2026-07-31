@@ -154,6 +154,12 @@ export default function PolicyDetail() {
           <p className="mt-3 max-w-2xl text-sm leading-7 text-gray-500">
             {policy.summary ?? policy.description ?? ''}
           </p>
+          {(policy.provider_name || policy.contact) && (
+            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
+              {policy.provider_name && <span>담당기관 · {policy.provider_name}</span>}
+              {policy.contact && <span>문의처 · {policy.contact}</span>}
+            </div>
+          )}
           <div className="mt-7 grid gap-3 sm:grid-cols-3">
             {[
               ['예상 혜택', formatAmount(policy.estimated_benefit_amount)],
@@ -247,6 +253,16 @@ export default function PolicyDetail() {
                 ),
               )}
             </ul>
+          )}
+          {tab === '신청방법' && policy.application_url && (
+            <a
+              href={policy.application_url}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-4 inline-block text-xs font-semibold text-blue-600 hover:underline"
+            >
+              온라인 신청 페이지 바로가기
+            </a>
           )}
         </div>
       </div>

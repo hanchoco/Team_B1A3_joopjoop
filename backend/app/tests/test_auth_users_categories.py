@@ -630,6 +630,22 @@ def test_categories_questions_and_answer_upsert(client: TestClient) -> None:
         assert stored_answers[0].id == created_answer["id"]
         assert stored_answers[0].answer_json == {"value": "NOT_ENROLLED"}
 
+    unauthenticated_get_response = client.get(
+        f"/api/v1/categories/{category_id}/answers",
+    )
+    assert unauthenticated_get_response.status_code == 401
+    assert set(unauthenticated_get_response.json()) == {"code", "detail"}
+    assert unauthenticated_get_response.json()["code"] == "AUTHENTICATION_FAILED"
+
+    get_answers_response = client.get(
+        f"/api/v1/categories/{category_id}/answers",
+        headers=headers,
+    )
+    assert get_answers_response.status_code == 200, get_answers_response.text
+    fetched_answers = get_answers_response.json()
+    assert len(fetched_answers) == 1
+    assert fetched_answers[0] == updated_answer
+
 
 def test_ensure_default_category_questions_seeds_matched_categories(
     client: TestClient,

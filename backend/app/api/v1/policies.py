@@ -72,6 +72,30 @@ def list_category_questions(
     ]
 
 
+@router.get(
+    "/categories/{category_id}/answers",
+    response_model=list[CategoryAnswerResponse],
+)
+def get_category_answers(
+    category_id: int,
+    db: DbSession,
+    current_user: CurrentUser,
+) -> list[CategoryAnswerResponse]:
+    """Return the current user's saved answers for one category."""
+
+    category = category_crud.get_category(db, category_id)
+    if category is None:
+        from app.services.errors import NotFoundError
+
+        raise NotFoundError("카테고리를 찾을 수 없습니다.")
+    records = category_crud.list_user_category_answers(
+        db,
+        current_user.id,
+        category_id=category_id,
+    )
+    return [CategoryAnswerResponse.model_validate(r) for r in records]
+
+
 @router.put(
     "/categories/{category_id}/answers",
     response_model=list[CategoryAnswerResponse],

@@ -2,8 +2,16 @@ import { ArrowRight, Bookmark, CheckCircle2, ClipboardList, UserRound } from 'lu
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { listMyPolicies } from '../../api/checklist'
+import { getRecommendations } from '../../api/policies'
 import { useApp } from '../../store/useApp'
-import type { UserPolicyItemResponse } from '../../types/api'
+import type { PolicySummaryResponse, UserPolicyItemResponse } from '../../types/api'
+
+function formatBenefit(amount: number | string | null): string | null {
+  if (amount === null) return null
+  const numeric = Number(amount)
+  if (!Number.isFinite(numeric) || numeric <= 0) return null
+  return `예상 혜택 ${numeric.toLocaleString()}원`
+}
 
 const PROFILE_FIELDS = [
   'birth_year',
@@ -21,6 +29,25 @@ export default function MyPage() {
   const [preparingCount, setPreparingCount] = useState(0)
   const [appliedCount, setAppliedCount] = useState(0)
   const [preparing, setPreparing] = useState<UserPolicyItemResponse[]>([])
+  const [recommendations, setRecommendations] = useState<PolicySummaryResponse[]>([])
+  const [recommendationsLoading, setRecommendationsLoading] = useState(true)
+
+  useEffect(() => {
+    let cancelled = false
+    getRecommendations(3)
+      .then((items) => {
+        if (!cancelled) setRecommendations(items)
+      })
+      .catch(() => {
+        if (!cancelled) setRecommendations([])
+      })
+      .finally(() => {
+        if (!cancelled) setRecommendationsLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -138,6 +165,33 @@ export default function MyPage() {
                 더 많은 정보 보기
               </button>
             </div>
+            {recommendationsLoading ? (
+              <p className="mt-5 text-sm text-gray-500">불러오는 중...</p>
+            ) : recommendations.length === 0 ? (
+              <p className="mt-5 text-sm text-gray-500">아직 추천할 정책이 없어요.</p>
+            ) : (
+              <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                {recommendations.map((policy) => {
+                  const benefitText = formatBenefit(policy.estimated_benefit_amount)
+                  return (
+                    <button
+                      key={policy.id}
+                      type="button"
+                      onClick={() => navigate(`/policies/${policy.id}`)}
+                      className="rounded-lg border border-gray-200 p-4 text-left transition hover:border-blue-300"
+                    >
+                      <h4 className="text-sm font-bold">{policy.title}</h4>
+                      {policy.summary && (
+                        <p className="mt-1 text-xs text-gray-500">{policy.summary}</p>
+                      )}
+                      {benefitText && (
+                        <p className="mt-2 text-xs font-semibold text-blue-600">{benefitText}</p>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
           </div>
         </div>
       </div>

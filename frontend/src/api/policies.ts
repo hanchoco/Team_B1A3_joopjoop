@@ -5,6 +5,7 @@ import type {
   PolicyDetailResponse,
   PolicyListResponse,
   PolicyMatchDetailResponse,
+  PolicySummaryResponse,
 } from '../types/api'
 
 export interface ListPoliciesParams {
@@ -42,5 +43,12 @@ export async function removeBookmark(id: number): Promise<void> {
 
 export async function getDashboardSummary(): Promise<DashboardSummaryResponse> {
   const response = await apiClient.get<DashboardSummaryResponse>('/users/me/dashboard-summary')
+  return response.data
+}
+
+export async function getRecommendations(limit = 3): Promise<PolicySummaryResponse[]> {
+  const response = await apiClient.get<PolicySummaryResponse[]>('/users/me/recommendations', {
+    params: { limit },
+  })
   return response.data
 }

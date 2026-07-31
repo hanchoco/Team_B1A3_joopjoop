@@ -21,6 +21,7 @@ _EXPECTED_SUCCESS_STATUS: dict[tuple[str, str], str] = {
     ("DELETE", "/api/v1/users/me"): "200",
     ("GET", "/api/v1/categories"): "200",
     ("GET", "/api/v1/categories/{category_id}/questions"): "200",
+    ("GET", "/api/v1/categories/{category_id}/answers"): "200",
     ("PUT", "/api/v1/categories/{category_id}/answers"): "200",
     ("GET", "/api/v1/policies"): "200",
     ("GET", "/api/v1/users/me/recommendations"): "200",
@@ -91,7 +92,7 @@ def test_openapi_enumerates_every_business_operation() -> None:
     schema = app.openapi()
     operations = _business_operations(schema)
 
-    assert len(operations) == 39
+    assert len(operations) == 40
     assert set(operations) == set(_EXPECTED_SUCCESS_STATUS)
     operation_ids = [operation.get("operationId") for operation in operations.values()]
     assert all(isinstance(operation_id, str) for operation_id in operation_ids)
