@@ -136,11 +136,29 @@ def evaluate_condition(
         # 자동판정 레지스트리에 없어도(예: participation_limit처럼 판정이 아닌 안내용
         # sentinel key) "등록되지 않은 키" 오류로 잘못 보이지 않게 이 분기를 먼저 처리한다.
         mode_label = "서류" if check_mode is ConditionCheckMode.DOCUMENT else "수동"
+        reason = f"{mode_label} 확인이 필요한 조건입니다."
+        answered_value: object = MISSING_VALUE
+        # 자동판정은 안 하지만, 카테고리 온보딩에서 사용자가 이미 입력해둔 값이 있으면
+        # (예: 월세 금액, 임차보증금) 그냥 무시하지 않고 안내 문구에 보여준다 - "입력했는데
+        # 왜 또 물어보냐"는 혼란을 줄이기 위함. 판정 자체(충족/불충족)는 여전히 사람이
+        # 직접 확인 버튼을 눌러야 확정된다.
+        if is_registered_condition_key(condition_key):
+            answered_value = resolve_condition_value(
+                condition_key,
+                context,
+                reference_date=reference_date,
+            )
+            if not is_missing_value(answered_value):
+                reason = (
+                    f"회원님이 입력하신 값: {_format_answered_value(condition_key, answered_value)}"
+                    f" — 이 조건에 해당하는지 확인해주세요."
+                )
         return _review_result(
             condition_key=condition_key,
             expected_value=_safe_expected(raw_expected),
-            reason=f"{mode_label} 확인이 필요한 조건입니다.",
+            reason=reason,
             condition_id=condition_id,
+            actual_value=None if is_missing_value(answered_value) else answered_value,
         )
 
     if not is_registered_condition_key(condition_key):
@@ -308,6 +326,17 @@ def evaluate_policy(
         unsatisfied_condition_count=unsatisfied_count,
         total_condition_count=len(results),
     )
+
+def _format_answered_value(condition_key: str, value: object) -> str:
+    """Render a resolved context value for a human-facing MANUAL-review reason."""
+
+    if isinstance(value, bool):
+        return "예" if value else "아니오"
+    if isinstance(value, (int, float)):
+        formatted = f"{value:,.0f}" if isinstance(value, float) else f"{value:,}"
+        return f"{formatted}원" if condition_key.endswith("_amount") else formatted
+    return str(value)
+
 
 def _review_result(
     *,

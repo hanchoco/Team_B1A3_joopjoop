@@ -110,6 +110,10 @@ AUTO_EVALUABLE_OPERATORS = {
 
 TOPIC_KEYWORDS = {
     "employment.insurance_enrolled": ["보험"],
+    # profile.age 예외조항은 실제 사례상 거의 항상 군복무 연장 패턴이다. "원가구 소득
+    # 미고려" 같은 다른 주제의 문장(우연히 "OO세 이상"이 포함됨)이 나이 조건에 잘못
+    # 붙는 사고가 있었다 - 이 키워드가 없으면 evidence가 원문에 있어도 버린다.
+    "profile.age": ["군복무", "군필", "제대", "복무"],
 }
 
 
@@ -242,18 +246,41 @@ def validate_conditions(raw_conditions: list) -> tuple:
     return cleaned, dropped
 
 
-def _extract_exception_notes(ai_result: dict) -> dict:
+def _normalize_whitespace(text: str) -> str:
+    return " ".join(text.split())
+
+
+def _extract_exception_notes(ai_result: dict, source_text: str) -> dict:
     """condition_exceptions를 {condition_key: 예외조항 요약} 딕셔너리로 정리.
 
-    허용되지 않은 condition_key나 빈 summary는 조용히 무시한다 (validate_conditions()와
-    같은 보수적 원칙 - 애매하면 반영하지 않는다).
+    실제로 겪은 사고 두 가지:
+    1. 프롬프트가 "원문에 근거 없으면 만들지 마세요"라고 지시해도, AI가 "청년월세
+       정책엔 보통 군필자 연장이 있다"는 일반 지식으로 원문에 전혀 없는 예외조항을
+       지어낸 적이 있다(검단구/서해구 정책에 "군필자는 만 32세까지 인정" 삽입, 두 정책
+       원문 어디에도 군복무 언급 없음) - evidence가 실제로 AI에게 보여준 원문
+       (source_text)에 포함될 때만 채택해서 막는다.
+    2. evidence가 원문에 실제로 있어도(그래서 1번 검증은 통과해도) 엉뚱한 조건에 잘못
+       붙는 경우가 있다(원가구 소득 미고려 조건 문장이 우연히 "OO세 이상"을 포함한다는
+       이유로 profile.age에 붙음) - TOPIC_KEYWORDS로 조건 키와 evidence의 주제가
+       맞는지도 확인한다.
     """
+    source_normalized = _normalize_whitespace(source_text)
     notes = {}
     for item in ai_result.get("condition_exceptions", []) or []:
         key = item.get("condition_key")
         summary = item.get("summary")
-        if key in ALLOWED_CONDITION_KEYS and isinstance(summary, str) and summary.strip():
-            notes[key] = summary.strip()
+        evidence = item.get("evidence")
+        if key not in ALLOWED_CONDITION_KEYS:
+            continue
+        if not isinstance(summary, str) or not summary.strip():
+            continue
+        if not isinstance(evidence, str) or not evidence.strip():
+            continue
+        if _normalize_whitespace(evidence) not in source_normalized:
+            continue
+        if _topic_mismatch(key, evidence):
+            continue
+        notes[key] = summary.strip()
     return notes
 
 
@@ -346,6 +373,9 @@ async def extract_conditions(policy_payload: dict, *, client: SolarClient) -> li
         })
 
     # 참여제한/중복수혜 안내 - 체크박스 전용
+    # ptcpPrpTrgtCn(참여제한 대상) 원문 자체가 "해당하면 제외"라는 의미인데, summary만
+    # 그대로 보여주면 "해당하면 되는 건지 안 되는 건지" 구분이 안 된다는 지적을 받아
+    # 항상 "제외 대상" 라벨을 붙여 명확히 한다.
     for note in ai_result.get("participation_notes", []):
         conditions.append({
             "condition_key": "participation_limit",
@@ -354,12 +384,12 @@ async def extract_conditions(policy_payload: dict, *, client: SolarClient) -> li
             "condition_group_no": 1,
             "is_required": False,
             "check_mode": "MANUAL",
-            "description": note.get("summary"),
+            "description": f"[신청 제외 대상] {note.get('summary')}",
             "failure_message": None,
         })
 
     # 조건별 예외조항 - 나이/지역/소득/AI 조건 전부 condition_key로 일괄 매칭
-    exception_notes = _extract_exception_notes(ai_result)
+    exception_notes = _extract_exception_notes(ai_result, user_input)
     for c in conditions:
         note = exception_notes.get(c.get("condition_key"))
         if note:

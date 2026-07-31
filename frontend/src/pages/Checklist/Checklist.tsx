@@ -1,9 +1,19 @@
 import { ArrowLeft, Check, CheckCircle2, ExternalLink, FileText, TriangleAlert } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { confirmChecklistCondition, startPreparation, updateChecklistDocument } from '../../api/checklist'
+import {
+  confirmChecklistCondition,
+  recordPolicyApplication,
+  resetChecklistProgress,
+  startPreparation,
+  updateChecklistDocument,
+} from '../../api/checklist'
 import { extractErrorMessage } from '../../api/client'
-import type { ChecklistDocumentItem, ChecklistResponse, ConditionResultStatus } from '../../types/api'
+import type {
+  ChecklistDocumentItem,
+  ChecklistResponse,
+  ConditionResultStatus,
+} from '../../types/api'
 
 const CONDITION_LABEL: Record<ConditionResultStatus, string> = {
   SATISFIED: '충족',
@@ -27,6 +37,7 @@ export default function Checklist() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [busyId, setBusyId] = useState<number | null>(null)
+  const [completionAction, setCompletionAction] = useState<'reset' | 'complete' | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -90,6 +101,40 @@ export default function Checklist() {
     }
   }
 
+  async function resetProgress() {
+    if (!checklist) return
+    setCompletionAction('reset')
+    setError('')
+    try {
+      const data = await resetChecklistProgress(checklist)
+      setChecklist(data)
+      setSelectedId(data.documents[0]?.document_id ?? null)
+    } catch (err) {
+      setError(extractErrorMessage(err))
+    } finally {
+      setCompletionAction(null)
+    }
+  }
+
+  async function completeApplication() {
+    if (!checklist) return
+    setCompletionAction('complete')
+    setError('')
+    try {
+      const today = new Date()
+      const applicationDate = [
+        today.getFullYear(),
+        String(today.getMonth() + 1).padStart(2, '0'),
+        String(today.getDate()).padStart(2, '0'),
+      ].join('-')
+      await recordPolicyApplication(checklist.policy_id, applicationDate)
+      navigate('/mypage/policies?tab=completed')
+    } catch (err) {
+      setError(extractErrorMessage(err))
+      setCompletionAction(null)
+    }
+  }
+
   if (loading) {
     return <p className="py-10 text-center text-sm text-gray-500">불러오는 중...</p>
   }
@@ -103,7 +148,9 @@ export default function Checklist() {
         >
           <ArrowLeft size={16} /> 정책 상세로
         </button>
-        <p className="mt-6 rounded-lg bg-rose-50 p-4 text-sm font-semibold text-rose-600">{error}</p>
+        <p className="mt-6 rounded-lg bg-rose-50 p-4 text-sm font-semibold text-rose-600">
+          {error}
+        </p>
       </section>
     )
   }
@@ -129,17 +176,16 @@ export default function Checklist() {
       </div>
 
       {error && (
-        <p className="mt-4 rounded-lg bg-rose-50 p-4 text-sm font-semibold text-rose-600">{error}</p>
+        <p className="mt-4 rounded-lg bg-rose-50 p-4 text-sm font-semibold text-rose-600">
+          {error}
+        </p>
       )}
 
       <div className="mt-6 rounded-xl border border-gray-200 bg-white p-5">
         <h2 className="text-xl font-black">자격조건 확인</h2>
         <ul className="mt-4 space-y-3">
           {checklist.conditions.map((condition) => (
-            <li
-              key={condition.condition_id}
-              className="rounded-lg border border-gray-200 p-4"
-            >
+            <li key={condition.condition_id} className="rounded-lg border border-gray-200 p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-sm font-semibold">{condition.description}</p>
@@ -192,6 +238,26 @@ export default function Checklist() {
               style={{ width: `${checklist.progress_percent}%` }}
             />
           </div>
+          {checklist.progress_percent === 100 && (
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+              <button
+                type="button"
+                disabled={completionAction !== null}
+                onClick={() => void resetProgress()}
+                className="flex-1 rounded-lg border border-blue-600 px-4 py-3 text-sm font-bold text-blue-600 disabled:opacity-40"
+              >
+                {completionAction === 'reset' ? '초기화 중...' : '진행도 초기화하기'}
+              </button>
+              <button
+                type="button"
+                disabled={completionAction !== null}
+                onClick={() => void completeApplication()}
+                className="flex-1 rounded-lg bg-blue-600 px-4 py-3 text-sm font-bold text-white disabled:opacity-40"
+              >
+                {completionAction === 'complete' ? '이동 중...' : '신청 완료 칸으로 이동하기'}
+              </button>
+            </div>
+          )}
           <ul className="mt-5 space-y-2">
             {documents.map((document) => {
               const isSelected = selected?.document_id === document.document_id
@@ -250,7 +316,9 @@ export default function Checklist() {
               </div>
             )}
 
-            {(selected.issuing_organization || selected.issuing_method || selected.submission_format) && (
+            {(selected.issuing_organization ||
+              selected.issuing_method ||
+              selected.submission_format) && (
               <dl className="mt-4 divide-y divide-gray-100 border-y border-gray-200 bg-white px-4">
                 {selected.issuing_organization && (
                   <div className="grid gap-1 py-3 sm:grid-cols-[88px_1fr]">

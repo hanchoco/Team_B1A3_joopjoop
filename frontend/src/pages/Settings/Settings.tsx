@@ -1,11 +1,11 @@
-import { Bell, CalendarClock, ChevronRight, Mail, ShieldCheck, UserRound, X } from 'lucide-react'
+import { Bell, CalendarClock, ChevronRight, KeyRound, Mail, ShieldCheck, X } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../../store/useApp'
 
 const menuItems = [
   { id: 'notifications', label: '알림 설정', icon: Bell },
-  { id: 'account', label: '비밀번호 변경', icon: UserRound },
+  { id: 'account', label: '비밀번호 변경', icon: KeyRound },
   { id: 'privacy', label: '개인정보 처리 안내', icon: ShieldCheck },
   { id: 'logout', label: '로그아웃' },
   { id: 'withdraw', label: '회원 탈퇴' },

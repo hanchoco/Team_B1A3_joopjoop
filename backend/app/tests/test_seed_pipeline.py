@@ -323,6 +323,9 @@ def test_extract_conditions_attaches_exception_note_to_matching_condition() -> N
                     "sprtTrgtMinAge": "19",
                     "sprtTrgtMaxAge": "34",
                     "zipCd": "11,41",
+                    "addAplyQlfcCndCn": (
+                        "군 복무기간만큼 연장 가능. 중견기업 중 일부 예외 인정."
+                    ),
                 },
             },
             client=client,
@@ -336,6 +339,161 @@ def test_extract_conditions_attaches_exception_note_to_matching_condition() -> N
         == "중견기업도 매출 기준 충족 시 인정됩니다."
     )
     assert by_key["profile.region_code"].exception_note is None
+
+
+def test_extract_conditions_drops_exception_note_with_ungrounded_evidence() -> None:
+    """Reproduces a real hallucination: the AI attached '군필자는 만 32세까지
+    인정' to two policies whose source text never mentions military service at
+    all - it echoed the illustrative example from our own prompt. evidence
+    that doesn't literally appear in what the AI was shown must be dropped."""
+
+    client = _FakeSolarClient(
+        {
+            "conditions": [],
+            "income_note": {"has_income_condition": False},
+            "condition_exceptions": [
+                {
+                    "condition_key": "profile.age",
+                    "summary": "군필자는 만 32세까지 인정",
+                    "evidence": "군필자는 만 32세까지 인정",
+                },
+            ],
+            "participation_notes": [],
+        }
+    )
+
+    conditions = asyncio.run(
+        extract_conditions(
+            {
+                "title": "검단구 청년월세 지원사업",
+                "raw_payload": {
+                    "plcyNm": "검단구 청년월세 지원사업",
+                    "sprtTrgtMinAge": "19",
+                    "sprtTrgtMaxAge": "34",
+                    "zipCd": "28290",
+                    "addAplyQlfcCndCn": "",
+                    "ptcpPrpTrgtCn": "",
+                    "earnEtcCn": "",
+                },
+            },
+            client=client,
+        )
+    )
+
+    age_condition = next(c for c in conditions if c.condition_key == "profile.age")
+    assert age_condition.exception_note is None
+
+
+def test_extract_conditions_keeps_exception_note_grounded_in_this_policys_text() -> None:
+    client = _FakeSolarClient(
+        {
+            "conditions": [],
+            "income_note": {"has_income_condition": False},
+            "condition_exceptions": [
+                {
+                    "condition_key": "profile.age",
+                    "summary": "군복무 기간에 따라 최대 3세까지 연장 인정",
+                    "evidence": "군복무 기간이 2년 이상인 경우 3세 연장",
+                },
+            ],
+            "participation_notes": [],
+        }
+    )
+
+    conditions = asyncio.run(
+        extract_conditions(
+            {
+                "title": "영종구 청년월세 지원사업",
+                "raw_payload": {
+                    "plcyNm": "영종구 청년월세 지원사업",
+                    "sprtTrgtMinAge": "35",
+                    "sprtTrgtMaxAge": "39",
+                    "zipCd": "28155",
+                    "addAplyQlfcCndCn": "군복무 기간이 2년 이상인 경우 3세 연장(1983년생)",
+                },
+            },
+            client=client,
+        )
+    )
+
+    age_condition = next(c for c in conditions if c.condition_key == "profile.age")
+    assert age_condition.exception_note == "군복무 기간에 따라 최대 3세까지 연장 인정"
+
+
+def test_extract_conditions_drops_age_exception_about_a_different_topic() -> None:
+    """Reproduces a second, subtler bug found right after the hallucination
+    fix: evidence that IS genuinely present in the source text (so it passes
+    grounding) can still be about the wrong topic - here an income-exemption
+    clause ('원가구 소득·재산 미고려') happens to contain '30세 이상' and got
+    attached to profile.age instead of being about income at all."""
+
+    client = _FakeSolarClient(
+        {
+            "conditions": [],
+            "income_note": {"has_income_condition": False},
+            "condition_exceptions": [
+                {
+                    "condition_key": "profile.age",
+                    "summary": (
+                        "30세 이상, 혼인, 미혼부·모, 30세 미만 미혼 청년의 소득이 중위 "
+                        "50% 이상으로 생계를 달리한다고 구청장이 인정하는 경우"
+                    ),
+                    "evidence": "원가구(부모님) 소득·재산 미고려 : 30세 이상",
+                },
+            ],
+            "participation_notes": [],
+        }
+    )
+
+    conditions = asyncio.run(
+        extract_conditions(
+            {
+                "title": "서해구 청년월세지원",
+                "raw_payload": {
+                    "plcyNm": "서해구 청년월세지원",
+                    "sprtTrgtMinAge": "35",
+                    "sprtTrgtMaxAge": "39",
+                    "zipCd": "28275",
+                    "addAplyQlfcCndCn": "원가구(부모님) 소득·재산 미고려 : 30세 이상",
+                },
+            },
+            client=client,
+        )
+    )
+
+    age_condition = next(c for c in conditions if c.condition_key == "profile.age")
+    assert age_condition.exception_note is None
+
+
+def test_participation_note_description_is_labelled_as_exclusion() -> None:
+    """ptcpPrpTrgtCn(참여제한 대상) items are always exclusion criteria, but a
+    bare summary like '부모와 함께 거주하는 경우' doesn't say whether matching
+    it helps or hurts. It must be prefixed so it reads unambiguously."""
+
+    client = _FakeSolarClient(
+        {
+            "conditions": [],
+            "income_note": {"has_income_condition": False},
+            "participation_notes": [
+                {
+                    "summary": "부모와 함께 거주(원가구와 세대분리하지 않은 자)하는 경우",
+                    "evidence": "부모와 함께 거주(원가구와 세대분리하지 않은 자)하는 경우",
+                },
+            ],
+        }
+    )
+
+    conditions = asyncio.run(
+        extract_conditions(
+            {"title": "청년월세지원", "raw_payload": {"plcyNm": "청년월세지원"}},
+            client=client,
+        )
+    )
+
+    note = next(c for c in conditions if c.condition_key == "participation_limit")
+    assert note.description == (
+        "[신청 제외 대상] 부모와 함께 거주(원가구와 세대분리하지 않은 자)하는 경우"
+    )
 
 
 # ---------------------------------------------------------------------------
