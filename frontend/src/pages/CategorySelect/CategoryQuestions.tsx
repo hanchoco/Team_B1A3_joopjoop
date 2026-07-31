@@ -23,6 +23,7 @@ export default function CategoryQuestions() {
   const categoryId = Number(categoryIdParam)
 
   const [categoryName, setCategoryName] = useState('')
+  const [categoryCode, setCategoryCode] = useState('')
   const [questions, setQuestions] = useState<CategoryQuestionResponse[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -47,6 +48,7 @@ export default function CategoryQuestions() {
         const [categories, categoryQuestions] = result
         const category = categories.find((item) => item.id === categoryId)
         setCategoryName(category?.name ?? '')
+        setCategoryCode(category?.code ?? '')
         setQuestions(categoryQuestions)
       })
       .catch((err: unknown) => {
@@ -64,13 +66,16 @@ export default function CategoryQuestions() {
     setAnswers((current) => ({ ...current, [questionId]: value }))
   }
 
-  async function finish() {
+  async function finish(answerValues: Record<number, unknown> = answers) {
     setSubmitting(true)
     setError('')
     try {
       const payload: CategoryAnswerUpsert[] = questions
-        .filter((item) => item.id in answers)
-        .map((item) => ({ question_id: item.id, answer_json: { value: answers[item.id] } }))
+        .filter((item) => item.id in answerValues)
+        .map((item) => ({
+          question_id: item.id,
+          answer_json: { value: answerValues[item.id] },
+        }))
       if (payload.length > 0) {
         await saveCategoryAnswers(categoryId, payload)
       }
@@ -79,6 +84,16 @@ export default function CategoryQuestions() {
       setError(extractErrorMessage(err))
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  function skipQuestion(questionId: number, isLast: boolean) {
+    const nextAnswers = { ...answers, [questionId]: null }
+    setAnswers(nextAnswers)
+    if (isLast) {
+      void finish(nextAnswers)
+    } else {
+      setStep((current) => current + 1)
     }
   }
 
@@ -136,6 +151,8 @@ export default function CategoryQuestions() {
   const remaining = questions.length - step - 1
   const isLast = step === questions.length - 1
   const answered = question.id in answers
+  const isHousing = categoryCode === 'HOUSING'
+  const isHomeOwnershipQuestion = question.question_key === 'housing.home_ownership_status_code'
 
   return (
     <section className="mx-auto max-w-3xl">
@@ -180,12 +197,18 @@ export default function CategoryQuestions() {
         )}
 
         <div className="mt-8">
-          {question.answer_type === 'BOOLEAN' ? (
+          {question.answer_type === 'BOOLEAN' || isHomeOwnershipQuestion ? (
             <div className="grid gap-3 sm:grid-cols-2">
-              {[
-                { label: '예', value: true },
-                { label: '아니요', value: false },
-              ].map((option) => {
+              {(isHomeOwnershipQuestion
+                ? [
+                    { label: '예', value: 'SELF' },
+                    { label: '아니오', value: 'NONE' },
+                  ]
+                : [
+                    { label: '예', value: true },
+                    { label: '아니요', value: false },
+                  ]
+              ).map((option) => {
                 const selected = answers[question.id] === option.value
                 return (
                   <button
@@ -205,15 +228,17 @@ export default function CategoryQuestions() {
               숫자로 입력해주세요{question.unit ? ` (${question.unit})` : ''}
               <input
                 type="number"
+                min={isHousing ? 0 : undefined}
                 value={
                   typeof answers[question.id] === 'number' ? (answers[question.id] as number) : ''
                 }
-                onChange={(event) =>
+                onChange={(event) => {
+                  const value = event.target.value
                   setAnswerValue(
                     question.id,
-                    event.target.value === '' ? undefined : Number(event.target.value),
+                    value === '' ? undefined : Math.max(isHousing ? 0 : -Infinity, Number(value)),
                   )
-                }
+                }}
                 className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3.5 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               />
             </label>
@@ -251,15 +276,27 @@ export default function CategoryQuestions() {
 
         {error && <p className="mt-4 text-sm font-semibold text-rose-600">{error}</p>}
 
-        <button
-          type="button"
-          disabled={!answered || submitting}
-          onClick={isLast ? () => void finish() : () => setStep((current) => current + 1)}
-          className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 py-3.5 font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          {isLast ? (submitting ? '저장 중...' : '답변 저장하고 맞춤 정책 보기') : '다음 질문'}{' '}
-          <ArrowRight size={18} />
-        </button>
+        <div className={`mt-8 grid gap-3 ${isHousing ? 'sm:grid-cols-2' : ''}`}>
+          {isHousing && (
+            <button
+              type="button"
+              disabled={submitting}
+              onClick={() => skipQuestion(question.id, isLast)}
+              className="inline-flex w-full items-center justify-center rounded-lg border border-gray-300 px-5 py-3.5 font-bold text-gray-600 transition hover:border-gray-400 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              잘 모르겠어요
+            </button>
+          )}
+          <button
+            type="button"
+            disabled={!answered || submitting}
+            onClick={isLast ? () => void finish() : () => setStep((current) => current + 1)}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 py-3.5 font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {isLast ? (submitting ? '저장 중...' : '답변 저장하고 맞춤 정책 보기') : '다음 질문'}{' '}
+            <ArrowRight size={18} />
+          </button>
+        </div>
       </div>
     </section>
   )
