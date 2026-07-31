@@ -103,9 +103,7 @@ function CategoryQuestionField({
   return (
     <div>
       <p className="text-sm font-semibold">{question.label}</p>
-      {question.description && (
-        <p className="mt-1 text-xs text-gray-500">{question.description}</p>
-      )}
+      {question.description && <p className="mt-1 text-xs text-gray-500">{question.description}</p>}
       <div className="mt-2">
         {question.answer_type === 'BOOLEAN' ? (
           <div className="grid grid-cols-2 gap-2">
@@ -248,9 +246,7 @@ export default function EditProfile() {
           }),
         )
         if (cancelled) return
-        setAnswerCategories(
-          withQuestions.filter((item): item is CategoryResponse => item !== null),
-        )
+        setAnswerCategories(withQuestions.filter((item): item is CategoryResponse => item !== null))
       })
       .catch((err: unknown) => {
         if (!cancelled) setCategoriesError(extractErrorMessage(err))
@@ -546,7 +542,7 @@ export default function EditProfile() {
           </select>
         </label>
         <label className="block text-sm font-semibold">
-          취업상태
+          취업 상태
           <select
             value={form.employment_status_code}
             onChange={(event) => setForm({ ...form, employment_status_code: event.target.value })}
@@ -660,9 +656,7 @@ export default function EditProfile() {
                           <div className="flex items-center gap-3">
                             <button
                               type="button"
-                              disabled={
-                                section.saving || Object.keys(section.answers).length === 0
-                              }
+                              disabled={section.saving || Object.keys(section.answers).length === 0}
                               onClick={() => void saveCategorySection(category.id)}
                               className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-50"
                             >
