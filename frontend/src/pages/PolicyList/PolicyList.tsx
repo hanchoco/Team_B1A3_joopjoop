@@ -69,6 +69,7 @@ export default function PolicyList() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const selectedCategory = searchParams.get('category')
+  const hasUpdatedAnswers = searchParams.get('answers') === 'updated'
   const activeFilter = (searchParams.get('filter') || 'ELIGIBLE') as PossibilityFilter
   const activeSort: PolicySort =
     searchParams.get('sort') === 'deadline' ? 'deadline' : 'recommended'
@@ -155,15 +156,19 @@ export default function PolicyList() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-sm font-semibold text-blue-600">
-            {selectedCategory ? `${selectedCategory} 추가 답변 반영 완료` : '맞춤 정책 추천'}
+            {selectedCategory && hasUpdatedAnswers
+              ? `${selectedCategory} 추가 답변 반영 완료`
+              : '맞춤 정책 추천'}
           </p>
           <h1 className="mt-2 text-3xl font-black">
             {currentUser?.nickname ? `${currentUser.nickname} 님을 위한 ` : '맞춤 '}
             정책 {total}개
           </h1>
           <p className="mt-2 text-sm text-gray-500">
-            {selectedCategory
+            {selectedCategory && hasUpdatedAnswers
               ? `${selectedCategory} 분야의 답변을 반영해 추천 정확도를 높였어요.`
+              : selectedCategory
+                ? `${selectedCategory} 분야의 맞춤 정책을 모았어요.`
               : '가능성이 높은 정책부터 간결하게 모았어요.'}
           </p>
         </div>

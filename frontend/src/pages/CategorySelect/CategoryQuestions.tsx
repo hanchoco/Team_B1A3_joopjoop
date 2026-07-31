@@ -62,8 +62,9 @@ function isRepeatedEmploymentStatusQuestion(question: CategoryQuestionResponse):
   )
 }
 
-function policiesLinkFor(categoryName: string): string {
+function policiesLinkFor(categoryName: string, answersUpdated = false): string {
   const params = new URLSearchParams(categoryName ? { category: categoryName } : {})
+  if (answersUpdated) params.set('answers', 'updated')
   return `/policies?${params.toString()}`
 }
 
@@ -366,7 +367,7 @@ export default function CategoryQuestions() {
       if (payload.length > 0) {
         await saveCategoryAnswers(categoryId, payload)
       }
-      navigate(policiesLinkFor(categoryName))
+      navigate(policiesLinkFor(categoryName, true))
     } catch (err) {
       setError(extractErrorMessage(err))
     } finally {
