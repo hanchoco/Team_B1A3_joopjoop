@@ -16,11 +16,7 @@ import { listCategories } from '../../api/categories'
 import { getDashboardSummary } from '../../api/policies'
 import BrandLogo from '../../components/common/BrandLogo'
 import BenefitCoins from '../../components/common/BenefitCoins'
-import {
-  employmentStatusLabel,
-  housingTypeLabel,
-  regionNameByCode,
-} from '../../constants/profile'
+import { employmentStatusLabel, housingTypeLabel, regionNameByCode } from '../../constants/profile'
 import { useApp } from '../../store/useApp'
 import type { CategoryResponse, DashboardSummaryResponse } from '../../types/api'
 
@@ -128,15 +124,7 @@ export default function Dashboard() {
         <aside className="rounded-xl border border-gray-200 bg-white p-6">
           {isLoggedIn ? (
             <>
-              <div className="flex items-center justify-between">
-                <h2 className="font-bold">내 정보 요약</h2>
-                <button
-                  onClick={() => navigate('/mypage/profile')}
-                  className="text-xs font-semibold text-blue-600"
-                >
-                  수정
-                </button>
-              </div>
+              <h2 className="font-bold">내 정보 요약</h2>
               <dl className="mt-5 space-y-3 text-sm">
                 {[
                   ['출생연도', profile?.birth_year ? `${profile.birth_year}년` : '미입력'],
@@ -151,7 +139,7 @@ export default function Dashboard() {
                 ))}
               </dl>
               <button
-                onClick={() => navigate('/mypage/profile')}
+                onClick={() => navigate('/mypage/profile?from=home')}
                 className="mt-6 w-full rounded-lg border border-blue-600 py-2.5 text-sm font-semibold text-blue-600"
               >
                 정보 다시 확인하기
@@ -258,7 +246,9 @@ export default function Dashboard() {
               <strong className="text-xl">{upcomingCount}개</strong>{' '}
             </div>{' '}
             <p className="mt-6 text-sm leading-7 text-gray-500">
-              {upcomingCount > 0 ? '이번 달 마감되는 정책이 있어요.' : '아직 마감이 임박한 정책이 없어요.'}
+              {upcomingCount > 0
+                ? '이번 달 마감되는 정책이 있어요.'
+                : '아직 마감이 임박한 정책이 없어요.'}
             </p>{' '}
             <button
               onClick={() => navigate('/mypage/policies?view=urgent&sort=deadline')}
@@ -276,7 +266,9 @@ export default function Dashboard() {
                 <p className="text-base leading-6 text-gray-500">
                   현재 기본 조건만으로도{' '}
                   <strong className="font-bold text-gray-700">
-                    {formatAmount(isLoggedIn ? dashboardSummary?.missed_benefit_total_amount : null)}
+                    {formatAmount(
+                      isLoggedIn ? dashboardSummary?.missed_benefit_total_amount : null,
+                    )}
                   </strong>
                   의 혜택을
                   <br />
