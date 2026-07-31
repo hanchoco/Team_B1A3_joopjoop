@@ -141,14 +141,17 @@ def _application_dates(
         "rqutPrdCn",
     )
     is_ongoing = any(keyword in period_text for keyword in ("상시", "수시", "예산 소진"))
+    # aplyYmd/rqutYmd(신청·모집기간)가 실제 마감 기준이다. bizPrdYmd(사업 운영기간)는
+    # 신청기간이 아예 없는 정책에서만 최후 대체값으로 쓴다 - 운영기간을 신청기간보다
+    # 먼저 채택하면 신청 마감/알림 스케줄이 실제 마감일과 어긋난다.
     start = _parse_date_text(
         _first_value(
             record,
             "applicationStartDate",
             "application_start_date",
             "aplyBgngYmd",
-            "bizPrdBgngYmd",
             "rqutBgngYmd",
+            "bizPrdBgngYmd",
         )
     )
     end = _parse_date_text(
@@ -157,8 +160,8 @@ def _application_dates(
             "applicationEndDate",
             "application_end_date",
             "aplyEndYmd",
-            "bizPrdEndYmd",
             "rqutEndYmd",
+            "bizPrdEndYmd",
         )
     )
     period_matches = list(_DATE_PATTERN.finditer(period_text))

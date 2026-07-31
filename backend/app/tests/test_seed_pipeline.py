@@ -25,9 +25,10 @@ from app.services.ai.benefit_extractor import (
 from app.services.ai.rule_extractor import (
     ALLOWED_CONDITION_KEYS,
     categorize_policy,
+    extract_conditions,
     validate_condition_payload,
 )
-from scripts.seed_policy_data import SeedDraftError, _validated_bundles
+from scripts.seed_policy_data import SeedDraftError, validated_bundles
 
 
 class _FakeSolarClient:
@@ -129,6 +130,133 @@ def test_approval_accepts_age_and_region_conditions() -> None:
         "profile.age",
         "profile.region_code",
     }
+
+
+# ---------------------------------------------------------------------------
+# Bug 4: AI-extracted structured conditions were always forced to MANUAL,
+# so matcher.evaluate_condition() could never auto-check anything besides
+# the two hardcoded age/region conditions.
+# ---------------------------------------------------------------------------
+
+
+def test_extract_conditions_marks_structured_ai_condition_as_auto() -> None:
+    client = _FakeSolarClient(
+        {
+            "conditions": [
+                {
+                    "condition_key": "employment.company_size_code",
+                    "operator": "IN",
+                    "expected_value": {"values": ["SMALL", "MICRO"]},
+                    "is_required": True,
+                    "description": "중소기업 재직자만 지원",
+                    "failure_message": "중소기업 재직자만 신청할 수 있습니다.",
+                }
+            ],
+            "income_note": {"has_income_condition": False},
+            "participation_notes": [],
+        }
+    )
+
+    conditions = asyncio.run(
+        extract_conditions(
+            {"title": "청년 취업 지원", "raw_payload": {"plcyNm": "청년 취업 지원"}},
+            client=client,
+        )
+    )
+
+    ai_condition = next(
+        c for c in conditions if c.condition_key == "employment.company_size_code"
+    )
+    assert ai_condition.check_mode == "AUTO"
+
+
+def test_extract_conditions_keeps_manual_check_operator_as_manual() -> None:
+    client = _FakeSolarClient(
+        {
+            "conditions": [
+                {
+                    "condition_key": "housing.has_lease_contract",
+                    "operator": "MANUAL_CHECK",
+                    "expected_value": None,
+                    "is_required": False,
+                    "description": "임대차 계약서 확인 필요",
+                    "failure_message": None,
+                }
+            ],
+            "income_note": {"has_income_condition": False},
+            "participation_notes": [],
+        }
+    )
+
+    conditions = asyncio.run(
+        extract_conditions(
+            {"title": "청년 월세 지원", "raw_payload": {"plcyNm": "청년 월세 지원"}},
+            client=client,
+        )
+    )
+
+    ai_condition = next(
+        c for c in conditions if c.condition_key == "housing.has_lease_contract"
+    )
+    assert ai_condition.check_mode == "MANUAL"
+
+
+def test_extract_conditions_attaches_exception_note_to_matching_condition() -> None:
+    """condition_exceptions should attach to age (hardcoded, not AI-authored)
+    and to a normal AI-authored condition by condition_key, leaving unmatched
+    conditions (e.g. region) untouched."""
+
+    client = _FakeSolarClient(
+        {
+            "conditions": [
+                {
+                    "condition_key": "employment.company_size_code",
+                    "operator": "IN",
+                    "expected_value": {"values": ["SMALL", "MICRO"]},
+                    "is_required": True,
+                    "description": "중소기업 재직자만 지원",
+                    "failure_message": "중소기업 재직자만 신청할 수 있습니다.",
+                }
+            ],
+            "income_note": {"has_income_condition": False},
+            "condition_exceptions": [
+                {
+                    "condition_key": "profile.age",
+                    "summary": "군필자는 만 32세까지 인정됩니다.",
+                    "evidence": "군 복무기간만큼 연장 가능",
+                },
+                {
+                    "condition_key": "employment.company_size_code",
+                    "summary": "중견기업도 매출 기준 충족 시 인정됩니다.",
+                    "evidence": "중견기업 중 일부 예외 인정",
+                },
+            ],
+            "participation_notes": [],
+        }
+    )
+
+    conditions = asyncio.run(
+        extract_conditions(
+            {
+                "title": "청년 취업 지원",
+                "raw_payload": {
+                    "plcyNm": "청년 취업 지원",
+                    "sprtTrgtMinAge": "19",
+                    "sprtTrgtMaxAge": "34",
+                    "zipCd": "11,41",
+                },
+            },
+            client=client,
+        )
+    )
+
+    by_key = {c.condition_key: c for c in conditions}
+    assert by_key["profile.age"].exception_note == "군필자는 만 32세까지 인정됩니다."
+    assert (
+        by_key["employment.company_size_code"].exception_note
+        == "중견기업도 매출 기준 충족 시 인정됩니다."
+    )
+    assert by_key["profile.region_code"].exception_note is None
 
 
 # ---------------------------------------------------------------------------
@@ -278,7 +406,7 @@ def test_validated_bundles_accepts_a_realistic_seed_draft() -> None:
         category_codes=["HOUSING"],
     )
 
-    bundles = _validated_bundles(draft)
+    bundles = validated_bundles(draft)
 
     assert len(bundles) == 1
     bundle = bundles[0]
@@ -294,11 +422,26 @@ def test_validated_bundles_rejects_unknown_category_code() -> None:
     draft = _minimal_draft(category_codes=["NOT_A_REAL_CATEGORY"])
 
     with pytest.raises(SeedDraftError, match="category_code"):
-        _validated_bundles(draft)
+        validated_bundles(draft)
 
 
 def test_validated_bundles_rejects_empty_category_codes() -> None:
     draft = _minimal_draft(category_codes=[])
 
     with pytest.raises(SeedDraftError, match="category_codes"):
-        _validated_bundles(draft)
+        validated_bundles(draft)
+
+
+def test_validated_bundles_accepts_approved_status_with_expected_status_override() -> None:
+    """policy_seed_loader loads already-approved, git-committed drafts - these
+    have status='approved' (not 'pending_review'), so the default rejects
+    them unless expected_status is overridden."""
+
+    draft = _minimal_draft()
+    draft["status"] = "approved"
+
+    with pytest.raises(SeedDraftError, match="pending_review"):
+        validated_bundles(draft)
+
+    bundles = validated_bundles(draft, expected_status="approved")
+    assert len(bundles) == 1

@@ -123,7 +123,7 @@ def _path_inside_review_dir(path: Path, review_dir: Path) -> Path:
     return resolved
 
 
-def _load_json_file(path: Path) -> Mapping[str, object]:
+def load_json_file(path: Path) -> Mapping[str, object]:
     if not path.is_file():
         raise SeedDraftError(f"review draft not found: {path}")
     if path.stat().st_size > _MAX_DRAFT_BYTES:
@@ -228,15 +228,24 @@ def _validate_category_codes(raw_bundle: Mapping[str, object]) -> list[str]:
     return codes
 
 
-def _validated_bundles(
+def validated_bundles(
     payload: Mapping[str, object],
+    *,
+    expected_status: str = "pending_review",
 ) -> list[dict[str, object]]:
+    """Validate a draft batch and return its normalized policy bundles.
+
+    ``expected_status`` defaults to ``"pending_review"`` for the CLI approval
+    flow. ``app.services.policy_seed_loader`` passes ``"approved"`` to load
+    drafts that already finished human review and were committed to git.
+    """
+
     if payload.get("schema_version") != 1:
         raise SeedDraftError("unsupported seed draft schema_version")
     if payload.get("kind") != "policy_seed_batch":
         raise SeedDraftError("draft kind must be policy_seed_batch")
-    if payload.get("status") != "pending_review":
-        raise SeedDraftError("only pending_review drafts can be approved")
+    if payload.get("status") != expected_status:
+        raise SeedDraftError(f"draft status must be {expected_status!r}")
     raw_policies = payload.get("policies")
     if (
         not isinstance(raw_policies, Sequence)
@@ -268,7 +277,7 @@ def _validated_bundles(
     return bundles
 
 
-def _database_ready_bundle(bundle: Mapping[str, object]) -> dict[str, object]:
+def database_ready_bundle(bundle: Mapping[str, object]) -> dict[str, object]:
     ready = dict(bundle)
     for field in _POLICY_DATE_FIELDS:
         value = ready.get(field)
@@ -355,8 +364,8 @@ async def approve_seed_draft(
         Path(draft_path),
         resolved_review_dir,
     )
-    payload = _load_json_file(approved_path)
-    bundles = _validated_bundles(payload)
+    payload = load_json_file(approved_path)
+    bundles = validated_bundles(payload)
 
     if session_factory is None or upsert_function is None:
         default_factory, default_upsert = _default_persistence_dependencies()
@@ -369,7 +378,7 @@ async def approve_seed_draft(
             await _call_upsert(
                 upsert_function,
                 session,
-                _database_ready_bundle(bundle),
+                database_ready_bundle(bundle),
             )
     finally:
         close_method = getattr(session, "close", None)

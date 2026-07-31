@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Mapping, Sequence
 
-from app.integrations.youth_policy_api import YouthPolicyClient
+from app.integrations.youth_policy_api import YouthPolicyClient, normalize_policy
 
 
 class _FakePagedClient(YouthPolicyClient):
@@ -71,3 +71,42 @@ def test_collect_stops_at_max_pages_when_everything_is_excluded() -> None:
     )
 
     assert policies == []
+
+
+# ---------------------------------------------------------------------------
+# 사업 신청기간(aply/rqut) vs 사업 운영기간(bizPrd) 우선순위 회귀 테스트
+# ---------------------------------------------------------------------------
+
+
+def test_application_period_prefers_recruitment_over_operation_period() -> None:
+    """신청/모집기간(rqut)이 있으면 운영기간(bizPrd)보다 그걸 써야 한다."""
+
+    record = {
+        "plcyNo": "period-test-1",
+        "plcyNm": "전남광주 청년 문화복지카드",
+        "rqutBgngYmd": "20260201",
+        "rqutEndYmd": "20260228",
+        "bizPrdBgngYmd": "20260101",
+        "bizPrdEndYmd": "20261201",
+    }
+
+    normalized = normalize_policy(record)
+
+    assert normalized.application_start_date == "2026-02-01"
+    assert normalized.application_end_date == "2026-02-28"
+
+
+def test_application_period_falls_back_to_operation_period_when_absent() -> None:
+    """신청기간 필드가 전혀 없으면 운영기간을 최후 대체값으로 쓴다."""
+
+    record = {
+        "plcyNo": "period-test-2",
+        "plcyNm": "전남광주 청년 문화복지카드",
+        "bizPrdBgngYmd": "20260101",
+        "bizPrdEndYmd": "20261201",
+    }
+
+    normalized = normalize_policy(record)
+
+    assert normalized.application_start_date == "2026-01-01"
+    assert normalized.application_end_date == "2026-12-01"

@@ -16,6 +16,7 @@ from app.crud.categories import ensure_default_categories, ensure_default_catego
 from app.db.session import SessionLocal
 from app.services.errors import ServiceError
 from app.services.notification_service import run_scheduled_deadline_notification_job
+from app.services.policy_seed_loader import ensure_seeded_policies
 
 scheduler = AsyncIOScheduler()
 
@@ -29,6 +30,7 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         with SessionLocal() as db:
             ensure_default_categories(db)
             ensure_default_category_questions(db)
+            ensure_seeded_policies(db)
     scheduler.add_job(
         run_scheduled_deadline_notification_job,
         trigger="cron",

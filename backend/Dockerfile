@@ -13,6 +13,7 @@ RUN pip install --upgrade pip \
 
 COPY app ./app
 COPY scripts ./scripts
+COPY review_drafts ./review_drafts
 
 EXPOSE 8000
 

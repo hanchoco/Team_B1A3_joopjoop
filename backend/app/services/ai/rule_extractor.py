@@ -35,6 +35,7 @@ class ExtractedCondition:
     check_mode: str = "MANUAL"
     description: str = None
     failure_message: str = None
+    exception_note: str = None
     sort_order: int = 0
 
     def to_dict(self) -> dict:
@@ -91,6 +92,15 @@ CODE_REGISTRY_VALUES = {
 
 NO_RESTRICTION_PHRASES = ["제한 없음", "모든", "무관", "관계없이", "누구나", "가능(모든"]
 ENUM_COVERAGE_DROP_THRESHOLD = 0.8
+
+# operator가 MANUAL_CHECK가 아니면 matcher.evaluate_rule()이 자동 판정할 수 있으므로
+# AUTO로 저장한다. condition_key는 이미 validate_conditions()에서 ALLOWED_CONDITION_KEYS로
+# 걸러졌고, ALLOWED_CONDITION_KEYS는 전부 policy_engine.rules의 자동판정 레지스트리에 등록돼
+# 있다. 값 파싱이 잘못돼도 matcher.evaluate_condition()이 NEEDS_REVIEW로 안전하게 낮춘다.
+AUTO_EVALUABLE_OPERATORS = {
+    "EQ", "NE", "IN", "NOT_IN", "GT", "GTE", "LT", "LTE", "BETWEEN",
+    "CONTAINS_ANY", "CONTAINS_ALL", "EXISTS",
+}
 
 TOPIC_KEYWORDS = {
     "employment.insurance_enrolled": ["보험"],
@@ -166,6 +176,21 @@ def validate_conditions(raw_conditions: list) -> tuple:
     return cleaned, dropped
 
 
+def _extract_exception_notes(ai_result: dict) -> dict:
+    """condition_exceptions를 {condition_key: 예외조항 요약} 딕셔너리로 정리.
+
+    허용되지 않은 condition_key나 빈 summary는 조용히 무시한다 (validate_conditions()와
+    같은 보수적 원칙 - 애매하면 반영하지 않는다).
+    """
+    notes = {}
+    for item in ai_result.get("condition_exceptions", []) or []:
+        key = item.get("condition_key")
+        summary = item.get("summary")
+        if key in ALLOWED_CONDITION_KEYS and isinstance(summary, str) and summary.strip():
+            notes[key] = summary.strip()
+    return notes
+
+
 # ============================================================
 # 메인 함수 (실제 프로덕션 진입점)
 # ============================================================
@@ -236,13 +261,14 @@ async def extract_conditions(policy_payload: dict, *, client: SolarClient) -> li
     # AI가 자유텍스트에서 뽑은 조건들 - 검증 통과한 것만
     valid_ai_conditions, dropped_ai_conditions = validate_conditions(ai_result.get("conditions", []))
     for c in valid_ai_conditions:
+        operator = c.get("operator", "MANUAL_CHECK")
         conditions.append({
             "condition_key": c.get("condition_key"),
-            "operator": c.get("operator", "MANUAL_CHECK"),
+            "operator": operator,
             "expected_value_json": c.get("expected_value"),
             "condition_group_no": 1,
             "is_required": c.get("is_required", False),
-            "check_mode": "MANUAL",
+            "check_mode": "AUTO" if operator in AUTO_EVALUABLE_OPERATORS else "MANUAL",
             "description": c.get("description"),
             "failure_message": c.get("failure_message"),
         })
@@ -259,6 +285,13 @@ async def extract_conditions(policy_payload: dict, *, client: SolarClient) -> li
             "description": note.get("summary"),
             "failure_message": None,
         })
+
+    # 조건별 예외조항 - 나이/지역/소득/AI 조건 전부 condition_key로 일괄 매칭
+    exception_notes = _extract_exception_notes(ai_result)
+    for c in conditions:
+        note = exception_notes.get(c.get("condition_key"))
+        if note:
+            c["exception_note"] = note
 
     for i, c in enumerate(conditions):
         c["sort_order"] = i + 1

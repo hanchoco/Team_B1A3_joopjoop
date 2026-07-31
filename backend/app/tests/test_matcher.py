@@ -231,6 +231,34 @@ def test_failed_condition_is_unsatisfied_and_uses_failure_message() -> None:
     assert result.reason == "가구원 수 기준을 충족하지 않습니다."
 
 
+def test_failed_condition_with_exception_note_needs_review_instead() -> None:
+    result = evaluate_condition(
+        _condition(
+            expected=2,
+            failure_message="가구원 수 기준을 충족하지 않습니다.",
+            exception_note="1인 가구도 예외적으로 인정됩니다.",
+        ),
+        {"profile": {"household_size": 1}},
+    )
+
+    assert result.status is ConditionStatus.NEEDS_REVIEW
+    assert result.reason == "1인 가구도 예외적으로 인정됩니다."
+
+
+def test_failed_condition_without_exception_note_keeps_original_behaviour() -> None:
+    result = evaluate_condition(
+        _condition(
+            expected=2,
+            failure_message="가구원 수 기준을 충족하지 않습니다.",
+            exception_note=None,
+        ),
+        {"profile": {"household_size": 1}},
+    )
+
+    assert result.status is ConditionStatus.UNSATISFIED
+    assert result.reason == "가구원 수 기준을 충족하지 않습니다."
+
+
 def test_policy_is_likely_only_when_every_condition_is_satisfied() -> None:
     conditions = [
         _condition(key="profile.household_size", expected=1),

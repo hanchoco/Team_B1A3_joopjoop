@@ -37,6 +37,7 @@ class ConditionLike(Protocol):
     operator: str | Enum
     expected_value_json: object
     check_mode: str | Enum
+    exception_note: str | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -212,6 +213,21 @@ def evaluate_condition(
             actual_value=actual_value,
             expected_value=expected_value,
             reason="조건을 충족합니다.",
+            condition_id=condition_id,
+        )
+
+    exception_note = _field(
+        condition,
+        ("exception_note",),
+        default=None,
+    )
+    if isinstance(exception_note, str) and exception_note.strip():
+        return ConditionEvaluation(
+            condition_key=condition_key,
+            status=ConditionStatus.NEEDS_REVIEW,
+            actual_value=actual_value,
+            expected_value=expected_value,
+            reason=exception_note.strip(),
             condition_id=condition_id,
         )
 
