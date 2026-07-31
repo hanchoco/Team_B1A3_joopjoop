@@ -1,4 +1,4 @@
-import { CircleUserRound, Menu, Settings as SettingsIcon } from 'lucide-react'
+import { CircleUserRound, LogOut, Menu, Settings as SettingsIcon } from 'lucide-react'
 import { BrowserRouter, NavLink, Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import BrandLogo from '../components/common/BrandLogo'
 import Chatbot from '../pages/Chatbot/Chatbot'
@@ -25,7 +25,7 @@ import RequireAuth from './RequireAuth'
 
 function AppLayout() {
   const navigate = useNavigate()
-  const { isLoggedIn } = useApp()
+  const { isLoggedIn, logout } = useApp()
   const menu = [
     ['홈', '/'],
     ['카테고리', '/categories'],
@@ -66,6 +66,17 @@ function AppLayout() {
                 >
                   <CircleUserRound size={20} />
                   <span className="hidden sm:inline">마이페이지</span>
+                </button>
+                <button
+                  onClick={() => {
+                    logout()
+                    navigate('/')
+                  }}
+                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-600"
+                  aria-label="로그아웃"
+                >
+                  <LogOut size={20} />
+                  <span className="hidden sm:inline">로그아웃</span>
                 </button>
               </>
             ) : (
