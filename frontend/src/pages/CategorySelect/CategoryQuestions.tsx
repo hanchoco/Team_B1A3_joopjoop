@@ -1,6 +1,6 @@
 import { ArrowLeft, ArrowRight, CheckCircle2, Clock3 } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { listCategories, listCategoryQuestions, saveCategoryAnswers } from '../../api/categories'
 import { extractErrorMessage } from '../../api/client'
 import type { CategoryAnswerUpsert, CategoryQuestionResponse } from '../../types/api'
@@ -20,7 +20,11 @@ function policiesLinkFor(categoryName: string): string {
 export default function CategoryQuestions() {
   const { categoryId: categoryIdParam } = useParams()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const categoryId = Number(categoryIdParam)
+  const isFromHome = searchParams.get('from') === 'home'
+  const previousPath = isFromHome ? '/' : '/categories'
+  const previousLabel = isFromHome ? '돌아가기' : '카테고리 선택'
 
   const [categoryName, setCategoryName] = useState('')
   const [categoryCode, setCategoryCode] = useState('')
@@ -106,10 +110,10 @@ export default function CategoryQuestions() {
       <section className="mx-auto max-w-3xl">
         <button
           type="button"
-          onClick={() => navigate('/categories')}
+          onClick={() => navigate(previousPath)}
           className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500"
         >
-          <ArrowLeft size={16} /> 카테고리 선택
+          <ArrowLeft size={16} /> {previousLabel}
         </button>
         <p className="mt-6 rounded-lg bg-rose-50 p-4 text-sm font-semibold text-rose-600">
           {error}
@@ -123,10 +127,10 @@ export default function CategoryQuestions() {
       <section className="mx-auto max-w-3xl">
         <button
           type="button"
-          onClick={() => navigate('/categories')}
+          onClick={() => navigate(previousPath)}
           className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500"
         >
-          <ArrowLeft size={16} /> 카테고리 선택
+          <ArrowLeft size={16} /> {previousLabel}
         </button>
         <div className="mt-6 rounded-xl border border-gray-200 bg-white p-10 text-center">
           <p className="text-lg font-bold">
@@ -158,10 +162,10 @@ export default function CategoryQuestions() {
     <section className="mx-auto max-w-3xl">
       <button
         type="button"
-        onClick={() => (step > 0 ? setStep(step - 1) : navigate('/categories'))}
+        onClick={() => (step > 0 ? setStep(step - 1) : navigate(previousPath))}
         className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500"
       >
-        <ArrowLeft size={16} /> {step > 0 ? '이전 질문' : '카테고리 선택'}
+        <ArrowLeft size={16} /> {step > 0 ? '이전 질문' : previousLabel}
       </button>
 
       <div className="mt-6 rounded-xl border border-blue-200 bg-blue-50 px-5 py-4">

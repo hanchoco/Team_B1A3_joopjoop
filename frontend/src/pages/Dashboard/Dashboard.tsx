@@ -186,7 +186,7 @@ export default function Dashboard() {
             return (
               <button
                 key={id}
-                onClick={() => navigate(`/categories/${id}/questions`)}
+                onClick={() => navigate(`/categories/${id}/questions?from=home`)}
                 className="flex h-24 flex-col items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white text-sm font-semibold transition hover:border-blue-300 hover:bg-blue-50"
               >
                 <Icon size={24} className="text-gray-500" />
