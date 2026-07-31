@@ -190,6 +190,7 @@ def list_recommendations(
     *,
     user_id: int,
     limit: int | None = None,
+    eligibility_status: str | None = None,
 ) -> list[EvaluatedPolicy]:
     """Return category-independent recommendations in match order."""
 
@@ -197,7 +198,7 @@ def list_recommendations(
         db,
         user_id=user_id,
         category_code=None,
-        eligibility_status=None,
+        eligibility_status=eligibility_status,
         sort="recommendation",
         keyword=None,
         page=1,

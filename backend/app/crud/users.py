@@ -121,13 +121,10 @@ def update_account(
     return user
 
 
-def soft_delete_user(db: Session, user: User) -> None:
-    """Mark an account withdrawn while retaining only policy-required records."""
+def delete_user(db: Session, user: User) -> None:
+    """Permanently remove an account and its cascaded records."""
 
-    now = datetime.now(UTC).replace(tzinfo=None)
-    user.account_status = "WITHDRAWN"
-    user.deleted_at = now
-    user.updated_at = now
+    db.delete(user)
     db.commit()
 
 

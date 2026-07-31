@@ -98,7 +98,7 @@ def change_account(
 
 
 def withdraw_account(db: Session, *, user: User, current_password: str) -> None:
-    """Soft-delete an account after final password confirmation."""
+    """Permanently delete an account after final password confirmation."""
 
     verify_current_password(user, current_password)
-    user_crud.soft_delete_user(db, user)
+    user_crud.delete_user(db, user)

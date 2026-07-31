@@ -1,4 +1,5 @@
 import axios from 'axios'
+import type { AxiosRequestConfig } from 'axios'
 
 const TOKEN_STORAGE_KEY = 'joopjoop-access-token'
 
@@ -26,10 +27,31 @@ apiClient.interceptors.request.use((config) => {
   return config
 })
 
+/** Routes where a 401 means "the credential you just typed was wrong", not
+ * "your session expired" — these must not trigger a forced /login redirect,
+ * so the caller's catch block can show extractErrorMessage() inline instead. */
+const AUTH_REDIRECT_EXEMPT: { method: string; url: string }[] = [
+  { method: 'post', url: '/auth/login' },
+  { method: 'post', url: '/users/me/verify-password' },
+  { method: 'patch', url: '/users/me/account' },
+  { method: 'delete', url: '/users/me' },
+]
+
+function isAuthRedirectExempt(config: AxiosRequestConfig | undefined): boolean {
+  if (!config) return false
+  const method = (config.method ?? '').toLowerCase()
+  const url = config.url ?? ''
+  return AUTH_REDIRECT_EXEMPT.some((rule) => rule.method === method && url === rule.url)
+}
+
 apiClient.interceptors.response.use(
   (response) => response,
   (error: unknown) => {
-    if (axios.isAxiosError(error) && error.response?.status === 401) {
+    if (
+      axios.isAxiosError(error) &&
+      error.response?.status === 401 &&
+      !isAuthRedirectExempt(error.config)
+    ) {
       clearToken()
       if (window.location.pathname !== '/login') {
         window.location.href = '/login'

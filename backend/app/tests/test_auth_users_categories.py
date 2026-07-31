@@ -9,7 +9,7 @@ from sqlalchemy import func, select
 
 from app.crud.categories import ensure_default_categories, ensure_default_category_questions
 from app.db.session import SessionLocal
-from app.models.user import AccountStatus, User
+from app.models.user import User
 from app.models.user_category_profile import (
     AnswerType,
     Category,
@@ -426,11 +426,7 @@ def test_auth_user_profile_account_consent_and_withdrawal_flow(
     assert withdrawal["message"]
 
     with SessionLocal() as db:
-        withdrawn_user = db.get(User, user_id)
-        assert withdrawn_user is not None
-        assert withdrawn_user.email == new_email
-        assert withdrawn_user.account_status == AccountStatus.WITHDRAWN
-        assert withdrawn_user.deleted_at is not None
+        assert db.get(User, user_id) is None
 
     denied_response = client.get("/api/v1/users/me", headers=current_headers)
     assert denied_response.status_code == 401
@@ -447,6 +443,30 @@ def test_auth_user_profile_account_consent_and_withdrawal_flow(
     assert withdrawn_login_response.status_code == 401
     assert set(withdrawn_login_response.json()) == {"code", "detail"}
     assert withdrawn_login_response.json()["code"] == "AUTHENTICATION_FAILED"
+
+    resignup_response = client.post(
+        "/api/v1/auth/signup",
+        json={
+            "email": new_email,
+            "password": new_password,
+            "nickname": "재가입닉네임",
+            "consents": [
+                {
+                    "consent_type": "TERMS_REQUIRED",
+                    "consent_version": "1.0",
+                    "is_agreed": True,
+                },
+                {
+                    "consent_type": "PRIVACY_REQUIRED",
+                    "consent_version": "1.0",
+                    "is_agreed": True,
+                },
+            ],
+        },
+    )
+    assert resignup_response.status_code == 201, resignup_response.text
+    resignup_user = resignup_response.json()["user"]
+    assert resignup_user["email"] == new_email
 
 
 def test_categories_questions_and_answer_upsert(client: TestClient) -> None:

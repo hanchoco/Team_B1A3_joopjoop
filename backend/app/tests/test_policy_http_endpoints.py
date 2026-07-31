@@ -418,6 +418,90 @@ def test_policy_discovery_match_and_bookmark_lifecycle(
     assert deleted_bookmark_state["preparation_status"] == "NOT_STARTED"
 
 
+def _seed_extra_review_policy(*, external_id: str, title: str) -> int:
+    """Insert one more NEEDS_REVIEW transport policy sharing the standard shape."""
+
+    today = date.today()
+    with SessionLocal() as db:
+        transport = db.scalar(select(Category).where(Category.code == "TRANSPORT"))
+        assert transport is not None
+
+        extra = Policy(
+            source="MANUAL",
+            external_id=external_id,
+            title=title,
+            summary="서류 확인이 필요한 추가 교통 정책입니다.",
+            description="증빙 서류 검토 후 지원합니다.",
+            support_target_text="임대차 계약 증빙 가능 청년",
+            support_content_text="총 30만 원",
+            application_method="방문 신청",
+            provider_name="Extra 기관",
+            application_url="https://example.com/extra",
+            application_start_date=today - timedelta(days=5),
+            application_end_date=today + timedelta(days=10),
+            is_ongoing=False,
+            published_date=today - timedelta(days=1),
+            status="ACTIVE",
+            subcategory="교통비",
+            region_scope="NATIONAL",
+            contact="02-000-0000",
+            is_active=True,
+        )
+        db.add(extra)
+        db.flush()
+
+        db.add_all(
+            [
+                PolicyCategory(
+                    policy_id=extra.id,
+                    category_id=transport.id,
+                    is_primary=True,
+                ),
+                PolicyCondition(
+                    policy_id=extra.id,
+                    condition_key="housing.has_lease_contract",
+                    operator="MANUAL_CHECK",
+                    expected_value_json=None,
+                    condition_group_no=1,
+                    is_required=True,
+                    check_mode="DOCUMENT",
+                    description="임대차 계약 증빙 확인",
+                    failure_message="임대차 계약 증빙이 필요합니다.",
+                    sort_order=1,
+                ),
+            ]
+        )
+        db.commit()
+        return extra.id
+
+
+def test_recommendations_only_return_eligible_when_filtered(client: TestClient) -> None:
+    """eligibility_status=ELIGIBLE must return only ELIGIBLE cards, never padded
+    with NEEDS_REVIEW/INELIGIBLE policies to fill the requested limit."""
+
+    headers = _authenticated_headers(client, email="recommend-eligible-only@example.com")
+    seeded = _seed_policy_dataset()
+    _seed_extra_review_policy(
+        external_id="http-test-review-extra-1",
+        title="Gamma 추가 확인 교통 지원",
+    )
+    _seed_extra_review_policy(
+        external_id="http-test-review-extra-2",
+        title="Delta 추가 확인 교통 지원",
+    )
+
+    recommendations = client.get(
+        "/api/v1/users/me/recommendations",
+        params={"limit": 3, "eligibility_status": "ELIGIBLE"},
+        headers=headers,
+    )
+    assert recommendations.status_code == 200, recommendations.text
+    body = recommendations.json()
+    assert len(body) == 1
+    assert body[0]["id"] == seeded.eligible_policy_id
+    assert body[0]["card_status"] == "ELIGIBLE"
+
+
 def test_dashboard_summary_upcoming_deadline_and_missed_benefits(
     client: TestClient,
 ) -> None:
