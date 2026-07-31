@@ -20,6 +20,13 @@ export async function listCategoryQuestions(
   return response.data
 }
 
+export async function getCategoryAnswers(categoryId: number): Promise<CategoryAnswerResponse[]> {
+  const response = await apiClient.get<CategoryAnswerResponse[]>(
+    `/categories/${categoryId}/answers`,
+  )
+  return response.data
+}
+
 export async function saveCategoryAnswers(
   categoryId: number,
   answers: CategoryAnswerUpsert[],
