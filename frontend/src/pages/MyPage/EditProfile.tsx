@@ -69,6 +69,12 @@ function asStringArray(value: unknown): string[] {
   return value.filter((item): item is string => typeof item === 'string')
 }
 
+function formatNumberInput(value: unknown): string {
+  return typeof value === 'number' && Number.isFinite(value)
+    ? Math.trunc(value).toLocaleString('ko-KR')
+    : ''
+}
+
 interface CategorySectionState {
   status: 'loading' | 'loaded' | 'error'
   error: string
@@ -128,11 +134,13 @@ function CategoryQuestionField({
           </div>
         ) : question.answer_type === 'NUMBER' ? (
           <input
-            type="number"
-            value={typeof value === 'number' ? value : ''}
-            onChange={(event) =>
-              onChange(event.target.value === '' ? undefined : Number(event.target.value))
-            }
+            type="text"
+            inputMode="numeric"
+            value={formatNumberInput(value)}
+            onChange={(event) => {
+              const digits = event.target.value.replace(/\D/g, '')
+              onChange(digits === '' ? undefined : Number(digits))
+            }}
             placeholder={question.unit ?? undefined}
             className={fieldClass}
           />
