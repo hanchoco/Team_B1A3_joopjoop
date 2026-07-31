@@ -200,6 +200,74 @@ def test_missing_context_value_needs_review() -> None:
     assert result.actual_value is None
 
 
+def test_manual_condition_surfaces_already_answered_category_value() -> None:
+    """Regression: a MANUAL condition used to always show the same generic
+    '수동 확인이 필요한 조건입니다.' message even when the user had already
+    answered the matching onboarding category question - the answer was
+    silently ignored. It must now be shown so review doesn't feel blind."""
+
+    result = evaluate_condition(
+        _condition(
+            key="housing.monthly_rent_amount",
+            operator="LTE",
+            expected={"value": 500000},
+            check_mode="MANUAL",
+        ),
+        {"housing": {"monthly_rent_amount": 450000}},
+    )
+
+    assert result.status is ConditionStatus.NEEDS_REVIEW
+    assert result.actual_value == 450000
+    assert "450,000원" in result.reason
+
+
+def test_manual_condition_without_answered_value_keeps_generic_reason() -> None:
+    result = evaluate_condition(
+        _condition(
+            key="housing.monthly_rent_amount",
+            operator="LTE",
+            expected={"value": 500000},
+            check_mode="MANUAL",
+        ),
+        {"housing": {}},
+    )
+
+    assert result.status is ConditionStatus.NEEDS_REVIEW
+    assert result.actual_value is None
+    assert result.reason == "수동 확인이 필요한 조건입니다."
+
+
+def test_manual_condition_formats_boolean_answer_in_korean() -> None:
+    result = evaluate_condition(
+        _condition(
+            key="housing.is_household_head",
+            operator="EQ",
+            expected={"value": True},
+            check_mode="MANUAL",
+        ),
+        {"housing": {"is_household_head": False}},
+    )
+
+    assert "아니오" in result.reason
+
+
+def test_participation_limit_unaffected_by_answered_value_lookup() -> None:
+    """participation_limit isn't a registered key, so there's no category
+    answer to surface - it must keep the plain generic reason, unchanged."""
+
+    result = evaluate_condition(
+        _condition(
+            key="participation_limit",
+            operator="MANUAL_CHECK",
+            expected=None,
+            check_mode="MANUAL",
+        ),
+        {},
+    )
+
+    assert result.reason == "수동 확인이 필요한 조건입니다."
+
+
 def test_false_boolean_is_a_real_value_not_a_missing_answer() -> None:
     result = evaluate_condition(
         _condition(
