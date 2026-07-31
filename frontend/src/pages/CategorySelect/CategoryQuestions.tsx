@@ -724,7 +724,7 @@ export default function CategoryQuestions() {
             }
             className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 py-3.5 font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {isLast ? (submitting ? '저장 중...' : '답변 저장하고 맞춤 정책 보기') : '다음 질문'}{' '}
+            {isLast ? (submitting ? '저장 중...' : '완료하기') : '다음 질문'}{' '}
             <ArrowRight size={18} />
           </button>
         </div>
