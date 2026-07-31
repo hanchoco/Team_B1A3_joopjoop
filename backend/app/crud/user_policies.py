@@ -224,6 +224,43 @@ def start_preparation(
     return state
 
 
+def delete_policy_progress(
+    db: Session,
+    *,
+    user_id: int,
+    state_id: int,
+) -> bool:
+    """Clear preparation and application progress, preserving a bookmark."""
+
+    state = get_user_policy_state_by_id(db, state_id=state_id, user_id=user_id)
+    if state is None:
+        return False
+
+    for progress in list_document_progress(db, state.id):
+        db.delete(progress)
+
+    match = get_policy_match(db, user_id=user_id, policy_id=state.policy_id)
+    if match is not None:
+        for result in list_condition_results(db, match.id):
+            result.is_user_confirmed = False
+            result.confirmed_at = None
+
+    if state.is_bookmarked:
+        state.preparation_status = "NOT_STARTED"
+        state.preparation_started_at = None
+        state.preparation_completed_at = None
+        state.progress_percent = 0
+        state.application_status = "NOT_APPLIED"
+        state.application_date = None
+        state.application_note = None
+        state.updated_at = datetime.now(UTC).replace(tzinfo=None)
+    else:
+        db.delete(state)
+
+    db.commit()
+    return True
+
+
 def list_document_progress(
     db: Session,
     state_id: int,

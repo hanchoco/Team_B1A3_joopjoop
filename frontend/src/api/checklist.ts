@@ -89,3 +89,7 @@ export async function listMyPolicies(params?: {
   })
   return response.data
 }
+
+export async function deletePolicyProgress(stateId: number): Promise<void> {
+  await apiClient.delete(`/users/me/policies/${stateId}/progress`)
+}

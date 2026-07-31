@@ -199,7 +199,7 @@ export default function Checklist() {
                   >
                     {CONDITION_LABEL[condition.result_status]}
                   </span>
-                  {condition.is_user_confirmed ? (
+                  {condition.result_status === 'SATISFIED' || condition.is_user_confirmed ? (
                     <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700">
                       <CheckCircle2 size={14} /> 확인 완료
                     </span>

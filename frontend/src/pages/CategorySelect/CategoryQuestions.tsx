@@ -300,7 +300,9 @@ export default function CategoryQuestions() {
         setCategoryName(category?.name ?? '')
         setCategoryCode(categoryCode)
         if (visibleUnansweredQuestions.length === 0) {
-          navigate(policiesLinkFor(category?.name ?? ''), { replace: true })
+          navigate(policiesLinkFor(category?.name ?? '', savedAnswers.length > 0), {
+            replace: true,
+          })
           return
         }
         setQuestions(unansweredQuestions)

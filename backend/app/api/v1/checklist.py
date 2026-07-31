@@ -164,6 +164,20 @@ def list_my_policies(
     ]
 
 
+@router.delete(
+    "/users/me/policies/{state_id}/progress",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def delete_my_policy_progress(
+    state_id: int,
+    db: DbSession,
+    current_user: CurrentUser,
+) -> None:
+    """Clear preparation and application progress for one owned policy."""
+
+    checklist_service.delete_policy_progress(db, user_id=current_user.id, state_id=state_id)
+
+
 def _checklist_response(
     bundle: checklist_service.ChecklistBundle,
 ) -> ChecklistResponse:

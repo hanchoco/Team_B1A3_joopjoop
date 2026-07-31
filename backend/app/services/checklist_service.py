@@ -93,6 +93,19 @@ def get_checklist(
     )
 
 
+def delete_policy_progress(
+    db: Session,
+    *,
+    user_id: int,
+    state_id: int,
+) -> None:
+    """Clear one owned policy's checklist and application state."""
+
+    deleted = state_crud.delete_policy_progress(db, user_id=user_id, state_id=state_id)
+    if not deleted:
+        raise NotFoundError("정책 진행 기록을 찾을 수 없습니다.")
+
+
 def update_document(
     db: Session,
     *,

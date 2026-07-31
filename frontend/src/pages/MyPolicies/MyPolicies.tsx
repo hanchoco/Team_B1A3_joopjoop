@@ -11,11 +11,12 @@ import {
   MoreHorizontal,
   Star,
   TrainFront,
+  Trash2,
   Users,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { listMyPolicies } from '../../api/checklist'
+import { deletePolicyProgress, listMyPolicies } from '../../api/checklist'
 import { extractErrorMessage } from '../../api/client'
 import { removeBookmark } from '../../api/policies'
 import type { MyPoliciesTab, UserPolicyItemResponse } from '../../types/api'
@@ -126,6 +127,18 @@ export default function MyPolicies() {
     }
   }
 
+  async function removeProgress(policy: UserPolicyItemResponse, state: PolicyTab) {
+    const stateLabel = state === 'completed' ? '신청 완료 기록과 체크리스트' : '체크리스트 진행 상황'
+    if (!window.confirm(`“${policy.title}”의 ${stateLabel}을 초기화할까요?`)) return
+
+    try {
+      await deletePolicyProgress(policy.state_id)
+      setPolicies((current) => current.filter((item) => item.state_id !== policy.state_id))
+    } catch (err) {
+      setError(extractErrorMessage(err))
+    }
+  }
+
   return (
     <section>
       <p className="text-sm font-semibold text-blue-600">마이페이지</p>
@@ -192,18 +205,6 @@ export default function MyPolicies() {
             const Icon = CATEGORY_ICON_BY_CODE[policy.category_code ?? ''] ?? Bookmark
             const remaining = daysUntil(policy.application_end_date)
             const progress = policy.progress_percent
-            const progressWidth =
-              progress >= 100
-                ? 'w-full'
-                : progress >= 80
-                  ? 'w-4/5'
-                  : progress >= 60
-                    ? 'w-3/5'
-                    : progress >= 40
-                      ? 'w-2/5'
-                      : progress >= 20
-                        ? 'w-1/5'
-                        : 'w-0'
             return (
               <article
                 key={policy.state_id}
@@ -228,7 +229,10 @@ export default function MyPolicies() {
                         진행률 {policy.progress_percent}%
                       </span>
                       <div className="mt-2 h-1.5 max-w-xs rounded-full bg-slate-100">
-                        <div className={`h-full rounded-full bg-blue-600 ${progressWidth}`} />
+                        <div
+                          className="h-full rounded-full bg-blue-600 transition-all"
+                          style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
+                        />
                       </div>
                     </>
                   )}
@@ -239,12 +243,22 @@ export default function MyPolicies() {
                   )}
                 </div>
                 {currentState === 'preparing' ? (
-                  <button
-                    onClick={() => navigate(`/policies/${policy.policy_id}/prepare`)}
-                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-bold text-white"
-                  >
-                    이어서 준비하기 <ArrowRight size={16} />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => void removeProgress(policy, currentState)}
+                      className="grid h-10 w-10 place-items-center rounded-lg border border-gray-300 text-gray-500 transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600"
+                      aria-label={`${policy.title} 체크리스트 진행 상황 초기화`}
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                    <button
+                      onClick={() => navigate(`/policies/${policy.policy_id}/prepare`)}
+                      className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-bold text-white"
+                    >
+                      이어서 준비하기 <ArrowRight size={16} />
+                    </button>
+                  </div>
                 ) : (
                   <div className="flex items-center gap-4">
                     {currentState === 'interest' && (
@@ -256,6 +270,16 @@ export default function MyPolicies() {
                         aria-pressed="true"
                       >
                         <Star size={21} className="fill-amber-400 text-amber-400" />
+                      </button>
+                    )}
+                    {currentState === 'completed' && (
+                      <button
+                        type="button"
+                        onClick={() => void removeProgress(policy, currentState)}
+                        className="grid h-9 w-9 place-items-center rounded-lg border border-gray-300 text-gray-500 transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600"
+                        aria-label={`${policy.title} 신청 완료 기록과 체크리스트 초기화`}
+                      >
+                        <Trash2 size={18} />
                       </button>
                     )}
                     <button
