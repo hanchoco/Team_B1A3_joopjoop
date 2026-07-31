@@ -1,7 +1,12 @@
 import { ArrowLeft, ArrowRight, CheckCircle2, ChevronDown, Clock3, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { listCategories, listCategoryQuestions, saveCategoryAnswers } from '../../api/categories'
+import {
+  getCategoryAnswers,
+  listCategories,
+  listCategoryQuestions,
+  saveCategoryAnswers,
+} from '../../api/categories'
 import { extractErrorMessage } from '../../api/client'
 import type { CategoryAnswerUpsert, CategoryQuestionResponse } from '../../types/api'
 
@@ -270,19 +275,35 @@ export default function CategoryQuestions() {
         }
         setLoading(true)
         setError('')
-        return Promise.all([listCategories(), listCategoryQuestions(categoryId)])
+        return Promise.all([
+          listCategories(),
+          listCategoryQuestions(categoryId),
+          getCategoryAnswers(categoryId),
+        ])
       })
       .then((result) => {
         if (cancelled || !result) return
-        const [categories, categoryQuestions] = result
+        const [categories, categoryQuestions, savedAnswers] = result
         const category = categories.find((item) => item.id === categoryId)
+        const categoryCode = category?.code ?? ''
+        const savedQuestionIds = new Set(savedAnswers.map((answer) => answer.question_id))
+        const unansweredQuestions = categoryQuestions.filter(
+          (question) => !savedQuestionIds.has(question.id),
+        )
+        const visibleUnansweredQuestions = removeDuplicateCompanySizeQuestions(
+          unansweredQuestions.filter(
+            (question) =>
+              !HIDDEN_QUESTION_KEYS.has(question.question_key) &&
+              !(categoryCode === 'EMPLOYMENT' && isRepeatedEmploymentStatusQuestion(question)),
+          ),
+        )
         setCategoryName(category?.name ?? '')
-        setCategoryCode(category?.code ?? '')
-        if (categoryQuestions.length === 0) {
+        setCategoryCode(categoryCode)
+        if (visibleUnansweredQuestions.length === 0) {
           navigate(policiesLinkFor(category?.name ?? ''), { replace: true })
           return
         }
-        setQuestions(categoryQuestions)
+        setQuestions(unansweredQuestions)
       })
       .catch((err: unknown) => {
         if (!cancelled) setError(extractErrorMessage(err))
