@@ -277,6 +277,10 @@ export default function CategoryQuestions() {
         const category = categories.find((item) => item.id === categoryId)
         setCategoryName(category?.name ?? '')
         setCategoryCode(category?.code ?? '')
+        if (categoryQuestions.length === 0) {
+          navigate(policiesLinkFor(category?.name ?? ''), { replace: true })
+          return
+        }
         setQuestions(categoryQuestions)
       })
       .catch((err: unknown) => {
@@ -288,7 +292,7 @@ export default function CategoryQuestions() {
     return () => {
       cancelled = true
     }
-  }, [categoryId])
+  }, [categoryId, navigate])
 
   function setAnswerValue(questionId: number, value: unknown) {
     setAnswers((current) => {
@@ -418,34 +422,7 @@ export default function CategoryQuestions() {
     )
   }
 
-  if (questions.length === 0) {
-    return (
-      <section className="mx-auto max-w-3xl">
-        <button
-          type="button"
-          onClick={() => navigate(previousPath)}
-          className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500"
-        >
-          <ArrowLeft size={16} /> {previousLabel}
-        </button>
-        <div className="mt-6 rounded-xl border border-gray-200 bg-white p-10 text-center">
-          <p className="text-lg font-bold">
-            {categoryName || '이 카테고리'}은(는) 추가로 확인할 게 없어요
-          </p>
-          <p className="mt-2 text-sm text-gray-500">
-            기본 정보만으로 바로 맞춤 정책을 확인할 수 있어요.
-          </p>
-          <button
-            type="button"
-            onClick={() => navigate(policiesLinkFor(categoryName))}
-            className="mt-6 inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 py-3 font-bold text-white"
-          >
-            맞춤 정책 보기 <ArrowRight size={18} />
-          </button>
-        </div>
-      </section>
-    )
-  }
+  if (questions.length === 0) return null
 
   const visibleQuestions = removeDuplicateCompanySizeQuestions(
     questions.filter(
