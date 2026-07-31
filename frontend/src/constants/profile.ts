@@ -27,11 +27,11 @@ export const INCOME_BAND_OPTIONS: { code: IncomeBandCode; label: string }[] = [
 ]
 
 export const EMPLOYMENT_STATUS_OPTIONS: { code: EmploymentStatusCode; label: string }[] = [
-  { code: 'EMPLOYED', label: '회사·기관에 재직 중' },
-  { code: 'SELF_EMPLOYED', label: '자영업·프리랜서' },
-  { code: 'JOB_SEEKER', label: '구직 중 (취업 준비 중)' },
-  { code: 'UNEMPLOYED', label: '현재 미취업 (구직 활동 안 함)' },
-  { code: 'STUDENT', label: '학생 (재학·교육 중)' },
+  { code: 'EMPLOYED', label: '재직 중' },
+  { code: 'SELF_EMPLOYED', label: '프리랜서·자영업' },
+  { code: 'JOB_SEEKER', label: '구직 중' },
+  { code: 'UNEMPLOYED', label: '미취업' },
+  { code: 'STUDENT', label: '학생' },
   { code: 'ON_LEAVE', label: '휴직 중' },
   { code: 'OTHER', label: '기타' },
 ]

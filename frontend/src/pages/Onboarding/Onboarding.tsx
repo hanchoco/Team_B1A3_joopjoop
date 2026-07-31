@@ -59,8 +59,8 @@ const questions: Question[] = [
   },
   {
     key: 'employment_status_code',
-    title: '현재 취업 상태를 알려주세요.',
-    hint: '현재 재직·구직·재학 여부에 맞는 정책을 찾을게요.',
+    title: '현재 취업상태를 알려주세요.',
+    hint: '재직 여부와 고용 형태에 맞는 정책을 찾을게요.',
     options: EMPLOYMENT_STATUS_OPTIONS.map((option) => ({
       value: option.code,
       label: option.label,

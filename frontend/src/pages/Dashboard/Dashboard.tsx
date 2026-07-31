@@ -129,7 +129,7 @@ export default function Dashboard() {
                 {[
                   ['출생연도', profile?.birth_year ? `${profile.birth_year}년` : '미입력'],
                   ['거주지역', regionNameByCode(profile?.region_code)],
-                  ['취업 상태', employmentStatusLabel(profile?.employment_status_code)],
+                  ['취업상태', employmentStatusLabel(profile?.employment_status_code)],
                   ['주거형태', housingTypeLabel(profile?.housing_type_code)],
                 ].map(([key, value]) => (
                   <div key={key} className="flex justify-between gap-3">
