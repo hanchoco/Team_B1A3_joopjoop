@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, CheckCircle2, ChevronDown, Clock3 } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CheckCircle2, ChevronDown, Clock3, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { listCategories, listCategoryQuestions, saveCategoryAnswers } from '../../api/categories'
@@ -42,6 +42,11 @@ const HOUSING_AMOUNT_RANGES: Record<string, AmountRange[]> = {
 }
 
 const RESIDENCE_MONTH_OPTIONS = Array.from({ length: 240 }, (_, index) => index + 1)
+const QUICK_AMOUNT_OPTIONS = [
+  { label: '+10만', value: 100_000 },
+  { label: '+100만', value: 1_000_000 },
+  { label: '+1,000만', value: 10_000_000 },
+]
 
 function formatAmountInput(value: unknown): string {
   return typeof value === 'number' && Number.isFinite(value)
@@ -119,7 +124,14 @@ export default function CategoryQuestions() {
   }, [categoryId])
 
   function setAnswerValue(questionId: number, value: unknown) {
-    setAnswers((current) => ({ ...current, [questionId]: value }))
+    setAnswers((current) => {
+      if (value === undefined) {
+        const nextAnswers = { ...current }
+        delete nextAnswers[questionId]
+        return nextAnswers
+      }
+      return { ...current, [questionId]: value }
+    })
   }
 
   async function finish(answerValues: Record<number, unknown> = answers) {
@@ -327,19 +339,29 @@ export default function CategoryQuestions() {
                   }
                   className={`w-full rounded-lg border border-gray-300 px-4 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 ${
                     amountRanges
-                      ? 'py-3.5'
+                      ? 'py-3.5 pr-12'
                       : isResidenceMonths
                         ? 'py-3.5 pr-12 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none'
                         : 'py-3.5'
                   }`}
                 />
                 {amountRanges && typeof answers[question.id] === 'number' && (
-                  <span
-                    className="pointer-events-none absolute bottom-1 right-3 text-xs font-bold text-blue-600"
-                    aria-live="polite"
-                  >
-                    {formatKoreanWon(answers[question.id])}
-                  </span>
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setAnswerValue(question.id, undefined)}
+                      className="absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
+                      aria-label="입력한 금액 지우기"
+                    >
+                      <X size={16} />
+                    </button>
+                    <span
+                      className="pointer-events-none absolute bottom-1 right-11 text-xs font-bold text-blue-600"
+                      aria-live="polite"
+                    >
+                      {formatKoreanWon(answers[question.id])}
+                    </span>
+                  </>
                 )}
                 {isResidenceMonths && (
                   <>
@@ -385,6 +407,22 @@ export default function CategoryQuestions() {
               </div>
               {amountRanges && (
                 <>
+                  <span className="mt-4 grid grid-cols-3 gap-2">
+                    {QUICK_AMOUNT_OPTIONS.map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => {
+                          const answer = answers[question.id]
+                          const currentAmount = typeof answer === 'number' ? answer : 0
+                          setAnswerValue(question.id, currentAmount + option.value)
+                        }}
+                        className="rounded-lg border border-blue-200 bg-blue-50 px-2 py-2.5 text-sm font-bold text-blue-700 transition hover:border-blue-400 hover:bg-blue-100"
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </span>
                   <span className="mt-5 block text-sm font-bold text-gray-700">또는 구간 선택</span>
                   <span className="mt-1 block text-xs font-normal text-gray-500">
                     구간을 선택하면 대표 금액이 입력돼요. 정확한 금액을 알면 직접 수정할 수 있어요.
