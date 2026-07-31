@@ -478,7 +478,7 @@ export default function CategoryQuestions() {
                       className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3.5 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                     />
                     {typeof value === 'number' && (
-                      <span className="mt-1 block text-xs font-bold text-blue-600">
+                      <span className="mt-2 block px-4 text-xs font-medium text-gray-400">
                         {formatKoreanWon(value)}
                       </span>
                     )}
@@ -548,22 +548,14 @@ export default function CategoryQuestions() {
                   }`}
                 />
                 {amountRanges && typeof answers[question.id] === 'number' && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => setAnswerValue(question.id, undefined)}
-                      className="absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
-                      aria-label="입력한 금액 지우기"
-                    >
-                      <X size={16} />
-                    </button>
-                    <span
-                      className="pointer-events-none absolute bottom-1 right-11 text-xs font-bold text-blue-600"
-                      aria-live="polite"
-                    >
-                      {formatKoreanWon(answers[question.id])}
-                    </span>
-                  </>
+                  <button
+                    type="button"
+                    onClick={() => setAnswerValue(question.id, undefined)}
+                    className="absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
+                    aria-label="입력한 금액 지우기"
+                  >
+                    <X size={16} />
+                  </button>
                 )}
                 {isResidenceMonths && (
                   <>
@@ -607,6 +599,14 @@ export default function CategoryQuestions() {
                   </>
                 )}
               </div>
+              {amountRanges && typeof answers[question.id] === 'number' && (
+                <span
+                  className="mt-2 block px-4 text-xs font-medium text-gray-400"
+                  aria-live="polite"
+                >
+                  {formatKoreanWon(answers[question.id])}
+                </span>
+              )}
               {amountRanges && (
                 <>
                   <span className="mt-4 grid grid-cols-3 gap-2">
