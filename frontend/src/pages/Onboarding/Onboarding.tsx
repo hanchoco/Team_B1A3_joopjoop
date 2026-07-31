@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, CheckCircle2, ChevronDown } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CheckCircle2, ChevronDown, Info } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -96,6 +96,7 @@ export default function Onboarding() {
   const [error, setError] = useState('')
   const [yearListOpen, setYearListOpen] = useState(false)
   const [customRegion, setCustomRegion] = useState('')
+  const [incomeGuideOpen, setIncomeGuideOpen] = useState(false)
   const yearListRef = useRef<HTMLDivElement>(null)
   const defaultYearRef = useRef<HTMLButtonElement>(null)
   const question = questions[step]
@@ -225,6 +226,46 @@ export default function Onboarding() {
           </div>
         ) : (
           <div className="mt-8">
+            {question.key === 'income_band_code' && (
+              <div className="mb-4 overflow-hidden rounded-lg border border-blue-200 bg-blue-50">
+                <button
+                  type="button"
+                  onClick={() => setIncomeGuideOpen((current) => !current)}
+                  className="flex w-full items-center gap-3 px-4 py-3.5 text-left"
+                  aria-expanded={incomeGuideOpen}
+                >
+                  <Info size={18} className="shrink-0 text-blue-600" />
+                  <span className="flex-1 text-sm font-bold text-blue-800">
+                    내 소득 구간을 잘 모르겠어요
+                  </span>
+                  <ChevronDown
+                    size={18}
+                    className={`shrink-0 text-blue-600 transition ${
+                      incomeGuideOpen ? 'rotate-180' : ''
+                    }`}
+                  />
+                </button>
+                {incomeGuideOpen && (
+                  <div className="border-t border-blue-200 bg-white px-4 py-4 text-sm leading-6 text-gray-600">
+                    <p>
+                      기준 중위소득은 전체 가구를 소득순으로 나열했을 때 가운데에 해당하는 소득으로,
+                      가구원 수와 적용 연도에 따라 금액이 달라져요.
+                    </p>
+                    <ul className="mt-3 space-y-2">
+                      <li>• 최근 급여명세서나 소득금액증명에서 월 소득을 확인해보세요.</li>
+                      <li>• 함께 사는 가구원 수에 맞는 기준 중위소득 금액과 비교해야 해요.</li>
+                      <li>
+                        • 정책에 따라 건강보험료나 재산을 포함한 소득인정액을 사용할 수 있어요.
+                      </li>
+                    </ul>
+                    <p className="mt-3 text-xs text-gray-500">
+                      정확한 구간을 판단하기 어렵다면 `잘 모름`을 선택해도 괜찮아요. 추천 정책의
+                      상세 조건에서 다시 확인할 수 있어요.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
             <div className="grid gap-3 sm:grid-cols-2">
               {question.options?.map((option) => {
                 const selected = selectedValue === option.value
