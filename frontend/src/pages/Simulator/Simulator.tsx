@@ -167,7 +167,7 @@ export default function Simulator() {
           onClick={() => navigate(-1)}
           className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-blue-600"
         >
-          <ArrowLeft size={16} /> 정책 상세로
+          <ArrowLeft size={16} /> 정책 상세
         </button>
         <p className="mt-6 rounded-lg bg-rose-50 p-4 text-sm font-semibold text-rose-600">
           {error || '정책을 찾을 수 없습니다.'}

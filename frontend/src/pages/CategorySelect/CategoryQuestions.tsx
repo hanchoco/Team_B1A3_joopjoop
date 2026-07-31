@@ -5,11 +5,61 @@ import { listCategories, listCategoryQuestions, saveCategoryAnswers } from '../.
 import { extractErrorMessage } from '../../api/client'
 import type { CategoryAnswerUpsert, CategoryQuestionResponse } from '../../types/api'
 
-function parseOptions(optionsJson: unknown): string[] {
-  if (Array.isArray(optionsJson)) {
-    return optionsJson.filter((item): item is string => typeof item === 'string')
-  }
-  return []
+interface SelectOption {
+  label: string
+  value: string
+}
+
+function parseOptions(optionsJson: unknown): SelectOption[] {
+  if (!Array.isArray(optionsJson)) return []
+
+  return optionsJson.flatMap((item) => {
+    if (typeof item === 'string') {
+      return [{ label: item, value: item }]
+    }
+    if (
+      item &&
+      typeof item === 'object' &&
+      typeof (item as { label?: unknown }).label === 'string' &&
+      typeof (item as { value?: unknown }).value === 'string'
+    ) {
+      return [
+        {
+          label: (item as { label: string }).label,
+          value: (item as { value: string }).value,
+        },
+      ]
+    }
+    return []
+  })
+}
+
+function removeDuplicateCompanySizeQuestions(
+  questions: CategoryQuestionResponse[],
+): CategoryQuestionResponse[] {
+  const companySizeQuestions = questions.filter(
+    (item) =>
+      item.question_key.includes('company_size') ||
+      (item.label.includes('회사') && item.label.includes('규모')),
+  )
+  if (companySizeQuestions.length < 2) return questions
+
+  const detailedQuestion = companySizeQuestions.at(-1)
+  return questions.filter(
+    (item) => !companySizeQuestions.includes(item) || item.id === detailedQuestion?.id,
+  )
+}
+
+function isRepeatedEmploymentStatusQuestion(question: CategoryQuestionResponse): boolean {
+  if (question.question_key === 'employment.contract_type_code') return false
+
+  return (
+    question.question_key.includes('employment_status') ||
+    question.label.includes('고용 형태') ||
+    question.label.includes('취업 상태') ||
+    question.label.includes('취업상태') ||
+    question.label.includes('경제활동 상태')
+  )
 }
 
 function policiesLinkFor(categoryName: string): string {
@@ -142,6 +192,22 @@ const AMOUNT_RANGES: Record<string, AmountRange[]> = {
 
 const RESIDENCE_MONTH_OPTIONS = Array.from({ length: 240 }, (_, index) => index + 1)
 const HIDDEN_QUESTION_KEYS = new Set(['finance.total_debt_amount'])
+const COMPANY_SIZE_LABELS: Record<string, string> = {
+  MICRO: '1~4인 (5인 미만)',
+  SMALL: '5~49인',
+  MEDIUM: '50~299인',
+  LARGE: '300인 이상',
+  PUBLIC: '공공기관·공기업',
+  UNKNOWN: '현재 근무 중이 아님',
+}
+const CONTRACT_TYPE_LABELS: Record<string, string> = {
+  PERMANENT: '정규직 (계약기간을 정하지 않음)',
+  FIXED_TERM: '계약직·기간제·인턴 (계약 종료일이 있음)',
+  DISPATCHED: '파견직·용역직 (소속 회사와 근무지가 다름)',
+  FREELANCER: '프리랜서·특수고용',
+  DAILY: '일용직·단기 아르바이트',
+  UNKNOWN: '현재 근무 중이 아님',
+}
 const QUICK_AMOUNT_OPTIONS = [
   { label: '+10만', value: 100_000 },
   { label: '+100만', value: 1_000_000 },
@@ -345,18 +411,28 @@ export default function CategoryQuestions() {
     )
   }
 
-  const visibleQuestions = questions.filter((item) => !HIDDEN_QUESTION_KEYS.has(item.question_key))
+  const visibleQuestions = removeDuplicateCompanySizeQuestions(
+    questions.filter(
+      (item) =>
+        !HIDDEN_QUESTION_KEYS.has(item.question_key) &&
+        !(categoryCode === 'EMPLOYMENT' && isRepeatedEmploymentStatusQuestion(item)),
+    ),
+  )
   const question = visibleQuestions[step]
   const remaining = visibleQuestions.length - step - 1
   const isLast = step === visibleQuestions.length - 1
   const answered = question.id in answers
   const isHousing = categoryCode === 'HOUSING'
-  const canSkipQuestion = isHousing || categoryCode === 'FINANCE'
+  const canSkipQuestion = isHousing || categoryCode === 'FINANCE' || categoryCode === 'EMPLOYMENT'
   const isHomeOwnershipQuestion = question.question_key === 'housing.home_ownership_status_code'
   const amountRanges = AMOUNT_RANGES[question.question_key]
-  const isResidenceMonths = question.question_key === 'housing.residence_months'
+  const isMonthDurationQuestion =
+    question.question_key === 'housing.residence_months' ||
+    question.question_key === 'employment.tenure_months'
   const isAnnualIncome = question.question_key === 'finance.annual_income_amount'
   const isTotalAssetQuestion = question.question_key === 'finance.total_asset_amount'
+  const isCompanySizeQuestion = question.question_key === 'employment.company_size_code'
+  const isContractTypeQuestion = question.question_key === 'employment.contract_type_code'
   const monthlyIncomeQuestion = questions.find(
     (item) => item.question_key === 'finance.monthly_income_amount',
   )
@@ -423,6 +499,28 @@ export default function CategoryQuestions() {
             </p>
           </div>
         )}
+        {isCompanySizeQuestion && (
+          <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
+            <p className="text-sm font-bold text-blue-800">
+              회사 전체의 상시근로자 수로 선택해주세요.
+            </p>
+            <p className="mt-1 text-xs leading-5 text-gray-600">
+              소속 팀이나 지점 인원이 아니라 본사와 지점을 포함한 회사 전체 인원이 기준입니다.
+              공공기관·공기업이라면 인원수와 관계없이 해당 선택지를 눌러주세요.
+            </p>
+          </div>
+        )}
+        {isContractTypeQuestion && (
+          <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
+            <p className="text-sm font-bold text-blue-800">
+              근로계약서에 적힌 계약기간과 고용 방식을 기준으로 선택해주세요.
+            </p>
+            <p className="mt-1 text-xs leading-5 text-gray-600">
+              계약 종료일이 정해져 있다면 계약직·기간제를, 다른 회사에 소속되어 현재 근무지로
+              파견됐다면 파견직·용역직을 선택하면 됩니다.
+            </p>
+          </div>
+        )}
 
         <div className="mt-8">
           {question.answer_type === 'BOOLEAN' || isHomeOwnershipQuestion ? (
@@ -478,7 +576,7 @@ export default function CategoryQuestions() {
                       className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3.5 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                     />
                     {typeof value === 'number' && (
-                      <span className="mt-1 block text-xs font-bold text-blue-600">
+                      <span className="mt-2 block px-4 text-xs font-medium text-gray-400">
                         {formatKoreanWon(value)}
                       </span>
                     )}
@@ -506,7 +604,7 @@ export default function CategoryQuestions() {
                   id={`question-${question.id}`}
                   type={amountRanges ? 'text' : 'number'}
                   inputMode={amountRanges ? 'numeric' : undefined}
-                  min={!amountRanges && isHousing ? 0 : undefined}
+                  min={!amountRanges && (isHousing || isMonthDurationQuestion) ? 0 : undefined}
                   value={
                     amountRanges
                       ? formatAmountInput(answers[question.id])
@@ -524,7 +622,10 @@ export default function CategoryQuestions() {
                         question.id,
                         value === ''
                           ? undefined
-                          : Math.max(isHousing ? 0 : -Infinity, Number(value)),
+                          : Math.max(
+                              isHousing || isMonthDurationQuestion ? 0 : -Infinity,
+                              Number(value),
+                            ),
                       )
                     }
                   }}
@@ -535,43 +636,35 @@ export default function CategoryQuestions() {
                         : `예: ${formatAmountInput(annualIncomeExample)} (월평균 × 12)`
                       : amountRanges
                         ? '예: 100,000,000'
-                        : isResidenceMonths
+                        : isMonthDurationQuestion
                           ? '개월 수 입력'
                           : undefined
                   }
                   className={`w-full rounded-lg border border-gray-300 px-4 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 ${
                     amountRanges
                       ? 'py-3.5 pr-12'
-                      : isResidenceMonths
+                      : isMonthDurationQuestion
                         ? 'py-3.5 pr-12 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none'
                         : 'py-3.5'
                   }`}
                 />
                 {amountRanges && typeof answers[question.id] === 'number' && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => setAnswerValue(question.id, undefined)}
-                      className="absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
-                      aria-label="입력한 금액 지우기"
-                    >
-                      <X size={16} />
-                    </button>
-                    <span
-                      className="pointer-events-none absolute bottom-1 right-11 text-xs font-bold text-blue-600"
-                      aria-live="polite"
-                    >
-                      {formatKoreanWon(answers[question.id])}
-                    </span>
-                  </>
+                  <button
+                    type="button"
+                    onClick={() => setAnswerValue(question.id, undefined)}
+                    className="absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
+                    aria-label="입력한 금액 지우기"
+                  >
+                    <X size={16} />
+                  </button>
                 )}
-                {isResidenceMonths && (
+                {isMonthDurationQuestion && (
                   <>
                     <button
                       type="button"
                       onClick={() => setMonthListOpen((current) => !current)}
                       className="absolute right-0 top-0 grid h-full w-12 place-items-center text-gray-500"
-                      aria-label="거주 개월 수 목록 열기"
+                      aria-label="개월 수 목록 열기"
                       aria-expanded={monthListOpen}
                     >
                       <ChevronDown
@@ -607,6 +700,14 @@ export default function CategoryQuestions() {
                   </>
                 )}
               </div>
+              {amountRanges && typeof answers[question.id] === 'number' && (
+                <span
+                  className="mt-2 block px-4 text-xs font-medium text-gray-400"
+                  aria-live="polite"
+                >
+                  {formatKoreanWon(answers[question.id])}
+                </span>
+              )}
               {amountRanges && (
                 <>
                   <span className="mt-4 grid grid-cols-3 gap-2">
@@ -658,15 +759,31 @@ export default function CategoryQuestions() {
           ) : parseOptions(question.options_json).length > 0 ? (
             <div className="grid gap-3 sm:grid-cols-2">
               {parseOptions(question.options_json).map((option) => {
-                const selected = answers[question.id] === option
+                const selected = answers[question.id] === option.value
                 return (
                   <button
-                    key={option}
+                    key={option.value}
                     type="button"
-                    onClick={() => setAnswerValue(question.id, option)}
+                    disabled={submitting}
+                    onClick={() => {
+                      if (isContractTypeQuestion && option.value === 'UNKNOWN') {
+                        const nextAnswers = { ...answers, [question.id]: option.value }
+                        visibleQuestions.slice(step + 1).forEach((item) => {
+                          nextAnswers[item.id] = null
+                        })
+                        setAnswers(nextAnswers)
+                        void finish(nextAnswers)
+                        return
+                      }
+                      setAnswerValue(question.id, option.value)
+                    }}
                     className={`flex min-h-16 items-center justify-between rounded-lg border px-5 py-4 text-left text-sm font-semibold transition ${selected ? 'border-blue-600 bg-blue-50 text-blue-700 ring-2 ring-blue-100' : 'border-gray-200 hover:border-blue-300'}`}
                   >
-                    {option}
+                    {isCompanySizeQuestion
+                      ? (COMPANY_SIZE_LABELS[option.value] ?? option.label)
+                      : isContractTypeQuestion
+                        ? (CONTRACT_TYPE_LABELS[option.value] ?? option.label)
+                        : option.label}
                     {selected && <CheckCircle2 size={18} />}
                   </button>
                 )
@@ -724,7 +841,7 @@ export default function CategoryQuestions() {
             }
             className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 py-3.5 font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {isLast ? (submitting ? '저장 중...' : '답변 저장하고 맞춤 정책 보기') : '다음 질문'}{' '}
+            {isLast ? (submitting ? '저장 중...' : '완료하기') : '다음 질문'}{' '}
             <ArrowRight size={18} />
           </button>
         </div>
