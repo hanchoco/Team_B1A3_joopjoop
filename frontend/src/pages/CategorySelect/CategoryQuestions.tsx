@@ -39,6 +39,13 @@ function parseOptions(optionsJson: unknown): SelectOption[] {
   })
 }
 
+function hasSavedAnswerValue(value: unknown): boolean {
+  if (value === null || value === undefined) return false
+  if (typeof value === 'string') return value.trim().length > 0
+  if (Array.isArray(value)) return value.length > 0
+  return true
+}
+
 function removeDuplicateCompanySizeQuestions(
   questions: CategoryQuestionResponse[],
 ): CategoryQuestionResponse[] {
@@ -286,7 +293,11 @@ export default function CategoryQuestions() {
         const [categories, categoryQuestions, savedAnswers] = result
         const category = categories.find((item) => item.id === categoryId)
         const categoryCode = category?.code ?? ''
-        const savedQuestionIds = new Set(savedAnswers.map((answer) => answer.question_id))
+        const savedQuestionIds = new Set(
+          savedAnswers
+            .filter((answer) => hasSavedAnswerValue(answer.answer_json.value))
+            .map((answer) => answer.question_id),
+        )
         const unansweredQuestions = categoryQuestions.filter(
           (question) => !savedQuestionIds.has(question.id),
         )

@@ -28,7 +28,7 @@ from app.schemas.user import (
     CategoryQuestionResponse,
     CategoryResponse,
 )
-from app.services import policy_service
+from app.services import category_answer_service, policy_service
 
 router = APIRouter(tags=["policies"])
 
@@ -115,6 +115,24 @@ def save_category_answers(
         answers=[answer.model_dump() for answer in payload.answers],
     )
     return [CategoryAnswerResponse.model_validate(record) for record in records]
+
+
+@router.delete(
+    "/categories/{category_id}/answers",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def reset_category_answers(
+    category_id: int,
+    db: DbSession,
+    current_user: CurrentUser,
+) -> None:
+    """Delete all category answers saved by the current user."""
+
+    category_answer_service.reset_category_answers(
+        db,
+        user_id=current_user.id,
+        category_id=category_id,
+    )
 
 
 @router.get("/policies", response_model=PolicyListResponse)

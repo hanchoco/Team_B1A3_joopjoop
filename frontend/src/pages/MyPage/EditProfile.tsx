@@ -7,6 +7,7 @@ import {
   getCategoryAnswers,
   listCategories,
   listCategoryQuestions,
+  resetCategoryAnswers,
   saveCategoryAnswers,
 } from '../../api/categories'
 import { extractErrorMessage } from '../../api/client'
@@ -81,6 +82,7 @@ interface CategorySectionState {
   questions: CategoryQuestionResponse[]
   answers: Record<number, unknown>
   saving: boolean
+  resetting: boolean
   saveError: string
   saved: boolean
 }
@@ -333,6 +335,7 @@ export default function EditProfile() {
         questions: [],
         answers: {},
         saving: false,
+        resetting: false,
         saveError: '',
         saved: false,
       },
@@ -351,6 +354,7 @@ export default function EditProfile() {
             questions,
             answers,
             saving: false,
+            resetting: false,
             saveError: '',
             saved: false,
           },
@@ -365,6 +369,7 @@ export default function EditProfile() {
             questions: [],
             answers: {},
             saving: false,
+            resetting: false,
             saveError: '',
             saved: false,
           },
@@ -443,6 +448,44 @@ export default function EditProfile() {
         [categoryId]: {
           ...current[categoryId],
           saving: false,
+          saveError: extractErrorMessage(err),
+        },
+      }))
+    }
+  }
+
+  async function resetCategorySection(categoryId: number, categoryName: string) {
+    const section = sections[categoryId]
+    if (!section || Object.keys(section.answers).length === 0) return
+    if (!window.confirm(`${categoryName} 카테고리에 저장된 답변을 모두 초기화할까요?`)) return
+
+    setSections((current) => ({
+      ...current,
+      [categoryId]: {
+        ...current[categoryId],
+        resetting: true,
+        saveError: '',
+        saved: false,
+      },
+    }))
+    try {
+      await resetCategoryAnswers(categoryId)
+      setSections((current) => ({
+        ...current,
+        [categoryId]: {
+          ...current[categoryId],
+          answers: {},
+          resetting: false,
+          saveError: '',
+          saved: false,
+        },
+      }))
+    } catch (err) {
+      setSections((current) => ({
+        ...current,
+        [categoryId]: {
+          ...current[categoryId],
+          resetting: false,
           saveError: extractErrorMessage(err),
         },
       }))
@@ -677,11 +720,29 @@ export default function EditProfile() {
                           <div className="flex items-center gap-3">
                             <button
                               type="button"
-                              disabled={section.saving || Object.keys(section.answers).length === 0}
+                              disabled={
+                                section.saving ||
+                                section.resetting ||
+                                Object.keys(section.answers).length === 0
+                              }
                               onClick={() => void saveCategorySection(category.id)}
                               className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               {section.saving ? '저장 중...' : '저장'}
+                            </button>
+                            <button
+                              type="button"
+                              disabled={
+                                section.saving ||
+                                section.resetting ||
+                                Object.keys(section.answers).length === 0
+                              }
+                              onClick={() =>
+                                void resetCategorySection(category.id, category.name)
+                              }
+                              className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-bold text-gray-600 transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              {section.resetting ? '초기화 중...' : '전체 초기화'}
                             </button>
                             {section.saved && (
                               <span className="inline-flex items-center gap-1 text-sm font-semibold text-emerald-600">

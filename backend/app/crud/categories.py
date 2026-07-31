@@ -3,7 +3,7 @@
 from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app.models.user_category_profile import (
@@ -343,3 +343,22 @@ def upsert_user_category_answers(
     for answer in saved:
         db.refresh(answer)
     return saved
+
+
+def delete_user_category_answers(
+    db: Session,
+    *,
+    user_id: int,
+    category_id: int,
+) -> int:
+    """Delete every saved answer owned by a user for one category."""
+
+    question_ids = select(CategoryQuestion.id).where(CategoryQuestion.category_id == category_id)
+    result = db.execute(
+        delete(UserCategoryAnswer).where(
+            UserCategoryAnswer.user_id == user_id,
+            UserCategoryAnswer.question_id.in_(question_ids),
+        )
+    )
+    db.commit()
+    return int(result.rowcount or 0)

@@ -37,3 +37,7 @@ export async function saveCategoryAnswers(
   )
   return response.data
 }
+
+export async function resetCategoryAnswers(categoryId: number): Promise<void> {
+  await apiClient.delete(`/categories/${categoryId}/answers`)
+}
