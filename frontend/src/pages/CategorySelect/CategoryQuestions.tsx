@@ -49,6 +49,25 @@ function formatAmountInput(value: unknown): string {
     : ''
 }
 
+function formatKoreanWon(value: unknown): string {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return ''
+
+  const amount = Math.max(0, Math.trunc(value))
+  if (amount === 0) return '0원'
+
+  const eok = Math.floor(amount / 100_000_000)
+  const man = Math.floor((amount % 100_000_000) / 10_000)
+  const won = amount % 10_000
+  const parts: string[] = []
+
+  if (eok > 0) parts.push(`${eok.toLocaleString('ko-KR')}억`)
+  if (man > 0) parts.push(`${man.toLocaleString('ko-KR')}만`)
+  if (won > 0) parts.push(`${won.toLocaleString('ko-KR')}원`)
+  else parts.push('원')
+
+  return parts.join(' ')
+}
+
 export default function CategoryQuestions() {
   const { categoryId: categoryIdParam } = useParams()
   const navigate = useNavigate()
@@ -306,12 +325,22 @@ export default function CategoryQuestions() {
                         ? '개월 수 입력'
                         : undefined
                   }
-                  className={`w-full rounded-lg border border-gray-300 px-4 py-3.5 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 ${
-                    isResidenceMonths
-                      ? 'pr-12 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none'
-                      : ''
+                  className={`w-full rounded-lg border border-gray-300 px-4 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 ${
+                    amountRanges
+                      ? 'py-3.5'
+                      : isResidenceMonths
+                        ? 'py-3.5 pr-12 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none'
+                        : 'py-3.5'
                   }`}
                 />
+                {amountRanges && typeof answers[question.id] === 'number' && (
+                  <span
+                    className="pointer-events-none absolute bottom-1 right-3 text-xs font-bold text-blue-600"
+                    aria-live="polite"
+                  >
+                    {formatKoreanWon(answers[question.id])}
+                  </span>
+                )}
                 {isResidenceMonths && (
                   <>
                     <button
