@@ -4,7 +4,13 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { bookmarkPolicy, getPolicy, getPolicyMatch, removeBookmark } from '../../api/policies'
 import { extractErrorMessage } from '../../api/client'
 import OnlineApplicationLink from '../../components/common/OnlineApplicationLink'
+import PolicyContentList from '../../components/policy/PolicyContentList'
 import type { PolicyDetailResponse, PolicyMatchDetailResponse } from '../../types/api'
+import {
+  parsePolicyContent,
+  parsePolicyContentLines,
+  parsePolicySummary,
+} from '../../utils/policyContent'
 import { resolvePolicyListReturnPath } from '../../utils/policyNavigation'
 
 const TABS = ['지원내용', '신청조건', '신청방법', '필요서류'] as const
@@ -27,14 +33,6 @@ function formatAmount(amount: number | string | null): string {
   const numeric = Number(amount)
   if (!Number.isFinite(numeric) || numeric <= 0) return '정보 없음'
   return `${numeric.toLocaleString()}원`
-}
-
-function linesOf(text: string | null): string[] {
-  if (!text) return []
-  return text
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean)
 }
 
 export default function PolicyDetail() {
@@ -158,9 +156,10 @@ export default function PolicyDetail() {
               />
             </button>
           </div>
-          <p className="mt-3 max-w-2xl text-sm leading-7 text-gray-500">
-            {policy.summary ?? policy.description ?? ''}
-          </p>
+          <PolicyContentList
+            items={parsePolicySummary(policy.summary ?? policy.description)}
+            className="mt-3 max-w-2xl"
+          />
           {(policy.provider_name || policy.contact) && (
             <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
               {policy.provider_name && <span>담당기관 · {policy.provider_name}</span>}
@@ -237,31 +236,24 @@ export default function PolicyDetail() {
               ))}
             </ul>
           ) : tab === '필요서류' ? (
-            <ul className="mt-4 space-y-3">
-              {policy.documents.length === 0 && (
-                <li className="text-sm text-gray-500">등록된 서류가 없습니다.</li>
+            <PolicyContentList
+              items={parsePolicyContentLines(
+                policy.documents.map(
+                  (document) =>
+                    `${document.document_name}${document.required_reason ? ` - ${document.required_reason}` : ''}`,
+                ),
+                { unmarkedType: 'primary' },
               )}
-              {policy.documents.map((document) => (
-                <li key={document.id} className="flex items-center gap-3 text-sm text-gray-600">
-                  <CheckCircle2 size={17} className="text-blue-600" />
-                  {document.document_name}
-                  {document.required_reason ? ` - ${document.required_reason}` : ''}
-                </li>
-              ))}
-            </ul>
+              emptyMessage="등록된 서류가 없습니다."
+            />
           ) : (
-            <ul className="mt-4 space-y-3">
-              {linesOf(tab === '지원내용' ? policy.support_content_text : policy.application_method)
-                .length === 0 && <li className="text-sm text-gray-500">등록된 정보가 없습니다.</li>}
-              {linesOf(
+            <PolicyContentList
+              items={parsePolicyContent(
                 tab === '지원내용' ? policy.support_content_text : policy.application_method,
-              ).map((line) => (
-                <li key={line} className="flex items-center gap-3 text-sm text-gray-600">
-                  <CheckCircle2 size={17} className="text-blue-600" />
-                  {line}
-                </li>
-              ))}
-            </ul>
+                { mode: tab === '지원내용' ? 'support' : 'application' },
+              )}
+              emptyMessage="등록된 정보가 없습니다."
+            />
           )}
           {tab === '신청방법' && policy.application_url && (
             <OnlineApplicationLink url={policy.application_url} className="mt-4" />
