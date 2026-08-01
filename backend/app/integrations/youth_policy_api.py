@@ -20,6 +20,9 @@ DEFAULT_PAGE_SIZE = 100
 _DATE_PATTERN = re.compile(
     r"(?P<year>\d{4})[.\-/년]?\s*(?P<month>\d{1,2})[.\-/월]?\s*" r"(?P<day>\d{1,2})일?"
 )
+# "2026.3.30 ~ 5.29"처럼 종료일 표기에 연도가 생략되는 경우가 있어서, 연도 없는
+# 월.일만도 매칭할 수 있어야 한다 (시작일과 같은 해로 채워 넣는다).
+_PARTIAL_DATE_PATTERN = re.compile(r"(?P<month>\d{1,2})[.\-/월]\s*(?P<day>\d{1,2})일?")
 
 
 class YouthPolicyAPIError(RuntimeError):
@@ -108,6 +111,19 @@ def _limited_text(value: str, max_length: int) -> str:
     return f"{value[: max_length - 1]}…"
 
 
+def _is_truncated_month(text: str, match: re.Match[str]) -> bool:
+    """Reject a match that mis-splits an incomplete "YYYY년 MM월" fragment.
+
+    _DATE_PATTERN's month/day groups are optional-length, so on a day-less
+    fragment like "2028년 12월까지" the mandatory day group backtracks into
+    the month digits (month="1", day="2") instead of failing outright -
+    misreading it as 2028-01-02. A genuine day is never immediately followed
+    by "월" in the source text, so that's a reliable tell that the day group
+    actually stole digits meant for the month.
+    """
+    return text[match.end() : match.end() + 1] == "월"
+
+
 def _parse_date_text(value: object | None) -> str | None:
     if value is None or value == "":
         return None
@@ -139,6 +155,11 @@ def _application_dates(
         "application_period",
         "aplyYmd",
         "rqutPrdCn",
+        # 위 필드가 전부 비어있을 때만 쓰는 최후 대체값. bizPrdEtcCn(기타 사업기간 설명)에
+        # 신청기간이 자유텍스트로만 적혀 있고 구조화 필드(bizPrdBgngYmd 등)도 비어있는
+        # 정책이 실제로 있었다(동일 프로그램의 다른 지역 변형 정책은 구조화 필드에 같은
+        # 날짜가 들어있어서 비교로 확인함).
+        "bizPrdEtcCn",
     )
     is_ongoing = any(keyword in period_text for keyword in ("상시", "수시", "예산 소진"))
     # aplyYmd/rqutYmd(신청·모집기간)가 실제 마감 기준이다. bizPrdYmd(사업 운영기간)는
@@ -164,11 +185,19 @@ def _application_dates(
             "bizPrdEndYmd",
         )
     )
-    period_matches = list(_DATE_PATTERN.finditer(period_text))
+    period_matches = [
+        m for m in _DATE_PATTERN.finditer(period_text) if not _is_truncated_month(period_text, m)
+    ]
     if start is None and period_matches:
         start = _parse_date_text(period_matches[0].group(0))
     if end is None and len(period_matches) >= 2:
         end = _parse_date_text(period_matches[1].group(0))
+    if end is None and start is not None:
+        search_from = period_matches[0].end() if period_matches else 0
+        partial = _PARTIAL_DATE_PATTERN.search(period_text, search_from)
+        if partial:
+            start_year = date.fromisoformat(start).year
+            end = _parse_date_text(f"{start_year}.{partial.group('month')}.{partial.group('day')}")
     if is_ongoing:
         end = None
     return start, end, is_ongoing

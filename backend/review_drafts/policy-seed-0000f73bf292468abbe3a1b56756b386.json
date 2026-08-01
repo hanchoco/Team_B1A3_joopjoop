@@ -1,4 +1,5 @@
 {
+  "approved_at": "2026-07-31T06:07:51.479500+00:00",
   "batch_id": "0000f73bf292468abbe3a1b56756b386",
   "generated_at": "2026-07-31T05:05:07.212758+00:00",
   "kind": "policy_seed_batch",
@@ -1208,5 +1209,5 @@
   ],
   "schema_version": 1,
   "source": "ONTONG_YOUTH",
-  "status": "pending_review"
+  "status": "approved"
 }
