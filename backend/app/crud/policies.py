@@ -2,13 +2,14 @@
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from typing import cast
 
 from sqlalchemy import delete, func, or_, select
 from sqlalchemy.orm import Session
 
-from app.models.policy import Policy, PolicyBenefit, PolicyCategory
+from app.core.time import today_in_kst
+from app.models.policy import Policy, PolicyBenefit, PolicyCategory, PolicyStatus
 from app.models.policy_condition import PolicyCondition
 from app.models.policy_document import PolicyDocument
 from app.models.user_category_profile import Category
@@ -132,6 +133,7 @@ def list_policies(
     page: int = 1,
     size: int = 20,
     sort: str = "latest",
+    deadline_as_of: date | None = None,
 ) -> tuple[list[Policy], int]:
     """Return a filtered, paginated policy collection and total count."""
 
@@ -166,6 +168,14 @@ def list_policies(
         count_statement = count_statement.where(keyword_filter)
 
     if sort == "deadline":
+        current_date = deadline_as_of or today_in_kst()
+        deadline_filter = or_(
+            Policy.application_end_date.is_(None),
+            Policy.application_end_date >= current_date,
+        )
+        open_status_filter = Policy.status.notin_((PolicyStatus.CLOSED, PolicyStatus.ARCHIVED))
+        statement = statement.where(deadline_filter, open_status_filter)
+        count_statement = count_statement.where(deadline_filter, open_status_filter)
         statement = statement.order_by(
             Policy.application_end_date.is_(None),
             Policy.application_end_date.asc(),
