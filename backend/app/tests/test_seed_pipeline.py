@@ -22,9 +22,9 @@ from app.services.ai.benefit_extractor import (
     extract_benefits,
     validate_benefit_payload,
 )
+from app.services.ai.category_classifier import classify_policy_category
 from app.services.ai.rule_extractor import (
     ALLOWED_CONDITION_KEYS,
-    categorize_policy,
     extract_conditions,
     structured_income_condition,
     validate_condition_payload,
@@ -567,13 +567,33 @@ def test_extract_conditions_includes_structured_income_even_without_free_text() 
 # ---------------------------------------------------------------------------
 
 
-def test_categorize_policy_maps_known_keywords() -> None:
-    assert categorize_policy("주거", "전월세") == ["HOUSING"]
-    assert categorize_policy("고용", "취업") == ["EMPLOYMENT"]
+def test_classify_policy_category_keeps_valid_ai_codes_in_order() -> None:
+    client = _FakeSolarClient({"category_codes": ["HOUSING", "FINANCE"]})
+
+    codes = asyncio.run(
+        classify_policy_category(
+            {"title": "청년 월세 지원", "raw_payload": {"plcyNm": "청년 월세 지원"}},
+            client=client,
+        )
+    )
+
+    assert codes == ["HOUSING", "FINANCE"]
 
 
-def test_categorize_policy_falls_back_to_etc() -> None:
-    assert categorize_policy("알 수 없는 분류", "") == ["ETC"]
+def test_classify_policy_category_drops_unknown_codes() -> None:
+    client = _FakeSolarClient({"category_codes": ["HOUSING", "NOT_A_REAL_CATEGORY"]})
+
+    codes = asyncio.run(classify_policy_category({"raw_payload": {}}, client=client))
+
+    assert codes == ["HOUSING"]
+
+
+def test_classify_policy_category_falls_back_to_etc() -> None:
+    client = _FakeSolarClient({"category_codes": []})
+
+    codes = asyncio.run(classify_policy_category({"raw_payload": {}}, client=client))
+
+    assert codes == ["ETC"]
 
 
 # ---------------------------------------------------------------------------

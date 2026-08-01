@@ -31,12 +31,12 @@ if str(BACKEND_ROOT) not in sys.path:
 from app.integrations.youth_policy_api import YouthPolicyClient
 from app.models.user_category_profile import CategoryCode
 from app.services.ai.benefit_extractor import extract_benefits, validate_benefit_payload
+from app.services.ai.category_classifier import classify_policy_category
 from app.services.ai.checklist_generator import (
     generate_checklist,
     validate_checklist_payload,
 )
 from app.services.ai.rule_extractor import (
-    categorize_policy,
     extract_conditions,
     validate_condition_payload,
 )
@@ -438,7 +438,6 @@ async def create_seed_draft(
             policy_payload = policy.to_dict()
             title = policy_payload.get("title") or policy_payload.get("external_id") or "?"
             print(f"[{index}/{total}] 처리 중: {title}", flush=True)
-            raw = policy_payload.get("raw_payload") or policy_payload
             conditions = await extract_conditions(
                 policy_payload,
                 client=ai_client,
@@ -451,7 +450,7 @@ async def create_seed_draft(
                 policy_payload,
                 client=ai_client,
             )
-            category_codes = categorize_policy(raw.get("lclsfNm", ""), raw.get("mclsfNm", ""))
+            category_codes = await classify_policy_category(policy_payload, client=ai_client)
             bundles.append(
                 {
                     "policy": policy_payload,

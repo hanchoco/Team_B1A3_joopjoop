@@ -1,0 +1,220 @@
+{
+  "approved_at": "2026-08-01T05:27:56.916888+00:00",
+  "batch_id": "63aab22cfb504a65a4cdc07c6b24e750",
+  "generated_at": "2026-08-01T05:25:48.119807+00:00",
+  "kind": "policy_recategorize_batch",
+  "policies": [
+    {
+      "external_id": "e2e-test-1",
+      "new_category_codes": [
+        "HOUSING"
+      ],
+      "old_category_codes": [
+        "HOUSING"
+      ],
+      "policy_id": 2,
+      "source": "MANUAL",
+      "title": "청년 월세 한시 특별지원"
+    },
+    {
+      "external_id": "20260729005400213313",
+      "new_category_codes": [
+        "EMPLOYMENT"
+      ],
+      "old_category_codes": [
+        "EMPLOYMENT"
+      ],
+      "policy_id": 78,
+      "source": "ONTONG_YOUTH",
+      "title": "전남광주 기후에너지 JOB 스쿨 참가자 모집"
+    },
+    {
+      "external_id": "20260729005400113312",
+      "new_category_codes": [
+        "PARTICIPATION"
+      ],
+      "old_category_codes": [
+        "PARTICIPATION"
+      ],
+      "policy_id": 79,
+      "source": "ONTONG_YOUTH",
+      "title": "충남형 청년 한달살이 프로그램 운영"
+    },
+    {
+      "external_id": "20260728005400213311",
+      "new_category_codes": [
+        "WELFARE"
+      ],
+      "old_category_codes": [
+        "FINANCE",
+        "WELFARE"
+      ],
+      "policy_id": 80,
+      "source": "ONTONG_YOUTH",
+      "title": "전남광주 청년 문화복지카드"
+    },
+    {
+      "external_id": "20260728005400213310",
+      "new_category_codes": [
+        "WELFARE"
+      ],
+      "old_category_codes": [
+        "FINANCE",
+        "WELFARE"
+      ],
+      "policy_id": 81,
+      "source": "ONTONG_YOUTH",
+      "title": "2026년 하반기 임신부 가사지원서비스 지원사업"
+    },
+    {
+      "external_id": "20260728005400213309",
+      "new_category_codes": [
+        "WELFARE"
+      ],
+      "old_category_codes": [
+        "FINANCE",
+        "WELFARE"
+      ],
+      "policy_id": 82,
+      "source": "ONTONG_YOUTH",
+      "title": "2026년 찬찬히 청년 사회생활(정서·심리)지원 캠퍼스 참여자 모집"
+    },
+    {
+      "external_id": "20260728005400213308",
+      "new_category_codes": [
+        "EMPLOYMENT"
+      ],
+      "old_category_codes": [
+        "EMPLOYMENT"
+      ],
+      "policy_id": 83,
+      "source": "ONTONG_YOUTH",
+      "title": "[남구] 구직청년 증명사진 촬영지원"
+    },
+    {
+      "external_id": "20260724005400113307",
+      "new_category_codes": [
+        "FINANCE"
+      ],
+      "old_category_codes": [
+        "FINANCE",
+        "WELFARE"
+      ],
+      "policy_id": 84,
+      "source": "ONTONG_YOUTH",
+      "title": "청년 자금지원을 위한 햇살론유스 운영"
+    },
+    {
+      "external_id": "20260724005400213306",
+      "new_category_codes": [
+        "WELFARE"
+      ],
+      "old_category_codes": [
+        "FINANCE",
+        "WELFARE"
+      ],
+      "policy_id": 85,
+      "source": "ONTONG_YOUTH",
+      "title": "군복무 인천청년 상해보험 지원"
+    },
+    {
+      "external_id": "20260724005400213305",
+      "new_category_codes": [
+        "PARTICIPATION"
+      ],
+      "old_category_codes": [
+        "PARTICIPATION"
+      ],
+      "policy_id": 86,
+      "source": "ONTONG_YOUTH",
+      "title": "2026년 부평 청년주간행사 추진단 모집"
+    },
+    {
+      "external_id": "20260724005400213304",
+      "new_category_codes": [
+        "HOUSING"
+      ],
+      "old_category_codes": [
+        "FINANCE",
+        "WELFARE"
+      ],
+      "policy_id": 87,
+      "source": "ONTONG_YOUTH",
+      "title": "2026년 찾아가는 청년주거 상담소(국토교통부)"
+    },
+    {
+      "external_id": "20260724005400213303",
+      "new_category_codes": [
+        "HOUSING"
+      ],
+      "old_category_codes": [
+        "HOUSING"
+      ],
+      "policy_id": 88,
+      "source": "ONTONG_YOUTH",
+      "title": "(검단구) 인천시 청년월세 지원사업"
+    },
+    {
+      "external_id": "20260724005400213302",
+      "new_category_codes": [
+        "HOUSING"
+      ],
+      "old_category_codes": [
+        "HOUSING"
+      ],
+      "policy_id": 89,
+      "source": "ONTONG_YOUTH",
+      "title": "(서해구) 인천시 청년월세 지원사업"
+    },
+    {
+      "external_id": "20260724005400213301",
+      "new_category_codes": [
+        "HOUSING"
+      ],
+      "old_category_codes": [
+        "HOUSING"
+      ],
+      "policy_id": 90,
+      "source": "ONTONG_YOUTH",
+      "title": "(영종구) 인천시 청년월세 지원사업"
+    },
+    {
+      "external_id": "20260724005400213300",
+      "new_category_codes": [
+        "EMPLOYMENT"
+      ],
+      "old_category_codes": [
+        "EMPLOYMENT"
+      ],
+      "policy_id": 91,
+      "source": "ONTONG_YOUTH",
+      "title": "(영종구) 청년 자격증 응시료 지원"
+    },
+    {
+      "external_id": "20260722005400213299",
+      "new_category_codes": [
+        "EMPLOYMENT"
+      ],
+      "old_category_codes": [
+        "EMPLOYMENT"
+      ],
+      "policy_id": 92,
+      "source": "ONTONG_YOUTH",
+      "title": "[남구] 2026년 구직 청년 면접용 정장대여"
+    },
+    {
+      "external_id": "20260722005400213298",
+      "new_category_codes": [
+        "HOUSING"
+      ],
+      "old_category_codes": [
+        "HOUSING"
+      ],
+      "policy_id": 93,
+      "source": "ONTONG_YOUTH",
+      "title": "청년월세지원"
+    }
+  ],
+  "schema_version": 1,
+  "status": "approved"
+}
