@@ -14,7 +14,9 @@ export default function HousingRentSimulatorForm({ rule, values, onChange }: Sim
       <KnownRuleInfo
         items={[
           { label: '월 지원 한도', value: formatWon(r.monthly_support_cap_amount) },
-          { label: '지원 기간', value: `${r.support_months}개월` },
+          ...(r.support_months !== undefined
+            ? [{ label: '지원 기간', value: `${r.support_months}개월` }]
+            : []),
           ...(r.rent_limit_amount !== undefined
             ? [{ label: '월세 제한', value: formatWon(r.rent_limit_amount) }]
             : []),

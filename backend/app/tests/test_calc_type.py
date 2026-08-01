@@ -9,8 +9,15 @@ from app.models.user_category_profile import Category, CategoryCode
 from app.services.policy_engine.calc_type import CalcType, can_simulate, resolve_calc_type
 
 
-def _benefit(benefit_type: BenefitType | str) -> PolicyBenefit:
-    return PolicyBenefit(benefit_type=benefit_type, amount_type="FIXED")
+def _benefit(
+    benefit_type: BenefitType | str,
+    calculation_rule_json: dict | None = None,
+) -> PolicyBenefit:
+    return PolicyBenefit(
+        benefit_type=benefit_type,
+        amount_type="FIXED",
+        calculation_rule_json=calculation_rule_json,
+    )
 
 
 def _policy(*category_codes: CategoryCode | str) -> Policy:
@@ -91,19 +98,58 @@ def test_non_simulatable_benefit_types_resolve_to_none(
     assert resolve_calc_type(_benefit(benefit_type), policy) is None
 
 
+_VALID_LOAN_INTEREST_RULE = {
+    "policy_interest_rate_percent": 1.8,
+    "max_loan_amount": 200000000,
+    "max_support_months": 24,
+    "repayment_type": "BULLET",
+}
+
+_VALID_CASH_VOUCHER_FIXED_RULE = {
+    "amount_type": "FIXED",
+    "amount": 300000,
+    "payment_cycle": "ONCE",
+    "max_count": 1,
+}
+
+
 @pytest.mark.parametrize(
-    ("benefit_type", "expected"),
+    ("benefit_type", "calculation_rule_json", "expected"),
     [
-        (BenefitType.LOAN, True),
-        (BenefitType.CASH, True),
-        (BenefitType.SERVICE, False),
-        (BenefitType.OTHER, False),
+        (BenefitType.LOAN, _VALID_LOAN_INTEREST_RULE, True),
+        (BenefitType.CASH, _VALID_CASH_VOUCHER_FIXED_RULE, True),
+        (BenefitType.SERVICE, None, False),
+        (BenefitType.OTHER, None, False),
     ],
 )
 def test_can_simulate_mirrors_resolve_calc_type(
     benefit_type: BenefitType,
+    calculation_rule_json: dict | None,
     expected: bool,
 ) -> None:
     policy = _policy()
 
-    assert can_simulate(_benefit(benefit_type), policy) is expected
+    assert can_simulate(_benefit(benefit_type, calculation_rule_json), policy) is expected
+
+
+@pytest.mark.parametrize(
+    ("benefit_type", "calculation_rule_json"),
+    [
+        (BenefitType.LOAN, None),
+        (BenefitType.LOAN, {}),
+        (BenefitType.LOAN, {"policy_interest_rate_percent": 1.8}),
+        (BenefitType.CASH, None),
+        (BenefitType.CASH, {"amount_type": "FIXED"}),
+        (BenefitType.CASH, {**_VALID_CASH_VOUCHER_FIXED_RULE, "amount_type": "UNKNOWN"}),
+    ],
+)
+def test_can_simulate_is_false_when_calc_type_resolves_but_rule_json_is_incomplete(
+    benefit_type: BenefitType,
+    calculation_rule_json: dict | None,
+) -> None:
+    """A resolvable CalcType is not enough if calculation_rule_json is missing
+    the fields simulator.calculate_*() actually reads as required."""
+
+    policy = _policy()
+
+    assert can_simulate(_benefit(benefit_type, calculation_rule_json), policy) is False

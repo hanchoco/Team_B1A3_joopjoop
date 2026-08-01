@@ -18,7 +18,9 @@ export default function TaxDeductionSimulatorForm({ rule, values, onChange }: Si
     <div>
       <KnownRuleInfo
         items={[
-          { label: '공제율', value: `${r.deduction_rate_percent}%` },
+          ...(r.deduction_rate_percent !== undefined
+            ? [{ label: '공제율', value: `${r.deduction_rate_percent}%` }]
+            : []),
           ...(r.max_deduction_amount !== undefined
             ? [{ label: '공제한도', value: formatWon(r.max_deduction_amount) }]
             : []),

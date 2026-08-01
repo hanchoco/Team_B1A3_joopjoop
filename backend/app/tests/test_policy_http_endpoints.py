@@ -173,6 +173,12 @@ def _seed_policy_dataset() -> SeededPolicyIds:
                     duration_months=12,
                     max_total_amount=Decimal("2400000.00"),
                     display_text="월 최대 20만 원",
+                    # HOUSING category -> resolves to HOUSING_RENT; fields required
+                    # by calculate_housing_rent() (docs/simulator_calc_rules.md).
+                    calculation_rule_json={
+                        "monthly_support_cap_amount": 200000,
+                        "support_months": 12,
+                    },
                 ),
                 PolicyBenefit(
                     policy_id=review.id,
@@ -183,6 +189,14 @@ def _seed_policy_dataset() -> SeededPolicyIds:
                     duration_months=12,
                     max_total_amount=Decimal("600000.00"),
                     display_text="총 최대 60만 원",
+                    # TRANSPORT category -> resolves to CASH_VOUCHER; fields required
+                    # by calculate_cash_voucher() for amount_type=FIXED.
+                    calculation_rule_json={
+                        "amount_type": "FIXED",
+                        "amount": 50000,
+                        "payment_cycle": "MONTHLY",
+                        "max_count": 12,
+                    },
                 ),
                 PolicyDocument(
                     policy_id=eligible.id,

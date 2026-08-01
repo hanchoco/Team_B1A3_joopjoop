@@ -53,7 +53,9 @@ export default function CashVoucherSimulatorForm({ rule, values, onChange }: Sim
     <div>
       <KnownRuleInfo
         items={[
-          { label: '지원 비율', value: `${r.rate_percent}%` },
+          ...(r.rate_percent !== undefined
+            ? [{ label: '지원 비율', value: `${r.rate_percent}%` }]
+            : []),
           { label: '지원 상한액', value: formatWon(r.cap_amount) },
           { label: '지급 주기', value: cycleLabel },
         ]}
