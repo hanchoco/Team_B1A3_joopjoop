@@ -140,7 +140,6 @@ export default function PolicyDetail() {
                 <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-600">
                   {category}
                 </span>
-                <span className="text-xs text-gray-400">정책 ID · {policy.id}</span>
               </div>
               <h1 className="mt-4 text-3xl font-black">{policy.title}</h1>
             </div>
