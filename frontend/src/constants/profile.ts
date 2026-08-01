@@ -4,17 +4,7 @@ import type {
   HousingTypeCode,
   IncomeBandCode,
 } from '../types/api'
-
-export const REGION_OPTIONS: { code: string | null; name: string }[] = [
-  { code: '11', name: '서울' },
-  { code: '41', name: '경기' },
-  { code: '28', name: '인천' },
-  { code: '26', name: '부산' },
-  { code: '27', name: '대구' },
-  { code: '29', name: '광주' },
-  { code: '30', name: '대전' },
-  { code: null, name: '그 외 지역' },
-]
+export { SIDO_OPTIONS as REGION_OPTIONS } from './regions'
 
 export const INCOME_BAND_OPTIONS: { code: IncomeBandCode; label: string }[] = [
   { code: 'BELOW_50', label: '중위소득 50% 미만' },
@@ -54,10 +44,6 @@ export const HOUSING_TYPE_OPTIONS: { code: HousingTypeCode; label: string }[] = 
   { code: 'WITH_FAMILY', label: '가족과 거주(가족 소유)' },
   { code: 'OTHER', label: '기타' },
 ]
-
-export function regionNameByCode(code: string | null | undefined): string {
-  return REGION_OPTIONS.find((option) => option.code === code)?.name ?? '미입력'
-}
 
 export function incomeBandLabel(code: IncomeBandCode | null | undefined): string {
   return INCOME_BAND_OPTIONS.find((option) => option.code === code)?.label ?? '미입력'

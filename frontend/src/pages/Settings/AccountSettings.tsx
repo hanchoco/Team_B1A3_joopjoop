@@ -4,6 +4,7 @@ import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { changePassword } from '../../api/users'
 import { extractErrorMessage } from '../../api/client'
+import ConfirmModal from '../../components/common/ConfirmModal'
 
 export default function AccountSettings() {
   const navigate = useNavigate()
@@ -13,11 +14,10 @@ export default function AccountSettings() {
   const [showPassword, setShowPassword] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
-  const [saved, setSaved] = useState(false)
+  const [successOpen, setSuccessOpen] = useState(false)
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    setSaved(false)
     setError('')
 
     if (newPassword.length < 8) {
@@ -39,7 +39,7 @@ export default function AccountSettings() {
       setCurrentPassword('')
       setNewPassword('')
       setPasswordConfirmation('')
-      setSaved(true)
+      setSuccessOpen(true)
     } catch (err) {
       setError(extractErrorMessage(err))
     } finally {
@@ -120,11 +120,6 @@ export default function AccountSettings() {
         </div>
 
         {error && <p className="mt-4 text-sm font-semibold text-rose-600">{error}</p>}
-        {saved && (
-          <p className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-emerald-700">
-            <CheckCircle2 size={17} /> 비밀번호가 변경됐어요.
-          </p>
-        )}
 
         <button
           type="submit"
@@ -134,6 +129,22 @@ export default function AccountSettings() {
           {submitting ? '변경 중...' : '변경하기'}
         </button>
       </form>
+
+      {successOpen && (
+        <ConfirmModal
+          title="비밀번호가 변경됐어요."
+          icon={
+            <span className="grid h-11 w-11 place-items-center rounded-full bg-emerald-100 text-emerald-600">
+              <CheckCircle2 size={21} />
+            </span>
+          }
+          confirmLabel="확인"
+          onConfirm={() => {
+            setSuccessOpen(false)
+            navigate('/settings')
+          }}
+        />
+      )}
     </section>
   )
 }

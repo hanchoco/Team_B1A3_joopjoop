@@ -16,8 +16,8 @@ import {
   HOUSEHOLD_TYPE_OPTIONS,
   HOUSING_TYPE_OPTIONS,
   INCOME_BAND_OPTIONS,
-  REGION_OPTIONS,
 } from '../../constants/profile'
+import { SIDO_OPTIONS, SIGUNGU_BY_SIDO_CODE } from '../../constants/regions'
 import { useApp } from '../../store/useApp'
 import type {
   CategoryAnswerUpsert,
@@ -29,13 +29,14 @@ import type {
 const fieldClass =
   'mt-2 w-full rounded-lg border border-gray-300 bg-white p-3 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100'
 
-const NO_REGION_CODE = '__none__'
 const EMPTY = ''
 
 const emptyForm = {
   nickname: EMPTY,
   birth_year: EMPTY,
   region_code: EMPTY,
+  region_sido: EMPTY,
+  region_sigungu: EMPTY,
   income_band_code: EMPTY,
   employment_status_code: EMPTY,
   household_type_code: EMPTY,
@@ -108,10 +109,18 @@ function CategoryQuestionField({
   onToggleMultiOption: (option: string) => void
 }) {
   const options = parseQuestionOptions(question.options_json)
+  const answerValue = value ?? undefined
 
   return (
     <div>
-      <p className="text-sm font-semibold">{question.label}</p>
+      <div className="flex flex-wrap items-center gap-2">
+        <p className="text-sm font-semibold">{question.label}</p>
+        {value === null && (
+          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-500">
+            아직 답변하지 않음
+          </span>
+        )}
+      </div>
       {question.description && <p className="mt-1 text-xs text-gray-500">{question.description}</p>}
       <div className="mt-2">
         {question.answer_type === 'BOOLEAN' ? (
@@ -120,7 +129,7 @@ function CategoryQuestionField({
               { label: '예', value: true },
               { label: '아니요', value: false },
             ].map((option) => {
-              const selected = value === option.value
+              const selected = answerValue === option.value
               return (
                 <button
                   key={option.label}
@@ -138,7 +147,7 @@ function CategoryQuestionField({
           <input
             type="text"
             inputMode="numeric"
-            value={formatNumberInput(value)}
+            value={formatNumberInput(answerValue)}
             onChange={(event) => {
               const digits = event.target.value.replace(/\D/g, '')
               onChange(digits === '' ? undefined : Number(digits))
@@ -149,7 +158,7 @@ function CategoryQuestionField({
         ) : question.answer_type === 'MULTI_SELECT' && options.length > 0 ? (
           <div className="grid gap-2 sm:grid-cols-2">
             {options.map((option) => {
-              const selected = asStringArray(value).includes(option.value)
+              const selected = asStringArray(answerValue).includes(option.value)
               return (
                 <button
                   key={option.value}
@@ -166,7 +175,7 @@ function CategoryQuestionField({
         ) : options.length > 0 ? (
           <div className="grid gap-2 sm:grid-cols-2">
             {options.map((option) => {
-              const selected = value === option.value
+              const selected = answerValue === option.value
               return (
                 <button
                   key={option.value}
@@ -183,7 +192,7 @@ function CategoryQuestionField({
         ) : (
           <input
             type="text"
-            value={typeof value === 'string' ? value : ''}
+            value={typeof answerValue === 'string' ? answerValue : ''}
             onChange={(event) => onChange(event.target.value)}
             className={fieldClass}
           />
@@ -220,10 +229,15 @@ export default function EditProfile() {
       })
       .then((data) => {
         if (cancelled) return
+        const savedSido =
+          SIDO_OPTIONS.find((option) => option.name === data.region_sido) ??
+          SIDO_OPTIONS.find((option) => option.code === data.region_code)
         setForm({
           nickname: currentUser?.nickname ?? EMPTY,
           birth_year: data.birth_year ? String(data.birth_year) : EMPTY,
-          region_code: data.region_code ?? NO_REGION_CODE,
+          region_code: savedSido?.code ?? EMPTY,
+          region_sido: savedSido?.name ?? EMPTY,
+          region_sigungu: savedSido ? (data.region_sigungu ?? EMPTY) : EMPTY,
           income_band_code: data.income_band_code ?? EMPTY,
           employment_status_code: data.employment_status_code ?? EMPTY,
           household_type_code: data.household_type_code ?? EMPTY,
@@ -278,7 +292,9 @@ export default function EditProfile() {
     try {
       const payload: UserProfileUpdate = {
         birth_year: form.birth_year ? Number(form.birth_year) : null,
-        region_code: form.region_code === NO_REGION_CODE ? null : form.region_code || null,
+        region_code: form.region_code || null,
+        region_sido: form.region_sido || null,
+        region_sigungu: form.region_sigungu || null,
         income_band_code: (form.income_band_code || null) as UserProfileUpdate['income_band_code'],
         employment_status_code: (form.employment_status_code ||
           null) as UserProfileUpdate['employment_status_code'],
@@ -577,15 +593,42 @@ export default function EditProfile() {
           />
         </label>
         <label className="block text-sm font-semibold">
-          거주지역
+          시/도
           <select
             value={form.region_code}
-            onChange={(event) => setForm({ ...form, region_code: event.target.value })}
+            onChange={(event) => {
+              const regionCode = event.target.value
+              const sido = SIDO_OPTIONS.find((option) => option.code === regionCode)
+              setForm({
+                ...form,
+                region_code: regionCode,
+                region_sido: sido?.name ?? EMPTY,
+                region_sigungu: EMPTY,
+              })
+            }}
             className={fieldClass}
           >
-            {REGION_OPTIONS.map((option) => (
-              <option key={option.name} value={option.code ?? NO_REGION_CODE}>
+            <option value={EMPTY}>시/도 선택</option>
+            {SIDO_OPTIONS.map((option) => (
+              <option key={option.code} value={option.code}>
                 {option.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block text-sm font-semibold">
+          시/군/구
+          <select
+            value={form.region_sigungu}
+            disabled={!form.region_code}
+            required={Boolean(form.region_code)}
+            onChange={(event) => setForm({ ...form, region_sigungu: event.target.value })}
+            className={`${fieldClass} disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400`}
+          >
+            <option value={EMPTY}>시/군/구 선택</option>
+            {(SIGUNGU_BY_SIDO_CODE[form.region_code] ?? []).map((sigungu) => (
+              <option key={sigungu} value={sigungu}>
+                {sigungu}
               </option>
             ))}
           </select>

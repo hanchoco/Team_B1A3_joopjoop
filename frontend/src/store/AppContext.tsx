@@ -3,7 +3,6 @@ import type { PropsWithChildren } from 'react'
 import { login as apiLogin, signup as apiSignup } from '../api/auth'
 import { clearToken, getToken, setToken as persistToken } from '../api/client'
 import { getCurrentUser, getMyProfile, updateDisplayName as apiUpdateDisplayName, updateMyProfile } from '../api/users'
-import type { NotificationSettings } from '../types'
 import type { SignupRequest, UserProfileResponse, UserProfileUpdate, UserResponse } from '../types/api'
 import { AppContext } from './context'
 
@@ -15,12 +14,6 @@ export function AppProvider({ children }: PropsWithChildren) {
     () => localStorage.getItem('joopjoop-profile-avatar') || undefined,
   )
   const isLoggedIn = token !== null
-  const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
-    enabled: true,
-    sevenDaysBefore: true,
-    threeDaysBefore: true,
-    deadlineDay: true,
-  })
   const [accountId] = useState('nara@example.com')
 
   useEffect(() => {
@@ -98,11 +91,9 @@ export function AppProvider({ children }: PropsWithChildren) {
       updateDisplayName,
       avatarUrl,
       updateAvatarUrl,
-      notificationSettings,
-      updateNotificationSettings: setNotificationSettings,
       accountId,
     }),
-    [isLoggedIn, token, currentUser, profile, avatarUrl, notificationSettings, accountId],
+    [isLoggedIn, token, currentUser, profile, avatarUrl, accountId],
   )
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>
