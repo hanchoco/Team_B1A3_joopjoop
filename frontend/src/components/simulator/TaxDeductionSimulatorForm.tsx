@@ -33,15 +33,21 @@ export default function TaxDeductionSimulatorForm({ rule, values, onChange }: Si
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="text-sm font-semibold">
           연간 세액/과세표준
-          <input
-            name="annual_tax_amount"
-            type="number"
-            min={0}
-            required
-            value={values.annual_tax_amount ?? ''}
-            onChange={update}
-            className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 font-normal"
-          />
+          <div className="relative mt-2">
+            <input
+              name="annual_tax_amount"
+              type="number"
+              min={0}
+              step={100000}
+              required
+              value={values.annual_tax_amount ?? ''}
+              onChange={update}
+              className="w-full rounded-lg border border-gray-300 px-4 py-3 pr-10 font-normal"
+            />
+            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400">
+              원
+            </span>
+          </div>
         </label>
       </div>
     </div>

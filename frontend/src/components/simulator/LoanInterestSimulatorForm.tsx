@@ -40,15 +40,21 @@ export default function LoanInterestSimulatorForm({ rule, values, onChange }: Si
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="text-sm font-semibold">
           대출 신청 금액
-          <input
-            name="loan_amount"
-            type="number"
-            min={0}
-            required
-            value={values.loan_amount ?? ''}
-            onChange={update}
-            className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 font-normal"
-          />
+          <div className="relative mt-2">
+            <input
+              name="loan_amount"
+              type="number"
+              min={0}
+              step={100000}
+              required
+              value={values.loan_amount ?? ''}
+              onChange={update}
+              className="w-full rounded-lg border border-gray-300 px-4 py-3 pr-10 font-normal"
+            />
+            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400">
+              원
+            </span>
+          </div>
         </label>
         {needsGeneralRate && (
           <PercentInput
@@ -60,15 +66,20 @@ export default function LoanInterestSimulatorForm({ rule, values, onChange }: Si
         )}
         <label className="text-sm font-semibold">
           희망 지원 개월 수(선택)
-          <input
-            name="support_months"
-            type="number"
-            min={1}
-            max={r.max_support_months}
-            value={values.support_months ?? r.max_support_months}
-            onChange={update}
-            className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 font-normal"
-          />
+          <div className="relative mt-2">
+            <input
+              name="support_months"
+              type="number"
+              min={1}
+              max={r.max_support_months}
+              value={values.support_months ?? r.max_support_months}
+              onChange={update}
+              className="w-full rounded-lg border border-gray-300 px-4 py-3 pr-14 font-normal"
+            />
+            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400">
+              개월
+            </span>
+          </div>
         </label>
       </div>
     </div>

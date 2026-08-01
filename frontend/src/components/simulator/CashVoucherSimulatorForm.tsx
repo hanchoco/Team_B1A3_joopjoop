@@ -33,15 +33,20 @@ export default function CashVoucherSimulatorForm({ rule, values, onChange }: Sim
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="text-sm font-semibold">
               받고 싶은 개월 수(선택)
-              <input
-                name="count"
-                type="number"
-                min={1}
-                max={r.max_count}
-                value={values.count ?? r.max_count}
-                onChange={update}
-                className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 font-normal"
-              />
+              <div className="relative mt-2">
+                <input
+                  name="count"
+                  type="number"
+                  min={1}
+                  max={r.max_count}
+                  value={values.count ?? r.max_count}
+                  onChange={update}
+                  className="w-full rounded-lg border border-gray-300 px-4 py-3 pr-14 font-normal"
+                />
+                <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400">
+                  개월
+                </span>
+              </div>
             </label>
           </div>
         )}
@@ -63,27 +68,38 @@ export default function CashVoucherSimulatorForm({ rule, values, onChange }: Sim
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="text-sm font-semibold">
           지출/구매 금액
-          <input
-            name="base_amount"
-            type="number"
-            min={0}
-            required
-            value={values.base_amount ?? ''}
-            onChange={update}
-            className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 font-normal"
-          />
+          <div className="relative mt-2">
+            <input
+              name="base_amount"
+              type="number"
+              min={0}
+              step={10000}
+              required
+              value={values.base_amount ?? ''}
+              onChange={update}
+              className="w-full rounded-lg border border-gray-300 px-4 py-3 pr-10 font-normal"
+            />
+            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400">
+              원
+            </span>
+          </div>
         </label>
         {isMonthly && (
           <label className="text-sm font-semibold">
             받고 싶은 개월 수(선택)
-            <input
-              name="count"
-              type="number"
-              min={1}
-              value={values.count ?? 1}
-              onChange={update}
-              className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 font-normal"
-            />
+            <div className="relative mt-2">
+              <input
+                name="count"
+                type="number"
+                min={1}
+                value={values.count ?? 1}
+                onChange={update}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 pr-14 font-normal"
+              />
+              <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400">
+                개월
+              </span>
+            </div>
           </label>
         )}
       </div>

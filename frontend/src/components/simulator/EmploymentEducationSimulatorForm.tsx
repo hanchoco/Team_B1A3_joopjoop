@@ -34,14 +34,20 @@ export default function EmploymentEducationSimulatorForm({
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="text-sm font-semibold">
           현재 월 소득(선택)
-          <input
-            name="current_monthly_income_amount"
-            type="number"
-            min={0}
-            value={values.current_monthly_income_amount ?? 0}
-            onChange={update}
-            className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 font-normal"
-          />
+          <div className="relative mt-2">
+            <input
+              name="current_monthly_income_amount"
+              type="number"
+              min={0}
+              step={10000}
+              value={values.current_monthly_income_amount ?? 0}
+              onChange={update}
+              className="w-full rounded-lg border border-gray-300 px-4 py-3 pr-10 font-normal"
+            />
+            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400">
+              원
+            </span>
+          </div>
         </label>
       </div>
     </div>
