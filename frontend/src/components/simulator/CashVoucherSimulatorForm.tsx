@@ -2,6 +2,7 @@ import type { ChangeEvent } from 'react'
 import type { CashVoucherRuleJson } from '../../types/api'
 import type { SimulatorFormProps } from '../../types/simulator'
 import { formatWon } from '../../utils/formatWon'
+import CurrencyInput from './CurrencyInput'
 import KnownRuleInfo from './KnownRuleInfo'
 
 const PAYMENT_CYCLE_LABEL: Record<string, string> = {
@@ -66,24 +67,14 @@ export default function CashVoucherSimulatorForm({ rule, values, onChange }: Sim
         ]}
       />
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className="text-sm font-semibold">
-          지출/구매 금액
-          <div className="relative mt-2">
-            <input
-              name="base_amount"
-              type="number"
-              min={0}
-              step={10000}
-              required
-              value={values.base_amount ?? ''}
-              onChange={update}
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 pr-10 font-normal"
-            />
-            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400">
-              원
-            </span>
-          </div>
-        </label>
+        <CurrencyInput
+          name="base_amount"
+          label="지출/구매 금액"
+          required
+          placeholder="예: 100,000"
+          value={values.base_amount}
+          onChange={onChange}
+        />
         {isMonthly && (
           <label className="text-sm font-semibold">
             받고 싶은 개월 수(선택)

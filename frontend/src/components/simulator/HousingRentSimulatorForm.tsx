@@ -2,6 +2,7 @@ import type { ChangeEvent } from 'react'
 import type { HousingRentRuleJson } from '../../types/api'
 import type { SimulatorFormProps } from '../../types/simulator'
 import { formatWon } from '../../utils/formatWon'
+import CurrencyInput from './CurrencyInput'
 import KnownRuleInfo from './KnownRuleInfo'
 
 export default function HousingRentSimulatorForm({ rule, values, onChange }: SimulatorFormProps) {
@@ -26,61 +27,29 @@ export default function HousingRentSimulatorForm({ rule, values, onChange }: Sim
         ]}
       />
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className="text-sm font-semibold">
-          월세
-          <div className="relative mt-2">
-            <input
-              name="monthly_rent_amount"
-              type="number"
-              min={0}
-              step={10000}
-              required
-              value={values.monthly_rent_amount ?? ''}
-              onChange={update}
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 pr-10 font-normal"
-            />
-            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400">
-              원
-            </span>
-          </div>
-        </label>
-        <label className="text-sm font-semibold">
-          월 관리비(선택, 지원 대상 아님)
-          <div className="relative mt-2">
-            <input
-              name="monthly_management_fee_amount"
-              type="number"
-              min={0}
-              step={10000}
-              value={values.monthly_management_fee_amount ?? 0}
-              onChange={update}
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 pr-10 font-normal"
-            />
-            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400">
-              원
-            </span>
-          </div>
-          <p className="mt-1 text-xs font-normal text-gray-400">
-            관리비는 지원 계산에 포함되지 않으며 참고용으로만 기록돼요.
-          </p>
-        </label>
-        <label className="text-sm font-semibold">
-          보증금(선택)
-          <div className="relative mt-2">
-            <input
-              name="deposit_amount"
-              type="number"
-              min={0}
-              step={100000}
-              value={values.deposit_amount ?? 0}
-              onChange={update}
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 pr-10 font-normal"
-            />
-            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400">
-              원
-            </span>
-          </div>
-        </label>
+        <CurrencyInput
+          name="monthly_rent_amount"
+          label="월세"
+          required
+          placeholder="예: 500,000"
+          value={values.monthly_rent_amount}
+          onChange={onChange}
+        />
+        <CurrencyInput
+          name="monthly_management_fee_amount"
+          label="월 관리비(선택, 지원 대상 아님)"
+          placeholder="예: 100,000"
+          value={values.monthly_management_fee_amount ?? 0}
+          onChange={onChange}
+          note="관리비는 지원 계산에 포함되지 않으며 참고용으로만 기록돼요."
+        />
+        <CurrencyInput
+          name="deposit_amount"
+          label="보증금(선택)"
+          placeholder="예: 10,000,000"
+          value={values.deposit_amount ?? 0}
+          onChange={onChange}
+        />
         <label className="text-sm font-semibold">
           희망 지원 개월 수(선택)
           <div className="relative mt-2">

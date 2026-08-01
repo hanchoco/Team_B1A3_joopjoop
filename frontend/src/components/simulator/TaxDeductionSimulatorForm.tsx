@@ -1,7 +1,7 @@
-import type { ChangeEvent } from 'react'
 import type { TaxDeductionRuleJson } from '../../types/api'
 import type { SimulatorFormProps } from '../../types/simulator'
 import { formatWon } from '../../utils/formatWon'
+import CurrencyInput from './CurrencyInput'
 import KnownRuleInfo from './KnownRuleInfo'
 
 const DEDUCTION_TYPE_LABEL: Record<string, string> = {
@@ -11,8 +11,6 @@ const DEDUCTION_TYPE_LABEL: Record<string, string> = {
 
 export default function TaxDeductionSimulatorForm({ rule, values, onChange }: SimulatorFormProps) {
   const r = rule as unknown as TaxDeductionRuleJson
-  const update = (event: ChangeEvent<HTMLInputElement>) =>
-    onChange(event.target.name, event.target.value === '' ? undefined : Number(event.target.value))
 
   return (
     <div>
@@ -31,24 +29,14 @@ export default function TaxDeductionSimulatorForm({ rule, values, onChange }: Si
         ]}
       />
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className="text-sm font-semibold">
-          연간 세액/과세표준
-          <div className="relative mt-2">
-            <input
-              name="annual_tax_amount"
-              type="number"
-              min={0}
-              step={100000}
-              required
-              value={values.annual_tax_amount ?? ''}
-              onChange={update}
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 pr-10 font-normal"
-            />
-            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400">
-              원
-            </span>
-          </div>
-        </label>
+        <CurrencyInput
+          name="annual_tax_amount"
+          label="연간 세액/과세표준"
+          required
+          placeholder="예: 1,000,000"
+          value={values.annual_tax_amount}
+          onChange={onChange}
+        />
       </div>
     </div>
   )

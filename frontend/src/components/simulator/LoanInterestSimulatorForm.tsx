@@ -2,6 +2,7 @@ import type { ChangeEvent } from 'react'
 import type { LoanInterestRuleJson } from '../../types/api'
 import type { SimulatorFormProps } from '../../types/simulator'
 import { formatWon } from '../../utils/formatWon'
+import CurrencyInput from './CurrencyInput'
 import KnownRuleInfo from './KnownRuleInfo'
 import PercentInput from './PercentInput'
 
@@ -38,24 +39,14 @@ export default function LoanInterestSimulatorForm({ rule, values, onChange }: Si
         ]}
       />
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className="text-sm font-semibold">
-          대출 신청 금액
-          <div className="relative mt-2">
-            <input
-              name="loan_amount"
-              type="number"
-              min={0}
-              step={100000}
-              required
-              value={values.loan_amount ?? ''}
-              onChange={update}
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 pr-10 font-normal"
-            />
-            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400">
-              원
-            </span>
-          </div>
-        </label>
+        <CurrencyInput
+          name="loan_amount"
+          label="대출 신청 금액"
+          required
+          placeholder="예: 10,000,000"
+          value={values.loan_amount}
+          onChange={onChange}
+        />
         {needsGeneralRate && (
           <PercentInput
             name="general_interest_rate_percent"
