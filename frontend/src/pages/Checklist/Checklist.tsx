@@ -193,7 +193,7 @@ export default function Checklist() {
         onClick={() => navigate(`/policies/${id}`)}
         className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500"
       >
-        <ArrowLeft size={16} /> 정책 상세로
+        <ArrowLeft size={16} /> 정책 상세
       </button>
       <div className="mt-5">
         <p className="text-sm font-semibold text-blue-600">신청 전 마지막 점검</p>
