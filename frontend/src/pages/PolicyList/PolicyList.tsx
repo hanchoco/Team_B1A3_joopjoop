@@ -17,6 +17,7 @@ import { bookmarkPolicy, listPolicies, removeBookmark } from '../../api/policies
 import { extractErrorMessage } from '../../api/client'
 import type { CategoryResponse, EligibilityStatus, PolicySummaryResponse } from '../../types/api'
 import { useApp } from '../../store/useApp'
+import { buildPolicyCardPreview } from '../../utils/policyCardPreview'
 import {
   buildPolicyDetailPath,
   POSSIBILITY_FILTERS,
@@ -366,6 +367,7 @@ export default function PolicyList() {
             const CategoryIcon = (categoryName && categoryIcons[categoryName]) || ReceiptText
             const chance = policy.card_status ? CARD_STATUS_LABEL[policy.card_status] : '확인 필요'
             const benefitText = formatBenefit(policy.estimated_benefit_amount)
+            const preview = buildPolicyCardPreview(policy)
             return (
               <article
                 key={policy.id}
@@ -403,8 +405,17 @@ export default function PolicyList() {
                   </span>
                   <div className="flex min-w-0 flex-col">
                     <div className="flex flex-1 flex-col gap-3">
-                      <h2 className="text-xl font-bold text-gray-950">{policy.title}</h2>
-                      <p className="text-sm leading-7 text-gray-500">{policy.summary}</p>
+                      <h2 className="line-clamp-2 text-xl font-bold leading-7 text-gray-950">
+                        {policy.title}
+                      </h2>
+                      <p className="line-clamp-3 text-sm leading-6 text-gray-500">
+                        {preview.summary}
+                        {preview.hasMoreContent && (
+                          <span className="sr-only">
+                            전체 내용은 정책 상세 페이지에서 확인할 수 있습니다.
+                          </span>
+                        )}
+                      </p>
                       {benefitText && (
                         <p className="text-base font-bold leading-7 text-blue-700">{benefitText}</p>
                       )}
