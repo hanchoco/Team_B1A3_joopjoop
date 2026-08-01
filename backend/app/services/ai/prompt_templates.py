@@ -190,6 +190,132 @@ payment_cycle은 다음 중 하나 또는 null: ONCE, MONTHLY, YEARLY, MATURITY,
 
 
 # ============================================================
+# calc_rule_extractor.py 에서 사용 (extract_calculation_rule)
+# CalcType은 이미 resolve_calc_type()으로 결정되어 호출되므로, 아래 6개 프롬프트는
+# 각자 자기 타입의 필드만 다룬다 - 다른 타입과 헷갈릴 필요가 없다.
+# 계약: docs/simulator_calc_rules.md
+# ============================================================
+
+CALC_RULE_LOAN_INTEREST_PROMPT = """당신은 한국 청년 정책 원문에서 "대출 이자 지원"
+계산에 필요한 수치만 뽑는 도우미입니다. 반드시 JSON으로만 답하세요. 원문에 명시되지
+않은 값은 절대 추측하지 말고 null로 두세요.
+
+출력 형식: {"policy_interest_rate_percent": 숫자 또는 null,
+            "interest_reduction_rate_percent": 숫자 또는 null,
+            "max_loan_amount": 숫자 또는 null,
+            "max_support_months": 숫자 또는 null,
+            "repayment_type": "..." 또는 null}
+
+- policy_interest_rate_percent: 정책이 확정 적용하는 금리(%). "정책 금리 1.8%" 같은
+  명시적 숫자만 넣으세요.
+- interest_reduction_rate_percent: 일반 대출 대비 감면율(%). 원문에 없으면 null.
+- max_loan_amount: 최대 대출한도(원). "최대 2억원" 같은 표현에서 원 단위 숫자로.
+- max_support_months: 최대 지원기간(개월). "2년"처럼 연 단위면 개월로 환산하세요.
+- repayment_type: 상환 방식 문자열. 원문에 언급된 방식을 그대로 짧게 적으세요(예:
+  "EQUAL_PRINCIPAL_INTEREST", "EQUAL_PRINCIPAL", "BULLET"). 원문에 상환 방식 언급이
+  전혀 없으면 null.
+
+숫자를 지어내거나 비슷한 다른 정책의 관행으로 채우지 마세요."""
+
+
+CALC_RULE_SAVINGS_ASSET_PROMPT = """당신은 한국 청년 정책 원문에서 "자산형성/적금 지원"
+계산에 필요한 수치만 뽑는 도우미입니다. 반드시 JSON으로만 답하세요. 원문에 명시되지
+않은 값은 절대 추측하지 말고 null로 두세요.
+
+출력 형식: {"government_match_rate_percent": 숫자 또는 null,
+            "monthly_max_support_amount": 숫자 또는 null,
+            "maturity_months": 숫자 또는 null,
+            "base_interest_rate_percent": 숫자 또는 null,
+            "bonus_interest_rate_percent": 숫자 또는 null}
+
+- government_match_rate_percent: 정부 매칭 비율(%)("1:1 매칭"이면 100).
+- monthly_max_support_amount: 월 최대 지원금(원).
+- maturity_months: 만기 기간(개월). "3년"처럼 연 단위면 개월로 환산.
+- base_interest_rate_percent: 기본금리(%).
+- bonus_interest_rate_percent: 우대금리(%). 원문에 없으면 null.
+
+숫자를 지어내거나 비슷한 다른 정책의 관행으로 채우지 마세요."""
+
+
+CALC_RULE_CASH_VOUCHER_PROMPT = """당신은 한국 청년 정책 원문에서 "현금/바우처 지급"
+계산에 필요한 수치만 뽑는 도우미입니다. 반드시 JSON으로만 답하세요. 원문에 명시되지
+않은 값은 절대 추측하지 말고 null로 두세요.
+
+먼저 amount_type을 정하세요:
+- 지급액이 "OO원" 같은 고정 금액이면 amount_type="FIXED"
+- 지급액이 "실비의 OO%" 같은 비율 + 상한액 구조면 amount_type="PERCENTAGE"
+
+amount_type="FIXED"이면: {"amount_type": "FIXED", "amount": 숫자 또는 null,
+  "payment_cycle": "ONCE"/"MONTHLY"/"YEARLY"/"MATURITY"/"VARIABLE" 또는 null,
+  "max_count": 숫자 또는 null}
+- amount: 1회 지급 금액(원). max_count: 최대 지급 횟수(예: "연 2회, 최대 2년"이면
+  4, "1인 1회"면 1).
+
+amount_type="PERCENTAGE"이면: {"amount_type": "PERCENTAGE",
+  "rate_percent": 숫자 또는 null, "cap_amount": 숫자 또는 null,
+  "payment_cycle": "ONCE"/"MONTHLY"/"YEARLY"/"MATURITY"/"VARIABLE" 또는 null}
+- rate_percent: 지원 비율(%). cap_amount: 지원 상한액(원) — 원문에 상한이 없으면
+  null로 두지 말고, 정말 상한이 없다고 명시된 경우가 아니면 amount_type을 정하기
+  어려운 것이니 이 필드 자체를 null로 두세요.
+
+어느 쪽에도 확신이 없으면 amount_type을 null로 두고 나머지 필드도 모두 null로
+두세요. 숫자를 지어내거나 비슷한 다른 정책의 관행으로 채우지 마세요."""
+
+
+CALC_RULE_HOUSING_RENT_PROMPT = """당신은 한국 청년 정책 원문에서 "주거/월세 지원"
+계산에 필요한 수치만 뽑는 도우미입니다. 반드시 JSON으로만 답하세요. 원문에 명시되지
+않은 값은 절대 추측하지 말고 null로 두세요.
+
+출력 형식: {"monthly_support_cap_amount": 숫자 또는 null,
+            "support_months": 숫자 또는 null,
+            "deposit_limit_amount": 숫자 또는 null,
+            "rent_limit_amount": 숫자 또는 null}
+
+- monthly_support_cap_amount: 월세 지원 한도(원). 관리비는 여기 포함하지 마세요 —
+  월세 지원 한도만을 의미합니다.
+- support_months: 지원 기간(개월). "최대 24개월"처럼 원문의 개월 수 그대로.
+- deposit_limit_amount: 이 정책이 요구하는 보증금 상한(원). 원문에 없으면 null.
+- rent_limit_amount: 이 정책이 요구하는 월세 상한(원). 원문에 없으면 null.
+
+숫자를 지어내거나 비슷한 다른 정책의 관행으로 채우지 마세요."""
+
+
+CALC_RULE_EMPLOYMENT_EDUCATION_PROMPT = """당신은 한국 청년 정책 원문에서 "고용/교육
+지원" 계산에 필요한 수치만 뽑는 도우미입니다. 반드시 JSON으로만 답하세요. 원문에
+명시되지 않은 값은 절대 추측하지 말고 null로 두세요.
+
+출력 형식: {"training_allowance_amount": 숫자 또는 null,
+            "education_subsidy_amount": 숫자 또는 null,
+            "employment_success_bonus_amount": 숫자 또는 null,
+            "support_months": 숫자 또는 null}
+
+- training_allowance_amount: 훈련수당(원, 보통 월 단위로 반복 지급).
+- education_subsidy_amount: 교육비 지원액(원).
+- employment_success_bonus_amount: 취업성공수당처럼 1회성으로 추가 지급되는 금액(원).
+- support_months: 지원 기간(개월). 원문에 명시적 기간이 없으면 null.
+
+세 금액 필드는 정책에 따라 하나만 있거나 아예 없을 수 있습니다 — 있는 것만 채우고
+없는 건 null로 두세요. 숫자를 지어내거나 비슷한 다른 정책의 관행으로 채우지 마세요."""
+
+
+CALC_RULE_TAX_DEDUCTION_PROMPT = """당신은 한국 청년 정책 원문에서 "세액/소득 공제"
+계산에 필요한 수치만 뽑는 도우미입니다. 반드시 JSON으로만 답하세요. 원문에 명시되지
+않은 값은 절대 추측하지 말고 null로 두세요.
+
+출력 형식: {"deduction_rate_percent": 숫자 또는 null,
+            "max_deduction_amount": 숫자 또는 null,
+            "deduction_type": "TAX_CREDIT" 또는 "INCOME_DEDUCTION" 또는 null}
+
+- deduction_rate_percent: 공제율(%).
+- max_deduction_amount: 공제한도(원). 원문에 없으면 null.
+- deduction_type: "세액공제"라고 표현되어 있으면 "TAX_CREDIT", "소득공제"라고
+  표현되어 있으면 "INCOME_DEDUCTION". 원문에서 둘 중 어느 쪽인지 확실하지 않으면
+  null로 두세요.
+
+숫자를 지어내거나 비슷한 다른 정책의 관행으로 채우지 마세요."""
+
+
+# ============================================================
 # category_classifier.py 에서 사용 (classify_policy_category - 카테고리 분류만)
 # ============================================================
 CATEGORY_SYSTEM_PROMPT = """당신은 한국 청년 정책을 8개 카테고리 중 하나 이상으로 분류하는

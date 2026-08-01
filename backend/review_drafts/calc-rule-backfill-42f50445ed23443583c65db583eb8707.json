@@ -1,0 +1,612 @@
+{
+  "approved_at": "2026-08-01T12:56:35.260705+00:00",
+  "batch_id": "42f50445ed23443583c65db583eb8707",
+  "generated_at": "2026-08-01T12:53:33.257570+00:00",
+  "kind": "calc_rule_backfill_batch",
+  "policies": [
+    {
+      "benefit_display_text": "1인 월 20만원씩, 최대 24개월(회) 월세 지원",
+      "benefit_id": 1071,
+      "calc_type": "HOUSING_RENT",
+      "calculation_rule_json": {
+        "deposit_limit_amount": null,
+        "monthly_support_cap_amount": 200000,
+        "rent_limit_amount": 200000,
+        "support_months": 24,
+        "type": "HOUSING_RENT"
+      },
+      "policy_id": 1,
+      "policy_title": "(검단구) 인천시 청년월세 지원사업"
+    },
+    {
+      "benefit_display_text": "1인 월 20만원씩, 최대 24개월(회) 월세 지원",
+      "benefit_id": 1072,
+      "calc_type": "HOUSING_RENT",
+      "calculation_rule_json": {
+        "deposit_limit_amount": null,
+        "monthly_support_cap_amount": 200000,
+        "rent_limit_amount": 200000,
+        "support_months": 24,
+        "type": "HOUSING_RENT"
+      },
+      "policy_id": 2,
+      "policy_title": "(서해구) 인천시 청년월세 지원사업"
+    },
+    {
+      "benefit_display_text": "1인 월 20만원씩, 최대 24개월(회) 월세 지원",
+      "benefit_id": 1073,
+      "calc_type": "HOUSING_RENT",
+      "calculation_rule_json": {
+        "deposit_limit_amount": null,
+        "monthly_support_cap_amount": 200000,
+        "rent_limit_amount": 200000,
+        "support_months": 24,
+        "type": "HOUSING_RENT"
+      },
+      "policy_id": 3,
+      "policy_title": "(영종구) 인천시 청년월세 지원사업"
+    },
+    {
+      "benefit_display_text": "문화복지비 연 25만원 지원",
+      "benefit_id": 1083,
+      "calc_type": "CASH_VOUCHER",
+      "calculation_rule_json": {
+        "amount": 250000,
+        "amount_type": "FIXED",
+        "max_count": 1,
+        "payment_cycle": "YEARLY",
+        "type": "CASH_VOUCHER"
+      },
+      "policy_id": 6,
+      "policy_title": "전남광주 청년 문화복지카드"
+    },
+    {
+      "benefit_display_text": "상해사망: 1,000만원 보장",
+      "benefit_id": 1087,
+      "calc_type": "CASH_VOUCHER",
+      "calculation_rule_json": {
+        "amount": 10000000,
+        "amount_type": "FIXED",
+        "max_count": 1,
+        "payment_cycle": "ONCE",
+        "type": "CASH_VOUCHER"
+      },
+      "policy_id": 11,
+      "policy_title": "군복무 인천청년 상해보험 지원"
+    },
+    {
+      "benefit_display_text": "상해후유장해: 장해지급률(3~100%)에 따라 최대 1,000만원 보장",
+      "benefit_id": 1088,
+      "calc_type": "CASH_VOUCHER",
+      "calculation_rule_json": {
+        "amount": 10000000,
+        "amount_type": "FIXED",
+        "max_count": 1,
+        "payment_cycle": "ONCE",
+        "type": "CASH_VOUCHER"
+      },
+      "policy_id": 11,
+      "policy_title": "군복무 인천청년 상해보험 지원"
+    },
+    {
+      "benefit_display_text": "질병사망: 1,000만원 보장",
+      "benefit_id": 1089,
+      "calc_type": "CASH_VOUCHER",
+      "calculation_rule_json": {
+        "amount": 10000000,
+        "amount_type": "FIXED",
+        "max_count": 1,
+        "payment_cycle": "ONCE",
+        "type": "CASH_VOUCHER"
+      },
+      "policy_id": 11,
+      "policy_title": "군복무 인천청년 상해보험 지원"
+    },
+    {
+      "benefit_display_text": "질병후유장해(80% 이상): 최대 1,000만원 보장",
+      "benefit_id": 1090,
+      "calc_type": "CASH_VOUCHER",
+      "calculation_rule_json": {
+        "amount": 10000000,
+        "amount_type": "FIXED",
+        "max_count": 1,
+        "payment_cycle": "ONCE",
+        "type": "CASH_VOUCHER"
+      },
+      "policy_id": 11,
+      "policy_title": "군복무 인천청년 상해보험 지원"
+    },
+    {
+      "benefit_display_text": "중증장해진단비(100%): 1,000만원 보장",
+      "benefit_id": 1091,
+      "calc_type": "CASH_VOUCHER",
+      "calculation_rule_json": {
+        "amount": 10000000,
+        "amount_type": "FIXED",
+        "max_count": 1,
+        "payment_cycle": "ONCE",
+        "type": "CASH_VOUCHER"
+      },
+      "policy_id": 11,
+      "policy_title": "군복무 인천청년 상해보험 지원"
+    },
+    {
+      "benefit_display_text": "상해입원(일당): 1일 이상 입원 시 1만 5천원 보장(180일 한도)",
+      "benefit_id": 1092,
+      "calc_type": "CASH_VOUCHER",
+      "calculation_rule_json": {
+        "amount": 15000,
+        "amount_type": "FIXED",
+        "max_count": 180,
+        "payment_cycle": "ONCE",
+        "type": "CASH_VOUCHER"
+      },
+      "policy_id": 11,
+      "policy_title": "군복무 인천청년 상해보험 지원"
+    },
+    {
+      "benefit_display_text": "질병입원(일당): 1일 이상 입원 시 1만 5천원 보장(180일 한도)",
+      "benefit_id": 1093,
+      "calc_type": "CASH_VOUCHER",
+      "calculation_rule_json": {
+        "amount": 15000,
+        "amount_type": "FIXED",
+        "max_count": 180,
+        "payment_cycle": "ONCE",
+        "type": "CASH_VOUCHER"
+      },
+      "policy_id": 11,
+      "policy_title": "군복무 인천청년 상해보험 지원"
+    },
+    {
+      "benefit_display_text": "정신질환위로금: 100만원 지급(1회한)",
+      "benefit_id": 1094,
+      "calc_type": "CASH_VOUCHER",
+      "calculation_rule_json": {
+        "amount": 1000000,
+        "amount_type": "FIXED",
+        "max_count": 1,
+        "payment_cycle": "ONCE",
+        "type": "CASH_VOUCHER"
+      },
+      "policy_id": 11,
+      "policy_title": "군복무 인천청년 상해보험 지원"
+    },
+    {
+      "benefit_display_text": "손/발가락 수술비: 20만원 보장(1회한)",
+      "benefit_id": 1095,
+      "calc_type": "CASH_VOUCHER",
+      "calculation_rule_json": {
+        "amount": 200000,
+        "amount_type": "FIXED",
+        "max_count": 1,
+        "payment_cycle": "ONCE",
+        "type": "CASH_VOUCHER"
+      },
+      "policy_id": 11,
+      "policy_title": "군복무 인천청년 상해보험 지원"
+    },
+    {
+      "benefit_display_text": "골절발생위로금(회당): 10만원 보장(치아파절 제외)",
+      "benefit_id": 1096,
+      "calc_type": "CASH_VOUCHER",
+      "calculation_rule_json": {
+        "amount": 100000,
+        "amount_type": "FIXED",
+        "max_count": 1,
+        "payment_cycle": "ONCE",
+        "type": "CASH_VOUCHER"
+      },
+      "policy_id": 11,
+      "policy_title": "군복무 인천청년 상해보험 지원"
+    },
+    {
+      "benefit_display_text": "화상발생위로금(회당): 10만원 보장(심재성 2도 이상)",
+      "benefit_id": 1097,
+      "calc_type": "CASH_VOUCHER",
+      "calculation_rule_json": {
+        "amount": 100000,
+        "amount_type": "FIXED",
+        "max_count": 1,
+        "payment_cycle": "ONCE",
+        "type": "CASH_VOUCHER"
+      },
+      "policy_id": 11,
+      "policy_title": "군복무 인천청년 상해보험 지원"
+    },
+    {
+      "benefit_display_text": "외상성절단진단비: 50만원 보장(1회한)",
+      "benefit_id": 1098,
+      "calc_type": "CASH_VOUCHER",
+      "calculation_rule_json": {
+        "amount": 500000,
+        "amount_type": "FIXED",
+        "max_count": 1,
+        "payment_cycle": "ONCE",
+        "type": "CASH_VOUCHER"
+      },
+      "policy_id": 11,
+      "policy_title": "군복무 인천청년 상해보험 지원"
+    },
+    {
+      "benefit_display_text": "상해사망장례지원금: 100만원 보장",
+      "benefit_id": 1099,
+      "calc_type": "CASH_VOUCHER",
+      "calculation_rule_json": {
+        "amount": 1000000,
+        "amount_type": "FIXED",
+        "max_count": 1,
+        "payment_cycle": "ONCE",
+        "type": "CASH_VOUCHER"
+      },
+      "policy_id": 11,
+      "policy_title": "군복무 인천청년 상해보험 지원"
+    },
+    {
+      "benefit_display_text": "월 최대 20만원 임대료 지원 (최장 24개월)",
+      "benefit_id": 1138,
+      "calc_type": "HOUSING_RENT",
+      "calculation_rule_json": {
+        "deposit_limit_amount": null,
+        "monthly_support_cap_amount": 200000,
+        "rent_limit_amount": null,
+        "support_months": 24,
+        "type": "HOUSING_RENT"
+      },
+      "policy_id": 16,
+      "policy_title": "청년월세지원"
+    },
+    {
+      "benefit_display_text": "단기(5주, 50만원×1개월) : 밀착상담, 자신감 회복, 진로탐색, 취업역량",
+      "benefit_id": 1110,
+      "calc_type": "EMPLOYMENT_EDUCATION",
+      "calculation_rule_json": {
+        "education_subsidy_amount": null,
+        "employment_success_bonus_amount": null,
+        "support_months": 1,
+        "training_allowance_amount": 500000,
+        "type": "EMPLOYMENT_EDUCATION"
+      },
+      "policy_id": 20,
+      "policy_title": "2026년 서구 청년도전지원사업"
+    },
+    {
+      "benefit_display_text": "중기(15주, 50만원×3개월) : 단기과정 + 외부연계 + 자율활동",
+      "benefit_id": 1111,
+      "calc_type": "EMPLOYMENT_EDUCATION",
+      "calculation_rule_json": {
+        "education_subsidy_amount": null,
+        "employment_success_bonus_amount": null,
+        "support_months": 3,
+        "training_allowance_amount": 1500000,
+        "type": "EMPLOYMENT_EDUCATION"
+      },
+      "policy_id": 20,
+      "policy_title": "2026년 서구 청년도전지원사업"
+    },
+    {
+      "benefit_display_text": "장기(25주, 50만원×5개월) : 단기과정 + 외부연계 + 자율활동",
+      "benefit_id": 1112,
+      "calc_type": "EMPLOYMENT_EDUCATION",
+      "calculation_rule_json": {
+        "education_subsidy_amount": null,
+        "employment_success_bonus_amount": null,
+        "support_months": 5,
+        "training_allowance_amount": 2500000,
+        "type": "EMPLOYMENT_EDUCATION"
+      },
+      "policy_id": 20,
+      "policy_title": "2026년 서구 청년도전지원사업"
+    },
+    {
+      "benefit_display_text": "중·장기 과정 이수자 : 취·창업 인센티브 추가 지급",
+      "benefit_id": 1113,
+      "calc_type": "EMPLOYMENT_EDUCATION",
+      "calculation_rule_json": {
+        "education_subsidy_amount": null,
+        "employment_success_bonus_amount": null,
+        "support_months": 5,
+        "training_allowance_amount": 500000,
+        "type": "EMPLOYMENT_EDUCATION"
+      },
+      "policy_id": 20,
+      "policy_title": "2026년 서구 청년도전지원사업"
+    },
+    {
+      "benefit_display_text": "유튜브 건당 100,000원, 블로그 건당 70,000원, 인스타그램 건당 30,000원 (월 1건, 총 4개월)",
+      "benefit_id": 1117,
+      "calc_type": "CASH_VOUCHER",
+      "calculation_rule_json": {
+        "amount": 100000,
+        "amount_type": "FIXED",
+        "max_count": 4,
+        "payment_cycle": "MONTHLY",
+        "type": "CASH_VOUCHER"
+      },
+      "policy_id": 24,
+      "policy_title": "2026년 서구 청년 크리에이터단 참여자 모집"
+    },
+    {
+      "benefit_display_text": "우수 크리에이터 선정 월 1명 50,000원",
+      "benefit_id": 1118,
+      "calc_type": "CASH_VOUCHER",
+      "calculation_rule_json": {
+        "amount": 50000,
+        "amount_type": "FIXED",
+        "max_count": 4,
+        "payment_cycle": "MONTHLY",
+        "type": "CASH_VOUCHER"
+      },
+      "policy_id": 24,
+      "policy_title": "2026년 서구 청년 크리에이터단 참여자 모집"
+    },
+    {
+      "benefit_display_text": "시급 11,188원, 월 209시간 개근 시 2,338,292원(세전), 유급주휴 포함, 주 5일 40시간 근로",
+      "benefit_id": 1121,
+      "calc_type": "EMPLOYMENT_EDUCATION",
+      "calculation_rule_json": {
+        "education_subsidy_amount": null,
+        "employment_success_bonus_amount": null,
+        "support_months": 5,
+        "training_allowance_amount": null,
+        "type": "EMPLOYMENT_EDUCATION"
+      },
+      "policy_id": 27,
+      "policy_title": "사회연대경제 청년 일경험사업 시범사업"
+    },
+    {
+      "benefit_display_text": "실제 결제한 응시료 및 교재비에 한하여 최대 10만원까지 지급",
+      "benefit_id": 1131,
+      "calc_type": "CASH_VOUCHER",
+      "calculation_rule_json": {
+        "amount": 100000,
+        "amount_type": "FIXED",
+        "max_count": 2,
+        "payment_cycle": "VARIABLE",
+        "type": "CASH_VOUCHER"
+      },
+      "policy_id": 33,
+      "policy_title": "2026년 완도군 청년 자격증 응시료 지원사업"
+    },
+    {
+      "benefit_display_text": "2년간 500만원 적립 시 기업 200만원, 광주시 300만원 추가 적립하여 24개월 후 만기공제금 1,000만원 지원",
+      "benefit_id": 1139,
+      "calc_type": "CASH_VOUCHER",
+      "calculation_rule_json": {
+        "amount": 10000000,
+        "amount_type": "FIXED",
+        "max_count": 1,
+        "payment_cycle": "MATURITY",
+        "type": "CASH_VOUCHER"
+      },
+      "policy_id": 37,
+      "policy_title": "광주형 청년일자리 공제(추가모집_마감)"
+    },
+    {
+      "benefit_display_text": "총 상금 1,360만원 규모",
+      "benefit_id": 1105,
+      "calc_type": "CASH_VOUCHER",
+      "calculation_rule_json": {
+        "amount": 13600000,
+        "amount_type": "FIXED",
+        "max_count": 1,
+        "payment_cycle": "ONCE",
+        "type": "CASH_VOUCHER"
+      },
+      "policy_id": 46,
+      "policy_title": "제4회 광주 북구청장배 청년 창업 아이디어 경진대회"
+    },
+    {
+      "benefit_display_text": "대상~장려상 팀별 최대 300만원 상당 사업화 자금 차등 지원",
+      "benefit_id": 1106,
+      "calc_type": "CASH_VOUCHER",
+      "calculation_rule_json": {
+        "amount": 3000000,
+        "amount_type": "FIXED",
+        "max_count": 1,
+        "payment_cycle": "VARIABLE",
+        "type": "CASH_VOUCHER"
+      },
+      "policy_id": 46,
+      "policy_title": "제4회 광주 북구청장배 청년 창업 아이디어 경진대회"
+    },
+    {
+      "benefit_display_text": "1인 1회, 연 최대 10만원 범위 자격증시험 응시료 지원",
+      "benefit_id": 845,
+      "calc_type": "CASH_VOUCHER",
+      "calculation_rule_json": {
+        "amount": 100000,
+        "amount_type": "FIXED",
+        "max_count": 1,
+        "payment_cycle": "YEARLY",
+        "type": "CASH_VOUCHER"
+      },
+      "policy_id": 48,
+      "policy_title": "(서해구) 청년 자격증 응시료 지원"
+    },
+    {
+      "benefit_display_text": "1인 1회, 연 최대 10만원 범위 자격증시험 응시료 지원",
+      "benefit_id": 846,
+      "calc_type": "CASH_VOUCHER",
+      "calculation_rule_json": {
+        "amount": 100000,
+        "amount_type": "FIXED",
+        "max_count": 1,
+        "payment_cycle": "YEARLY",
+        "type": "CASH_VOUCHER"
+      },
+      "policy_id": 49,
+      "policy_title": "(검단구) 청년 자격증 응시료 지원"
+    },
+    {
+      "benefit_display_text": "최대 6개월 일자리(서울형 생활임금) 지원 + 역량강화 교육 지원",
+      "benefit_id": 848,
+      "calc_type": "EMPLOYMENT_EDUCATION",
+      "calculation_rule_json": {
+        "education_subsidy_amount": null,
+        "employment_success_bonus_amount": null,
+        "support_months": 6,
+        "training_allowance_amount": null,
+        "type": "EMPLOYMENT_EDUCATION"
+      },
+      "policy_id": 51,
+      "policy_title": "서울영커리언스 점프업(미래 청년 일자리 사업)"
+    },
+    {
+      "benefit_display_text": "참여자 참여수당(1인 20만원)",
+      "benefit_id": 1665,
+      "calc_type": "CASH_VOUCHER",
+      "calculation_rule_json": {
+        "amount": 200000,
+        "amount_type": "FIXED",
+        "max_count": 1,
+        "payment_cycle": "ONCE",
+        "type": "CASH_VOUCHER"
+      },
+      "policy_id": 52,
+      "policy_title": "경계선지능청년지원"
+    },
+    {
+      "benefit_display_text": "지자체 사업비(1인 80만원)",
+      "benefit_id": 1666,
+      "calc_type": "CASH_VOUCHER",
+      "calculation_rule_json": {
+        "amount": 800000,
+        "amount_type": "FIXED",
+        "max_count": 1,
+        "payment_cycle": "ONCE",
+        "type": "CASH_VOUCHER"
+      },
+      "policy_id": 52,
+      "policy_title": "경계선지능청년지원"
+    },
+    {
+      "benefit_display_text": "구직촉진수당 : 취업활동계획에 따른 구직활동 이행시 월 60~100만원, 6개월 지원",
+      "benefit_id": 1626,
+      "calc_type": "EMPLOYMENT_EDUCATION",
+      "calculation_rule_json": {
+        "education_subsidy_amount": null,
+        "employment_success_bonus_amount": 1500000,
+        "support_months": 6,
+        "training_allowance_amount": null,
+        "type": "EMPLOYMENT_EDUCATION"
+      },
+      "policy_id": 58,
+      "policy_title": "국민취업지원제도"
+    },
+    {
+      "benefit_display_text": "어학·한국사, 국가자격증 응시료 실비 및 교재비 지원, 최대 10만원",
+      "benefit_id": 1644,
+      "calc_type": "CASH_VOUCHER",
+      "calculation_rule_json": {
+        "amount": 100000,
+        "amount_type": "FIXED",
+        "max_count": 2,
+        "payment_cycle": "VARIABLE",
+        "type": "CASH_VOUCHER"
+      },
+      "policy_id": 66,
+      "policy_title": "2026년 완도군 청년 자격증 응시료 지원사업"
+    },
+    {
+      "benefit_display_text": "월 234만원 참여수당 지급(세전, 주 40시간 기준), 4대 보험 가입",
+      "benefit_id": 1647,
+      "calc_type": "EMPLOYMENT_EDUCATION",
+      "calculation_rule_json": {
+        "education_subsidy_amount": null,
+        "employment_success_bonus_amount": null,
+        "support_months": 5,
+        "training_allowance_amount": 2340000,
+        "type": "EMPLOYMENT_EDUCATION"
+      },
+      "policy_id": 68,
+      "policy_title": "사회연대경제 청년일경험"
+    },
+    {
+      "benefit_display_text": "선정자 대상 강사비 및 재료비 등 지원",
+      "benefit_id": 1657,
+      "calc_type": "CASH_VOUCHER",
+      "calculation_rule_json": {
+        "amount": 1000000,
+        "amount_type": "FIXED",
+        "max_count": 1,
+        "payment_cycle": "ONCE",
+        "type": "CASH_VOUCHER"
+      },
+      "policy_id": 74,
+      "policy_title": "2026년 서구 하반기 청년강사 모집"
+    },
+    {
+      "benefit_display_text": "유튜브 건당 100,000원, 블로그 건당 70,000원, 인스타그램 건당 30,000원, 우수 크리에이터 선정 월 1명 50,000원",
+      "benefit_id": 1677,
+      "calc_type": "CASH_VOUCHER",
+      "calculation_rule_json": {
+        "amount": 100000,
+        "amount_type": "FIXED",
+        "max_count": 4,
+        "payment_cycle": "ONCE",
+        "type": "CASH_VOUCHER"
+      },
+      "policy_id": 80,
+      "policy_title": "2026년 서구 청년 크리에이터단 참여자 모집"
+    },
+    {
+      "benefit_display_text": "매월 10만원 적금 시 24개월 만기 시 240만원 정부지원",
+      "benefit_id": 1684,
+      "calc_type": "CASH_VOUCHER",
+      "calculation_rule_json": {
+        "amount": 2400000,
+        "amount_type": "FIXED",
+        "max_count": 1,
+        "payment_cycle": "MATURITY",
+        "type": "CASH_VOUCHER"
+      },
+      "policy_id": 87,
+      "policy_title": "(문체부) 청년예술인 예술활동 적립계좌"
+    },
+    {
+      "benefit_display_text": "월 5만원, 최대 8개월 지원",
+      "benefit_id": 1686,
+      "calc_type": "CASH_VOUCHER",
+      "calculation_rule_json": {
+        "amount": 50000,
+        "amount_type": "FIXED",
+        "max_count": 8,
+        "payment_cycle": "MONTHLY",
+        "type": "CASH_VOUCHER"
+      },
+      "policy_id": 90,
+      "policy_title": "2026년 청년근로자 교통비 지원사업"
+    },
+    {
+      "benefit_display_text": "월 임차료 50% 지원(월 최대 40만원), 최대 5개월간",
+      "benefit_id": 1687,
+      "calc_type": "HOUSING_RENT",
+      "calculation_rule_json": {
+        "deposit_limit_amount": null,
+        "monthly_support_cap_amount": 400000,
+        "rent_limit_amount": null,
+        "support_months": 5,
+        "type": "HOUSING_RENT"
+      },
+      "policy_id": 91,
+      "policy_title": "2026년 청년창업자 임차료 지원사업"
+    },
+    {
+      "benefit_display_text": "월 50만원씩 5년간 적립 후 만기 시 3천만 원 및 이자 지급",
+      "benefit_id": 1688,
+      "calc_type": "CASH_VOUCHER",
+      "calculation_rule_json": {
+        "amount": 30000000,
+        "amount_type": "FIXED",
+        "max_count": 1,
+        "payment_cycle": "MATURITY",
+        "type": "CASH_VOUCHER"
+      },
+      "policy_id": 92,
+      "policy_title": "삼척형 일자리 안심공제"
+    }
+  ],
+  "schema_version": 1,
+  "status": "approved"
+}

@@ -13,12 +13,15 @@ rule_extractor.py(자격조건), checklist_generator.py(제출서류)와 동일�
 from dataclasses import asdict, dataclass
 
 try:
+    from .calc_rule_extractor import is_calculation_rule_complete
     from .prompt_templates import BENEFIT_SYSTEM_PROMPT
     from .solar_client import SolarClient
 except ImportError:
+    from calc_rule_extractor import is_calculation_rule_complete
     from prompt_templates import BENEFIT_SYSTEM_PROMPT
     from solar_client import SolarClient
 
+from app.models.policy import CalcType
 
 # ============================================================
 # 타입
@@ -34,6 +37,7 @@ class ExtractedBenefit:
     payment_cycle: str = None
     duration_months: int = None
     max_total_amount: object = None
+    calculation_rule_json: object = None
     display_text: str = None
 
     def to_dict(self) -> dict:
@@ -129,5 +133,21 @@ def validate_benefit_payload(payload: dict) -> list[ExtractedBenefit]:
         max_amount = item.get("max_amount")
         if min_amount is not None and max_amount is not None and min_amount > max_amount:
             raise ValueError("min_amount cannot be greater than max_amount")
+        # calculation_rule_json이 없는(None) 건 이 필드가 생기기 전에 승인된 과거
+        # 드래프트에도 나타나는 정상 상태라 항상 통과시킨다 - 값이 있을 때만 그 타입의
+        # 필수 필드가 다 채워졌는지 확인한다 (docs/simulator_calc_rules.md 계약).
+        calculation_rule_json = item.get("calculation_rule_json")
+        if calculation_rule_json is not None:
+            if not isinstance(calculation_rule_json, dict):
+                raise ValueError("calculation_rule_json must be an object")
+            rule_type = calculation_rule_json.get("type")
+            try:
+                calc_type = CalcType(rule_type)
+            except ValueError as exc:
+                raise ValueError(f"unsupported calculation_rule_json.type: {rule_type}") from exc
+            if not is_calculation_rule_complete(calc_type, calculation_rule_json):
+                raise ValueError(
+                    f"calculation_rule_json is missing required fields for type {rule_type}"
+                )
         result.append(ExtractedBenefit(**{k: v for k, v in item.items() if k in valid_fields}))
     return result

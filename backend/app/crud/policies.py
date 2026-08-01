@@ -72,6 +72,25 @@ def replace_policy_categories(
             )
 
 
+def update_benefit_calculation_rule(
+    db: Session,
+    *,
+    benefit_id: int,
+    calculation_rule_json: Mapping[str, object] | None,
+) -> None:
+    """Set one PolicyBenefit row's calculation_rule_json - nothing else.
+
+    Touches only this one column (never benefit_type/amount_type/display_text/etc.),
+    so it is safe to call from a backfill script without risking the cascade
+    delete+reinsert that upsert_policy_bundle()'s benefits handling triggers.
+    """
+
+    benefit = db.get(PolicyBenefit, benefit_id)
+    if benefit is None:
+        raise ValueError(f"no policy_benefits row with id={benefit_id}")
+    benefit.calculation_rule_json = dict(calculation_rule_json) if calculation_rule_json else None
+
+
 def list_policy_benefits(db: Session, policy_id: int) -> list[PolicyBenefit]:
     """Return benefit calculation definitions for a policy."""
 

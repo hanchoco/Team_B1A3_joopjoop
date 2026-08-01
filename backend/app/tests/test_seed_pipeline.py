@@ -686,6 +686,77 @@ def test_validate_benefit_payload_rejects_min_greater_than_max() -> None:
         )
 
 
+def test_validate_benefit_payload_accepts_null_calculation_rule_json() -> None:
+    """Every already-approved draft before this feature existed has this field
+    absent - it must always pass, or app boot breaks re-validating old drafts."""
+
+    result = validate_benefit_payload(
+        {
+            "benefits": [
+                {
+                    "benefit_type": "SERVICE",
+                    "amount_type": "VARIABLE",
+                }
+            ]
+        }
+    )
+    assert result[0].calculation_rule_json is None
+
+
+def test_validate_benefit_payload_accepts_complete_calculation_rule_json() -> None:
+    result = validate_benefit_payload(
+        {
+            "benefits": [
+                {
+                    "benefit_type": "LOAN",
+                    "amount_type": "FORMULA",
+                    "calculation_rule_json": {
+                        "type": "LOAN_INTEREST",
+                        "policy_interest_rate_percent": 1.8,
+                        "max_loan_amount": 200000000,
+                        "max_support_months": 24,
+                        "repayment_type": "BULLET",
+                    },
+                }
+            ]
+        }
+    )
+    assert result[0].calculation_rule_json["type"] == "LOAN_INTEREST"
+
+
+def test_validate_benefit_payload_rejects_unsupported_calculation_rule_type() -> None:
+    with pytest.raises(ValueError, match="calculation_rule_json.type"):
+        validate_benefit_payload(
+            {
+                "benefits": [
+                    {
+                        "benefit_type": "CASH",
+                        "amount_type": "FIXED",
+                        "calculation_rule_json": {"type": "NOT_A_REAL_TYPE"},
+                    }
+                ]
+            }
+        )
+
+
+def test_validate_benefit_payload_rejects_incomplete_calculation_rule_json() -> None:
+    with pytest.raises(ValueError, match="missing required fields"):
+        validate_benefit_payload(
+            {
+                "benefits": [
+                    {
+                        "benefit_type": "LOAN",
+                        "amount_type": "FORMULA",
+                        "calculation_rule_json": {
+                            "type": "LOAN_INTEREST",
+                            "policy_interest_rate_percent": 1.8,
+                        },
+                    }
+                ]
+            }
+        )
+
+
 # ---------------------------------------------------------------------------
 # Integration: a fully-populated draft (all three bugs) passes approval
 # validation together.
