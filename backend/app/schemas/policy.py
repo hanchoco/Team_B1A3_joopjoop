@@ -232,6 +232,7 @@ class PolicySummaryResponse(SchemaModel):
     max_benefit_amount: Decimal | None = Field(default=None, ge=0)
     days_until_deadline: int | None = None
     is_bookmarked: bool = False
+    is_simulatable: bool = False
 
 
 class PolicyDetailResponse(PolicySummaryResponse):

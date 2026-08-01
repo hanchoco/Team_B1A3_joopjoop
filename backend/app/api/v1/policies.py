@@ -382,6 +382,7 @@ def _policy_summary(
         max_benefit_amount=evaluated.estimated_benefit_amount,
         days_until_deadline=_days_until(policy.application_end_date),
         is_bookmarked=bool(state and state.is_bookmarked),
+        is_simulatable=evaluated.is_simulatable,
     )
 
 

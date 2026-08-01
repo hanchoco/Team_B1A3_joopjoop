@@ -252,6 +252,10 @@ def test_policy_discovery_match_and_bookmark_lifecycle(
     assert _as_decimal(list_body["items"][0]["match_score"]) == Decimal("100.00")
     assert _as_decimal(list_body["items"][0]["estimated_benefit_amount"]) == Decimal("2400000.00")
     assert list_body["items"][0]["is_bookmarked"] is False
+    # eligible = CASH benefit + HOUSING category -> resolves to HOUSING_RENT
+    assert list_body["items"][0]["is_simulatable"] is True
+    # review = DISCOUNT benefit + TRANSPORT category -> resolves to CASH_VOUCHER
+    assert list_body["items"][1]["is_simulatable"] is True
 
     housing_only = client.get(
         "/api/v1/policies",
@@ -336,6 +340,7 @@ def test_policy_discovery_match_and_bookmark_lifecycle(
     assert _as_decimal(detail_body["benefits"][0]["max_total_amount"]) == Decimal("2400000.00")
     assert detail_body["documents"][0]["document_code"] == "RESIDENT_REGISTRATION"
     assert detail_body["is_bookmarked"] is False
+    assert detail_body["is_simulatable"] is True
 
     match = client.get(
         f"/api/v1/policies/{seeded.eligible_policy_id}/match",
@@ -473,6 +478,75 @@ def _seed_extra_review_policy(*, external_id: str, title: str) -> int:
         )
         db.commit()
         return extra.id
+
+
+def _seed_non_simulatable_policy() -> int:
+    """Insert a policy whose only benefit (SERVICE) has no simulator CalcType."""
+
+    today = date.today()
+    with SessionLocal() as db:
+        transport = db.scalar(select(Category).where(Category.code == "TRANSPORT"))
+        assert transport is not None
+
+        policy = Policy(
+            source="MANUAL",
+            external_id="http-test-non-simulatable",
+            title="Epsilon 상담 서비스 지원",
+            summary="금액 계산이 없는 상담 서비스 정책입니다.",
+            description="1:1 상담을 제공합니다.",
+            support_target_text="청년 누구나",
+            support_content_text="1:1 상담 서비스",
+            application_method="온라인 신청",
+            provider_name="Epsilon 기관",
+            application_start_date=today - timedelta(days=5),
+            application_end_date=today + timedelta(days=10),
+            is_ongoing=False,
+            published_date=today,
+            status="ACTIVE",
+            subcategory="상담",
+            region_scope="NATIONAL",
+            is_active=True,
+        )
+        db.add(policy)
+        db.flush()
+
+        db.add_all(
+            [
+                PolicyCategory(
+                    policy_id=policy.id,
+                    category_id=transport.id,
+                    is_primary=True,
+                ),
+                PolicyBenefit(
+                    policy_id=policy.id,
+                    benefit_type="SERVICE",
+                    amount_type="VARIABLE",
+                    display_text="1:1 상담 제공",
+                ),
+            ]
+        )
+        db.commit()
+        return policy.id
+
+
+def test_service_only_benefit_is_not_simulatable(client: TestClient) -> None:
+    """A SERVICE-type benefit has no CalcType, so is_simulatable must be False."""
+
+    headers = _authenticated_headers(client, email="non-simulatable@example.com")
+    policy_id = _seed_non_simulatable_policy()
+
+    detail = client.get(f"/api/v1/policies/{policy_id}", headers=headers)
+    assert detail.status_code == 200, detail.text
+    assert detail.json()["is_simulatable"] is False
+
+    policy_list = client.get(
+        "/api/v1/policies",
+        params={"sort": "latest", "page": 1, "size": 10},
+        headers=headers,
+    )
+    assert policy_list.status_code == 200, policy_list.text
+    item = next(item for item in policy_list.json()["items"] if item["id"] == policy_id)
+    assert item["is_simulatable"] is False
 
 
 def test_recommendations_only_return_eligible_when_filtered(client: TestClient) -> None:
