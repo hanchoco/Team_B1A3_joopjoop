@@ -46,16 +46,6 @@ class ExtractedCondition:
 # 코드 레지스트리
 # ============================================================
 
-CATEGORY_KEYWORD_MAP = {
-    "HOUSING": ["주거", "전월세", "주택"],
-    "TRANSPORT": ["교통"],
-    "FINANCE": ["금융", "자산형성", "대출", "저축"],
-    "TAX": ["세금", "세제"],
-    "EMPLOYMENT": ["일자리", "취업", "고용", "창업"],
-    "WELFARE": ["복지", "생활지원", "돌봄"],
-    "PARTICIPATION": ["참여", "청년참여", "네트워크"],
-}
-
 INCOME_BAND_ORDER = ["BELOW_50", "BETWEEN_50_75", "BETWEEN_75_100", "BETWEEN_100_120", "BETWEEN_120_150", "ABOVE_150"]
 INCOME_BAND_UPPER_BOUND = {
     "BELOW_50": 50, "BETWEEN_50_75": 75, "BETWEEN_75_100": 100,
@@ -115,12 +105,6 @@ TOPIC_KEYWORDS = {
     # 붙는 사고가 있었다 - 이 키워드가 없으면 evidence가 원문에 있어도 버린다.
     "profile.age": ["군복무", "군필", "제대", "복무"],
 }
-
-
-def categorize_policy(lclsf_nm: str, mclsf_nm: str) -> list:
-    text = f"{lclsf_nm or ''} {mclsf_nm or ''}"
-    matched = [code for code, keywords in CATEGORY_KEYWORD_MAP.items() if any(kw in text for kw in keywords)]
-    return matched or ["ETC"]
 
 
 def income_threshold_to_bands(percent: float) -> list:

@@ -43,6 +43,34 @@ def list_policy_categories(db: Session, policy_id: int) -> list[Category]:
     return list(db.scalars(statement).all())
 
 
+def replace_policy_categories(
+    db: Session,
+    *,
+    policy_id: int,
+    category_codes: Sequence[object],
+) -> None:
+    """Replace every category link for one policy (first code = primary).
+
+    Touches only ``policy_categories`` - never conditions/documents/benefits -
+    so it is safe to call on its own (e.g. a recategorization-only script)
+    without risking the cascade deletes those tables trigger downstream.
+    """
+
+    db.execute(delete(PolicyCategory).where(PolicyCategory.policy_id == policy_id))
+    for position, category_code in enumerate(category_codes):
+        if not isinstance(category_code, str):
+            continue
+        category = db.scalar(select(Category).where(Category.code == category_code.upper()))
+        if category is not None:
+            db.add(
+                PolicyCategory(
+                    policy_id=policy_id,
+                    category_id=category.id,
+                    is_primary=position == 0,
+                )
+            )
+
+
 def list_policy_benefits(db: Session, policy_id: int) -> list[PolicyBenefit]:
     """Return benefit calculation definitions for a policy."""
 
@@ -155,6 +183,12 @@ def list_policies(
     return list(db.scalars(statement).all()), total
 
 
+def list_all_policies(db: Session) -> list[Policy]:
+    """Return every policy row (active and inactive), for maintenance scripts."""
+
+    return list(db.scalars(select(Policy).order_by(Policy.id)).all())
+
+
 def list_external_ids(db: Session, *, source: str) -> set[str]:
     """Return the external_id of every persisted policy for one source.
 
@@ -249,19 +283,7 @@ def upsert_policy_bundle(
     if isinstance(categories_payload, Sequence) and not isinstance(
         categories_payload, (str, bytes)
     ):
-        db.execute(delete(PolicyCategory).where(PolicyCategory.policy_id == policy.id))
-        for position, category_code in enumerate(categories_payload):
-            if not isinstance(category_code, str):
-                continue
-            category = db.scalar(select(Category).where(Category.code == category_code.upper()))
-            if category is not None:
-                db.add(
-                    PolicyCategory(
-                        policy_id=policy.id,
-                        category_id=category.id,
-                        is_primary=position == 0,
-                    )
-                )
+        replace_policy_categories(db, policy_id=policy.id, category_codes=categories_payload)
 
     _replace_policy_children(
         db,

@@ -18,7 +18,7 @@
         }
       ],
       "category_codes": [
-        "ETC"
+        "EMPLOYMENT"
       ],
       "conditions": [
         {
@@ -226,7 +226,7 @@
         }
       ],
       "category_codes": [
-        "ETC"
+        "EMPLOYMENT"
       ],
       "conditions": [
         {
@@ -363,7 +363,7 @@
         }
       ],
       "category_codes": [
-        "ETC"
+        "EMPLOYMENT"
       ],
       "conditions": [
         {
@@ -1104,8 +1104,7 @@
     {
       "benefits": [],
       "category_codes": [
-        "FINANCE",
-        "WELFARE"
+        "HOUSING"
       ],
       "conditions": [
         {
@@ -1438,7 +1437,7 @@
     {
       "benefits": [],
       "category_codes": [
-        "ETC"
+        "PARTICIPATION"
       ],
       "conditions": [
         {
@@ -1575,7 +1574,6 @@
         }
       ],
       "category_codes": [
-        "FINANCE",
         "WELFARE"
       ],
       "conditions": [
@@ -2202,7 +2200,7 @@
         }
       ],
       "category_codes": [
-        "EMPLOYMENT"
+        "WELFARE"
       ],
       "conditions": [
         {
@@ -2351,7 +2349,7 @@
         }
       ],
       "category_codes": [
-        "ETC"
+        "EMPLOYMENT"
       ],
       "conditions": [
         {
@@ -2514,7 +2512,7 @@
         }
       ],
       "category_codes": [
-        "ETC"
+        "EMPLOYMENT"
       ],
       "conditions": [
         {
@@ -2919,7 +2917,7 @@
         }
       ],
       "category_codes": [
-        "ETC"
+        "FINANCE"
       ],
       "conditions": [
         {

@@ -364,7 +364,6 @@
         }
       ],
       "category_codes": [
-        "FINANCE",
         "WELFARE"
       ],
       "conditions": [
@@ -568,7 +567,6 @@
         }
       ],
       "category_codes": [
-        "FINANCE",
         "WELFARE"
       ],
       "conditions": [
@@ -744,7 +742,6 @@
         }
       ],
       "category_codes": [
-        "FINANCE",
         "WELFARE"
       ],
       "conditions": [
@@ -1008,8 +1005,7 @@
     {
       "benefits": [],
       "category_codes": [
-        "FINANCE",
-        "WELFARE"
+        "FINANCE"
       ],
       "conditions": [
         {
@@ -1535,7 +1531,6 @@
         }
       ],
       "category_codes": [
-        "FINANCE",
         "WELFARE"
       ],
       "conditions": [
@@ -1854,8 +1849,7 @@
         }
       ],
       "category_codes": [
-        "FINANCE",
-        "WELFARE"
+        "HOUSING"
       ],
       "conditions": [
         {
