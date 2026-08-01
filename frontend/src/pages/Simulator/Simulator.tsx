@@ -186,7 +186,7 @@ export default function Simulator() {
           onClick={() => navigate(`/policies/${policyId}`)}
           className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-blue-600"
         >
-          <ArrowLeft size={16} /> 정책 상세로
+          <ArrowLeft size={16} /> 정책 상세
         </button>
         <p className="mt-6 rounded-lg bg-slate-50 p-6 text-sm text-gray-600">
           이 정책은 아직 예상 시뮬레이션을 지원하지 않아요.
