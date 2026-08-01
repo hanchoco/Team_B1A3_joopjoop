@@ -9,6 +9,8 @@ import {
   updateChecklistDocument,
 } from '../../api/checklist'
 import { extractErrorMessage } from '../../api/client'
+import { getPolicy } from '../../api/policies'
+import OnlineApplicationLink from '../../components/common/OnlineApplicationLink'
 import type {
   ChecklistConditionItem,
   ChecklistDocumentItem,
@@ -34,6 +36,7 @@ export default function Checklist() {
   const policyId = Number(id)
 
   const [checklist, setChecklist] = useState<ChecklistResponse | null>(null)
+  const [applicationUrl, setApplicationUrl] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -50,12 +53,14 @@ export default function Checklist() {
         }
         setLoading(true)
         setError('')
-        return startPreparation(policyId)
+        return Promise.all([startPreparation(policyId), getPolicy(policyId)])
       })
-      .then((data) => {
-        if (cancelled || !data) return
-        setChecklist(data)
-        setSelectedId(data.documents[0]?.document_id ?? null)
+      .then((result) => {
+        if (cancelled || !result) return
+        const [checklistData, policyData] = result
+        setChecklist(checklistData)
+        setApplicationUrl(policyData.application_url)
+        setSelectedId(checklistData.documents[0]?.document_id ?? null)
       })
       .catch((err: unknown) => {
         if (!cancelled) setError(extractErrorMessage(err))
@@ -102,11 +107,7 @@ export default function Checklist() {
     setBusyId(condition.condition_id)
     setError('')
     try {
-      const data = await confirmChecklistCondition(
-        checklist.state_id,
-        condition.condition_id,
-        true,
-      )
+      const data = await confirmChecklistCondition(checklist.state_id, condition.condition_id, true)
       setChecklist(data)
     } catch (err) {
       setError(extractErrorMessage(err))
@@ -195,10 +196,17 @@ export default function Checklist() {
       >
         <ArrowLeft size={16} /> 정책 상세
       </button>
-      <div className="mt-5">
-        <p className="text-sm font-semibold text-blue-600">신청 전 마지막 점검</p>
-        <h1 className="mt-2 text-3xl font-black">가입 준비하기</h1>
-        <p className="mt-2 text-sm text-gray-500">{checklist.policy_title}</p>
+      <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-blue-600">신청 전 마지막 점검</p>
+          <h1 className="mt-2 text-3xl font-black">가입 준비하기</h1>
+          <p className="mt-2 text-sm text-gray-500">{checklist.policy_title}</p>
+        </div>
+        <OnlineApplicationLink
+          url={applicationUrl}
+          variant="button"
+          className="w-full max-w-full justify-center text-center sm:w-auto sm:shrink-0"
+        />
       </div>
 
       {error && (

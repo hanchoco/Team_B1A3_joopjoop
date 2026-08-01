@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { bookmarkPolicy, getPolicy, getPolicyMatch, removeBookmark } from '../../api/policies'
 import { extractErrorMessage } from '../../api/client'
+import OnlineApplicationLink from '../../components/common/OnlineApplicationLink'
 import type { PolicyDetailResponse, PolicyMatchDetailResponse } from '../../types/api'
 
 const TABS = ['지원내용', '신청조건', '신청방법', '필요서류'] as const
@@ -177,7 +178,9 @@ export default function PolicyDetail() {
           <CheckCircle2 className="text-emerald-600" />
           <p className="mt-4 text-sm font-semibold text-emerald-700">조건 충족 요약</p>
           <p className="mt-2 text-xl font-black">
-            {match ? `${match.total_condition_count}개 중 ${match.satisfied_condition_count}개 충족` : '-'}
+            {match
+              ? `${match.total_condition_count}개 중 ${match.satisfied_condition_count}개 충족`
+              : '-'}
           </p>
           <p className="mt-2 text-sm leading-6 text-gray-600">
             {policy.card_status === 'ELIGIBLE'
@@ -244,25 +247,18 @@ export default function PolicyDetail() {
             <ul className="mt-4 space-y-3">
               {linesOf(tab === '지원내용' ? policy.support_content_text : policy.application_method)
                 .length === 0 && <li className="text-sm text-gray-500">등록된 정보가 없습니다.</li>}
-              {linesOf(tab === '지원내용' ? policy.support_content_text : policy.application_method).map(
-                (line) => (
-                  <li key={line} className="flex items-center gap-3 text-sm text-gray-600">
-                    <CheckCircle2 size={17} className="text-blue-600" />
-                    {line}
-                  </li>
-                ),
-              )}
+              {linesOf(
+                tab === '지원내용' ? policy.support_content_text : policy.application_method,
+              ).map((line) => (
+                <li key={line} className="flex items-center gap-3 text-sm text-gray-600">
+                  <CheckCircle2 size={17} className="text-blue-600" />
+                  {line}
+                </li>
+              ))}
             </ul>
           )}
           {tab === '신청방법' && policy.application_url && (
-            <a
-              href={policy.application_url}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-4 inline-block text-xs font-semibold text-blue-600 hover:underline"
-            >
-              온라인 신청 페이지 바로가기
-            </a>
+            <OnlineApplicationLink url={policy.application_url} className="mt-4" />
           )}
         </div>
       </div>
