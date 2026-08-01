@@ -16,11 +16,11 @@ from app.crud import categories as category_crud
 from app.crud import policies as policy_crud
 from app.crud import user_policies as state_crud
 from app.crud import users as user_crud
-from app.models.policy import Policy
+from app.models.policy import CalcType, Policy, PolicyBenefit
 from app.models.user_policy import EligibilityStatus, UserPolicyMatch
 from app.schemas.dashboard import DashboardSummaryResponse, DashboardUpcomingPolicy
 from app.services.errors import NotFoundError
-from app.services.policy_engine.calc_type import can_simulate
+from app.services.policy_engine.calc_type import can_simulate, resolve_calc_type
 from app.services.policy_engine.matcher import PolicyEvaluation, evaluate_policy
 
 ENGINE_VERSION = "joop-policy-engine-1"
@@ -293,19 +293,30 @@ def _estimate_max_benefit(benefits: list[object]) -> Decimal:
     return total
 
 
-def _is_policy_simulatable(bundle: policy_crud.PolicyBundle) -> bool:
-    """True if the simulator can run at least one benefit on this policy.
+def build_policy_like_for_calc_type(bundle: policy_crud.PolicyBundle) -> object:
+    """Build the minimal category_links shape resolve_calc_type()/can_simulate()
+    need (see policy_engine.calc_type), reusing bundle.categories - already
+    loaded - instead of touching bundle.policy.category_links, which would
+    trigger an extra lazy-load query per policy."""
 
-    ``resolve_calc_type()``/``can_simulate()`` need a ``policy.category_links``
-    shape (see policy_engine.calc_type), but ``bundle.categories`` already
-    holds the same categories pre-loaded - reuse it instead of touching
-    ``bundle.policy.category_links``, which would trigger an extra lazy-load
-    query per policy.
-    """
-
-    policy_like = SimpleNamespace(
+    return SimpleNamespace(
         category_links=[SimpleNamespace(category=category) for category in bundle.categories]
     )
+
+
+def resolve_bundle_benefit_calc_type(
+    bundle: policy_crud.PolicyBundle,
+    benefit: PolicyBenefit,
+) -> CalcType | None:
+    """Public wrapper so routes can expose PolicyBenefitResponse.calc_type."""
+
+    return resolve_calc_type(benefit, build_policy_like_for_calc_type(bundle))
+
+
+def _is_policy_simulatable(bundle: policy_crud.PolicyBundle) -> bool:
+    """True if the simulator can run at least one benefit on this policy."""
+
+    policy_like = build_policy_like_for_calc_type(bundle)
     return any(can_simulate(benefit, policy_like) for benefit in bundle.benefits)
 
 

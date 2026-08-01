@@ -85,6 +85,24 @@ class PaymentCycle(str, Enum):
     VARIABLE = "VARIABLE"
 
 
+class CalcType(str, Enum):
+    """Logical simulator calculation shape derived from benefit_type + category.
+
+    Not a database column - PolicyBenefit has no calc_type field. It is
+    resolved at runtime by services.policy_engine.calc_type.resolve_calc_type()
+    and only used to pick how calculation_rule_json is interpreted (see
+    docs/simulator_calc_rules.md). Defined here, alongside the other benefit
+    enums, purely so schemas can import it the same way as BenefitType/etc.
+    """
+
+    LOAN_INTEREST = "LOAN_INTEREST"
+    SAVINGS_ASSET = "SAVINGS_ASSET"
+    CASH_VOUCHER = "CASH_VOUCHER"
+    HOUSING_RENT = "HOUSING_RENT"
+    EMPLOYMENT_EDUCATION = "EMPLOYMENT_EDUCATION"
+    TAX_DEDUCTION = "TAX_DEDUCTION"
+
+
 class Policy(TimestampMixin, Base):
     """Normalized policy record collected from an integration or entered manually."""
 
@@ -318,6 +336,7 @@ class PolicyBenefit(TimestampMixin, Base):
 __all__ = [
     "AmountType",
     "BenefitType",
+    "CalcType",
     "PaymentCycle",
     "Policy",
     "PolicyBenefit",
