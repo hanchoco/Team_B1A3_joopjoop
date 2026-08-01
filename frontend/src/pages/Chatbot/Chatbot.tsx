@@ -11,6 +11,13 @@ interface ChatMessage {
   text: string
 }
 
+const INITIAL_SUGGESTED_QUESTIONS = [
+  '제가 이 정책에 지원할 수 있나요?',
+  '필요한 서류는 무엇인가요?',
+  '소득 기준은 어떻게 계산하나요?',
+  '신청 절차가 궁금합니다.',
+]
+
 export default function Chatbot() {
   const navigate = useNavigate()
   const { id } = useParams()
@@ -19,7 +26,9 @@ export default function Chatbot() {
   const displayName = currentUser?.nickname || currentUser?.email.split('@')[0] || '회원'
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const [input, setInput] = useState('')
-  const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([])
+  const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>(
+    INITIAL_SUGGESTED_QUESTIONS,
+  )
   const [isAnswering, setIsAnswering] = useState(false)
   const [error, setError] = useState('')
   const [messages, setMessages] = useState<ChatMessage[]>([
