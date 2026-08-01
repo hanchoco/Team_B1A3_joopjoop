@@ -15,17 +15,20 @@
 
 ## 논리적 타입 도출 기준 (참고)
 
-| 논리적 타입 | 관련 `benefit_type` | 관련 카테고리(예시) |
+실제 도출 로직은 `backend/app/services/policy_engine/calc_type.py`의 `resolve_calc_type()`에 구현되어 있다.
+
+| 논리적 타입 | 관련 `benefit_type` | 관련 카테고리 |
 | --- | --- | --- |
 | `LOAN_INTEREST` | `LOAN` | 금융 |
 | `SAVINGS_ASSET` | `SAVINGS` | 금융 |
-| `CASH_VOUCHER` | `CASH`, `DISCOUNT` | 복지, 고용 등 |
-| `HOUSING_RENT` | `CASH`, `OTHER` | 주거 |
-| `EMPLOYMENT_EDUCATION` | `CASH`, `SERVICE` | 고용 |
+| `HOUSING_RENT` | `CASH`, `DISCOUNT` | 주거 카테고리를 가진 정책 |
+| `EMPLOYMENT_EDUCATION` | `CASH`, `DISCOUNT` | (주거가 아니면서) 고용 카테고리를 가진 정책 |
+| `CASH_VOUCHER` | `CASH`, `DISCOUNT` | 그 외 카테고리(교통/복지 등) — 전용 계산 함수가 없는 카테고리는 여기로 흡수된다 |
 | `TAX_DEDUCTION` | `TAX_REDUCTION` | 세금 |
 
-실제 도출 로직(우선순위, 예외 케이스 처리 등)은 Policy Engine 구현 시점에 확정한다.
-이 표는 스키마를 채울 때 어떤 타입을 선택해야 할지 가늠하기 위한 참고용이다.
+> `SERVICE`/`OTHER` benefit_type은 시뮬레이션을 지원하지 않는다 — `resolve_calc_type()`이 항상 `None`을 반환하며, 위 표의 어떤 논리적 타입에도 매핑되지 않는다.
+
+`CASH`/`DISCOUNT`는 정책의 `PolicyCategory` 링크를 확인해 주거 → 고용 → 그 외(`CASH_VOUCHER`) 순으로 우선순위가 적용된다. 이 표는 스키마를 채울 때 어떤 타입을 선택해야 할지 가늠하기 위한 참고용이다.
 
 ---
 

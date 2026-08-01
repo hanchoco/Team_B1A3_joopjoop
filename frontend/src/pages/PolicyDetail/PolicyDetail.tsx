@@ -262,7 +262,9 @@ export default function PolicyDetail() {
       <div className="mt-5 grid gap-3 sm:grid-cols-3">
         <button
           onClick={() => navigate(`/policies/${policy.id}/simulation`)}
-          className="inline-flex items-center justify-center gap-2 rounded-lg border border-blue-600 bg-white px-4 py-3.5 font-bold text-blue-600"
+          disabled={!policy.is_simulatable}
+          title={policy.is_simulatable ? undefined : '이 정책은 아직 예상 시뮬레이션을 지원하지 않아요.'}
+          className="inline-flex items-center justify-center gap-2 rounded-lg border border-blue-600 bg-white px-4 py-3.5 font-bold text-blue-600 disabled:cursor-not-allowed disabled:border-gray-300 disabled:text-gray-400"
         >
           <Calculator size={18} /> 예상 시뮬레이션 보기
         </button>

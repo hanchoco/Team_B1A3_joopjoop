@@ -8,6 +8,8 @@ from fastapi import APIRouter, Query, Response, status
 from app.api.deps import CurrentUser, DbSession
 from app.crud import categories as category_crud
 from app.crud import user_policies as state_crud
+from app.crud.policies import PolicyBundle
+from app.models.policy import PolicyBenefit
 from app.schemas.dashboard import DashboardSummaryResponse
 from app.schemas.policy import (
     PolicyBenefitResponse,
@@ -244,7 +246,7 @@ def get_policy_detail(
             for condition in evaluated.bundle.conditions
         ],
         benefits=[
-            PolicyBenefitResponse.model_validate(benefit) for benefit in evaluated.bundle.benefits
+            _benefit_response(evaluated.bundle, benefit) for benefit in evaluated.bundle.benefits
         ],
         documents=[
             PolicyDocumentResponse.model_validate(document)
@@ -383,6 +385,16 @@ def _policy_summary(
         days_until_deadline=_days_until(policy.application_end_date),
         is_bookmarked=bool(state and state.is_bookmarked),
         is_simulatable=evaluated.is_simulatable,
+    )
+
+
+def _benefit_response(
+    bundle: PolicyBundle,
+    benefit: PolicyBenefit,
+) -> PolicyBenefitResponse:
+    response = PolicyBenefitResponse.model_validate(benefit)
+    return response.model_copy(
+        update={"calc_type": policy_service.resolve_bundle_benefit_calc_type(bundle, benefit)}
     )
 
 

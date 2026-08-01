@@ -11,6 +11,7 @@ from pydantic import BaseModel, ConfigDict, Field, JsonValue, model_validator
 from app.models.policy import (
     AmountType,
     BenefitType,
+    CalcType,
     PaymentCycle,
     PolicySource,
     PolicyStatus,
@@ -95,6 +96,10 @@ class PolicyBenefitResponse(PolicyBenefitFields):
 
     id: int
     policy_id: int
+    # Not a DB column - resolved at read time via
+    # services.policy_engine.calc_type.resolve_calc_type() so the frontend
+    # knows which simulator form/calculation_rule_json shape applies.
+    calc_type: CalcType | None = None
     created_at: datetime
     updated_at: datetime
 

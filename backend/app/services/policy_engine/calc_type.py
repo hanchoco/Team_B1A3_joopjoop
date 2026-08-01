@@ -16,19 +16,8 @@ from collections.abc import Iterable
 from enum import Enum
 from typing import Protocol
 
-from app.models.policy import BenefitType
+from app.models.policy import BenefitType, CalcType
 from app.models.user_category_profile import CategoryCode
-
-
-class CalcType(str, Enum):
-    """Logical calculation shape consumed by the future simulator engine."""
-
-    LOAN_INTEREST = "LOAN_INTEREST"
-    SAVINGS_ASSET = "SAVINGS_ASSET"
-    CASH_VOUCHER = "CASH_VOUCHER"
-    HOUSING_RENT = "HOUSING_RENT"
-    EMPLOYMENT_EDUCATION = "EMPLOYMENT_EDUCATION"
-    TAX_DEDUCTION = "TAX_DEDUCTION"
 
 
 class _CategoryLike(Protocol):

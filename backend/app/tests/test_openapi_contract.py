@@ -23,11 +23,13 @@ _EXPECTED_SUCCESS_STATUS: dict[tuple[str, str], str] = {
     ("GET", "/api/v1/categories/{category_id}/questions"): "200",
     ("GET", "/api/v1/categories/{category_id}/answers"): "200",
     ("PUT", "/api/v1/categories/{category_id}/answers"): "200",
+    ("DELETE", "/api/v1/categories/{category_id}/answers"): "204",
     ("GET", "/api/v1/policies"): "200",
     ("GET", "/api/v1/users/me/recommendations"): "200",
     ("GET", "/api/v1/users/me/dashboard-summary"): "200",
     ("GET", "/api/v1/policies/{policy_id}"): "200",
     ("GET", "/api/v1/policies/{policy_id}/match"): "200",
+    ("POST", "/api/v1/policies/{policy_id}/benefits/{benefit_id}/simulate"): "200",
     ("POST", "/api/v1/policies/{policy_id}/bookmark"): "201",
     ("DELETE", "/api/v1/policies/{policy_id}/bookmark"): "204",
     ("POST", "/api/v1/policies/{policy_id}/questions"): "200",
@@ -43,17 +45,13 @@ _EXPECTED_SUCCESS_STATUS: dict[tuple[str, str], str] = {
     ): "200",
     ("POST", "/api/v1/policies/{policy_id}/applications"): "200",
     ("GET", "/api/v1/users/me/policies"): "200",
+    ("DELETE", "/api/v1/users/me/policies/{state_id}/progress"): "204",
     ("GET", "/api/v1/users/me/notification-settings"): "200",
     ("PATCH", "/api/v1/users/me/notification-settings"): "200",
     ("GET", "/api/v1/users/me/notifications"): "200",
     ("PATCH", "/api/v1/notifications/{notification_id}/read"): "200",
     ("POST", "/api/v1/users/me/notifications/run-deadline-check"): "200",
-    ("POST", "/api/v1/simulator/housing"): "200",
-    ("POST", "/api/v1/simulator/transport"): "200",
-    ("POST", "/api/v1/simulator/finance"): "200",
-    ("POST", "/api/v1/simulator/tax"): "200",
-    ("POST", "/api/v1/simulator/employment"): "200",
-    ("POST", "/api/v1/simulator/welfare"): "200",
+    ("PATCH", "/api/v1/users/me/display-name"): "200",
     ("GET", "/health"): "200",
 }
 _PUBLIC_OPERATIONS = {
@@ -61,12 +59,6 @@ _PUBLIC_OPERATIONS = {
     ("POST", "/api/v1/auth/login"),
     ("GET", "/api/v1/categories"),
     ("GET", "/api/v1/categories/{category_id}/questions"),
-    ("POST", "/api/v1/simulator/housing"),
-    ("POST", "/api/v1/simulator/transport"),
-    ("POST", "/api/v1/simulator/finance"),
-    ("POST", "/api/v1/simulator/tax"),
-    ("POST", "/api/v1/simulator/employment"),
-    ("POST", "/api/v1/simulator/welfare"),
     ("GET", "/health"),
 }
 
@@ -92,7 +84,7 @@ def test_openapi_enumerates_every_business_operation() -> None:
     schema = app.openapi()
     operations = _business_operations(schema)
 
-    assert len(operations) == 40
+    assert len(operations) == 38
     assert set(operations) == set(_EXPECTED_SUCCESS_STATUS)
     operation_ids = [operation.get("operationId") for operation in operations.values()]
     assert all(isinstance(operation_id, str) for operation_id in operation_ids)

@@ -1,11 +1,16 @@
-"""HTTP-level coverage for every category-specific simulator endpoint."""
+"""HTTP-level coverage for POST /policies/{policy_id}/benefits/{benefit_id}/simulate."""
 
 from __future__ import annotations
 
+from datetime import date
 from decimal import Decimal
 
-import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import select
+
+from app.db.session import SessionLocal
+from app.models.policy import Policy, PolicyBenefit, PolicyCategory
+from app.models.user_category_profile import Category
 
 TOP_LEVEL_RESULT_KEYS = {
     "category",
@@ -22,240 +27,283 @@ TOP_LEVEL_RESULT_KEYS = {
 }
 
 
-def _decimal_map(values: dict[str, object]) -> dict[str, Decimal]:
-    return {key: Decimal(str(value)) for key, value in values.items()}
+def _authenticated_headers(client: TestClient, *, email: str) -> dict[str, str]:
+    signup = client.post(
+        "/api/v1/auth/signup",
+        json={
+            "email": email,
+            "password": "safe-password-123",
+            "nickname": "시뮬레이터테스터",
+            "consents": [
+                {
+                    "consent_type": "TERMS_REQUIRED",
+                    "consent_version": "1.0",
+                    "is_agreed": True,
+                },
+                {
+                    "consent_type": "PRIVACY_REQUIRED",
+                    "consent_version": "1.0",
+                    "is_agreed": True,
+                },
+            ],
+        },
+    )
+    assert signup.status_code == 201, signup.text
+    token = signup.json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}
 
 
-@pytest.mark.parametrize(
-    (
-        "path",
-        "payload",
-        "expected_category",
-        "expected_amounts",
-        "expected_breakdown",
-    ),
-    [
-        pytest.param(
-            "/api/v1/simulator/housing",
-            {
-                "monthly_rent_amount": "500000",
-                "monthly_management_fee_amount": "100000",
-                "deposit_amount": "10000000",
-                "monthly_support_amount": "200000",
-                "support_months": 12,
-            },
-            "HOUSING",
-            {
-                "monthly_before_amount": Decimal("600000.00"),
-                "monthly_after_amount": Decimal("400000.00"),
-                "monthly_savings_amount": Decimal("200000.00"),
-                "annual_before_amount": Decimal("7200000.00"),
-                "annual_after_amount": Decimal("4800000.00"),
-                "annual_savings_amount": Decimal("2400000.00"),
-                "total_benefit_amount": Decimal("2400000.00"),
-            },
-            {
-                "monthly_rent_amount": Decimal("500000.00"),
-                "monthly_management_fee_amount": Decimal("100000.00"),
-                "deposit_amount": Decimal("10000000.00"),
-                "applied_monthly_support_amount": Decimal("200000.00"),
-            },
-            id="housing",
-        ),
-        pytest.param(
-            "/api/v1/simulator/transport",
-            {
-                "monthly_transport_cost_amount": "100000",
-                "reimbursement_rate_percent": "20",
-                "monthly_support_cap_amount": "15000",
-                "support_months": 12,
-            },
-            "TRANSPORT",
-            {
-                "monthly_before_amount": Decimal("100000.00"),
-                "monthly_after_amount": Decimal("85000.00"),
-                "monthly_savings_amount": Decimal("15000.00"),
-                "annual_before_amount": Decimal("1200000.00"),
-                "annual_after_amount": Decimal("1020000.00"),
-                "annual_savings_amount": Decimal("180000.00"),
-                "total_benefit_amount": Decimal("180000.00"),
-            },
-            {
-                "monthly_transport_cost_amount": Decimal("100000.00"),
-                "reimbursement_rate_percent": Decimal("20.0000"),
-                "applied_monthly_support_amount": Decimal("15000.00"),
-                "monthly_support_cap_amount": Decimal("15000.00"),
-            },
-            id="transport",
-        ),
-        pytest.param(
-            "/api/v1/simulator/finance",
-            {
-                "principal_amount": "12000000",
-                "annual_interest_rate_percent": "6",
-                "interest_reduction_rate_percent": "2",
-                "support_months": 12,
-            },
-            "FINANCE",
-            {
-                "monthly_before_amount": Decimal("60000.00"),
-                "monthly_after_amount": Decimal("40000.00"),
-                "monthly_savings_amount": Decimal("20000.00"),
-                "annual_before_amount": Decimal("720000.00"),
-                "annual_after_amount": Decimal("480000.00"),
-                "annual_savings_amount": Decimal("240000.00"),
-                "total_benefit_amount": Decimal("240000.00"),
-            },
-            {
-                "principal_amount": Decimal("12000000.00"),
-                "annual_interest_rate_percent": Decimal("6.0000"),
-                "applied_interest_reduction_rate_percent": Decimal("2.0000"),
-                "supported_annual_interest_rate_percent": Decimal("4.0000"),
-            },
-            id="finance",
-        ),
-        pytest.param(
-            "/api/v1/simulator/tax",
-            {
-                "annual_tax_amount": "1000000",
-                "tax_reduction_rate_percent": "10",
-                "max_reduction_amount": "80000",
-                "support_months": 12,
-            },
-            "TAX",
-            {
-                "monthly_before_amount": Decimal("83333.33"),
-                "monthly_after_amount": Decimal("76666.67"),
-                "monthly_savings_amount": Decimal("6666.67"),
-                "annual_before_amount": Decimal("1000000.00"),
-                "annual_after_amount": Decimal("920000.00"),
-                "annual_savings_amount": Decimal("80000.00"),
-                "total_benefit_amount": Decimal("80000.00"),
-            },
-            {
-                "annual_tax_amount": Decimal("1000000.00"),
-                "tax_reduction_rate_percent": Decimal("10.0000"),
-                "applied_annual_reduction_amount": Decimal("80000.00"),
-                "max_reduction_amount": Decimal("80000.00"),
-            },
-            id="tax",
-        ),
-        pytest.param(
-            "/api/v1/simulator/employment",
-            {
-                "monthly_income_amount": "2000000",
-                "monthly_subsidy_amount": "500000",
-                "support_months": 6,
-            },
-            "EMPLOYMENT",
-            {
-                "monthly_before_amount": Decimal("2000000.00"),
-                "monthly_after_amount": Decimal("2500000.00"),
-                "monthly_savings_amount": Decimal("500000.00"),
-                "annual_before_amount": Decimal("24000000.00"),
-                "annual_after_amount": Decimal("27000000.00"),
-                "annual_savings_amount": Decimal("3000000.00"),
-                "total_benefit_amount": Decimal("3000000.00"),
-            },
-            {
-                "monthly_income_amount": Decimal("2000000.00"),
-                "monthly_subsidy_amount": Decimal("500000.00"),
-            },
-            id="employment",
-        ),
-        pytest.param(
-            "/api/v1/simulator/welfare",
-            {
-                "monthly_living_cost_amount": "300000",
-                "monthly_benefit_amount": "500000",
-                "support_months": 12,
-            },
-            "WELFARE",
-            {
-                "monthly_before_amount": Decimal("300000.00"),
-                "monthly_after_amount": Decimal("0.00"),
-                "monthly_savings_amount": Decimal("300000.00"),
-                "annual_before_amount": Decimal("3600000.00"),
-                "annual_after_amount": Decimal("0.00"),
-                "annual_savings_amount": Decimal("3600000.00"),
-                "total_benefit_amount": Decimal("3600000.00"),
-            },
-            {
-                "monthly_living_cost_amount": Decimal("300000.00"),
-                "requested_monthly_benefit_amount": Decimal("500000.00"),
-                "applied_monthly_benefit_amount": Decimal("300000.00"),
-            },
-            id="welfare",
-        ),
-    ],
-)
-def test_all_simulator_http_endpoints_return_exact_results(
-    client: TestClient,
-    path: str,
-    payload: dict[str, object],
-    expected_category: str,
-    expected_amounts: dict[str, Decimal],
-    expected_breakdown: dict[str, Decimal],
-) -> None:
-    """Every simulator is public, strict, and returns the normalised result."""
+def _seed_policy_with_benefit(
+    *,
+    external_id: str,
+    benefit_type: str,
+    amount_type: str,
+    calculation_rule_json: dict[str, object] | None,
+    category_code: str = "HOUSING",
+) -> tuple[int, int]:
+    with SessionLocal() as db:
+        category = db.scalar(select(Category).where(Category.code == category_code))
+        assert category is not None
 
-    response = client.post(path, json=payload)
+        policy = Policy(
+            source="MANUAL",
+            external_id=external_id,
+            title="시뮬레이터 테스트 정책",
+            summary="시뮬레이터 HTTP 테스트용 정책입니다.",
+            application_end_date=date.today().replace(year=date.today().year + 1),
+            status="ACTIVE",
+            is_active=True,
+        )
+        db.add(policy)
+        db.flush()
+        db.add(
+            PolicyCategory(
+                policy_id=policy.id,
+                category_id=category.id,
+                is_primary=True,
+            )
+        )
+        benefit = PolicyBenefit(
+            policy_id=policy.id,
+            benefit_type=benefit_type,
+            amount_type=amount_type,
+            calculation_rule_json=calculation_rule_json,
+        )
+        db.add(benefit)
+        db.commit()
+        db.refresh(benefit)
+        return policy.id, benefit.id
+
+
+def test_simulate_loan_interest_benefit_returns_exact_result(client: TestClient) -> None:
+    headers = _authenticated_headers(client, email="simulate-loan@example.com")
+    policy_id, benefit_id = _seed_policy_with_benefit(
+        external_id="sim-http-loan",
+        benefit_type="LOAN",
+        amount_type="FORMULA",
+        calculation_rule_json={
+            "policy_interest_rate_percent": "1.8",
+            "interest_reduction_rate_percent": "2.2",
+            "max_loan_amount": "200000000",
+            "max_support_months": 24,
+            "repayment_type": "BULLET",
+        },
+        category_code="FINANCE",
+    )
+
+    response = client.post(
+        f"/api/v1/policies/{policy_id}/benefits/{benefit_id}/simulate",
+        json={"user_input": {"loan_amount": "100000000"}},
+        headers=headers,
+    )
 
     assert response.status_code == 200, response.text
     body = response.json()
     assert set(body) == TOP_LEVEL_RESULT_KEYS
-    assert body["category"] == expected_category
-    assert body["support_months"] == payload["support_months"]
-    assert isinstance(body["disclaimer"], str)
+    assert body["category"] == "LOAN_INTEREST"
+    assert Decimal(str(body["total_benefit_amount"])) == Decimal("4400000.00")
+    assert body["support_months"] == 24
     assert body["disclaimer"].strip()
-    for key, expected in expected_amounts.items():
-        assert Decimal(str(body[key])) == expected
-    assert set(body["breakdown"]) == set(expected_breakdown)
-    assert _decimal_map(body["breakdown"]) == expected_breakdown
 
 
-@pytest.mark.parametrize(
-    ("path", "payload"),
-    [
-        (
-            "/api/v1/simulator/housing",
-            {
-                "monthly_rent_amount": "-1",
-                "monthly_support_amount": "0",
-            },
-        ),
-        (
-            "/api/v1/simulator/transport",
-            {
-                "monthly_transport_cost_amount": "10000",
-                "reimbursement_rate_percent": "101",
-            },
-        ),
-        (
-            "/api/v1/simulator/finance",
-            {
-                "principal_amount": "1000000",
-                "annual_interest_rate_percent": "5",
-                "interest_reduction_rate_percent": "1",
-                "support_months": 121,
-            },
-        ),
-        (
-            "/api/v1/simulator/tax",
-            {
-                "annual_tax_amount": "100000",
-                "tax_reduction_rate_percent": "10",
-                "unexpected": "not allowed",
-            },
-        ),
-    ],
-)
-def test_simulator_http_validation_rejects_invalid_payloads(
+def test_simulate_cash_benefit_with_housing_category_resolves_housing_rent(
     client: TestClient,
-    path: str,
-    payload: dict[str, object],
 ) -> None:
-    response = client.post(path, json=payload)
+    headers = _authenticated_headers(client, email="simulate-housing@example.com")
+    policy_id, benefit_id = _seed_policy_with_benefit(
+        external_id="sim-http-housing",
+        benefit_type="CASH",
+        amount_type="FIXED",
+        calculation_rule_json={"monthly_support_cap_amount": "200000", "support_months": 12},
+        category_code="HOUSING",
+    )
+
+    response = client.post(
+        f"/api/v1/policies/{policy_id}/benefits/{benefit_id}/simulate",
+        json={"user_input": {"monthly_rent_amount": "300000"}},
+        headers=headers,
+    )
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["category"] == "HOUSING_RENT"
+    assert Decimal(str(body["total_benefit_amount"])) == Decimal("2400000.00")
+
+
+def test_simulate_requires_authentication(client: TestClient) -> None:
+    policy_id, benefit_id = _seed_policy_with_benefit(
+        external_id="sim-http-auth",
+        benefit_type="LOAN",
+        amount_type="FORMULA",
+        calculation_rule_json={
+            "policy_interest_rate_percent": "1.8",
+            "interest_reduction_rate_percent": "2.2",
+            "max_loan_amount": "200000000",
+            "max_support_months": 24,
+            "repayment_type": "BULLET",
+        },
+        category_code="FINANCE",
+    )
+
+    response = client.post(
+        f"/api/v1/policies/{policy_id}/benefits/{benefit_id}/simulate",
+        json={"user_input": {"loan_amount": "100000000"}},
+    )
+
+    assert response.status_code == 401
+
+
+def test_simulate_returns_404_for_unknown_policy(client: TestClient) -> None:
+    headers = _authenticated_headers(client, email="simulate-404-policy@example.com")
+
+    response = client.post(
+        "/api/v1/policies/999999/benefits/1/simulate",
+        json={"user_input": {}},
+        headers=headers,
+    )
+
+    assert response.status_code == 404
+    assert response.json()["code"] == "NOT_FOUND"
+
+
+def test_simulate_returns_404_for_unknown_benefit(client: TestClient) -> None:
+    headers = _authenticated_headers(client, email="simulate-404-benefit@example.com")
+    policy_id, _benefit_id = _seed_policy_with_benefit(
+        external_id="sim-http-404-benefit",
+        benefit_type="LOAN",
+        amount_type="FORMULA",
+        calculation_rule_json={
+            "policy_interest_rate_percent": "1.8",
+            "interest_reduction_rate_percent": "2.2",
+            "max_loan_amount": "200000000",
+            "max_support_months": 24,
+            "repayment_type": "BULLET",
+        },
+        category_code="FINANCE",
+    )
+
+    response = client.post(
+        f"/api/v1/policies/{policy_id}/benefits/999999/simulate",
+        json={"user_input": {}},
+        headers=headers,
+    )
+
+    assert response.status_code == 404
+    assert response.json()["code"] == "NOT_FOUND"
+
+
+def test_simulate_returns_422_for_service_benefit_with_no_calc_type(client: TestClient) -> None:
+    headers = _authenticated_headers(client, email="simulate-422-unsupported@example.com")
+    policy_id, benefit_id = _seed_policy_with_benefit(
+        external_id="sim-http-service",
+        benefit_type="SERVICE",
+        amount_type="VARIABLE",
+        calculation_rule_json=None,
+        category_code="TRANSPORT",
+    )
+
+    response = client.post(
+        f"/api/v1/policies/{policy_id}/benefits/{benefit_id}/simulate",
+        json={"user_input": {}},
+        headers=headers,
+    )
 
     assert response.status_code == 422
-    assert response.json()["detail"]
+    assert response.json()["code"] == "SIMULATION_ERROR"
+
+
+def test_simulate_returns_422_for_missing_required_user_input(client: TestClient) -> None:
+    headers = _authenticated_headers(client, email="simulate-422-missing-input@example.com")
+    policy_id, benefit_id = _seed_policy_with_benefit(
+        external_id="sim-http-missing-input",
+        benefit_type="LOAN",
+        amount_type="FORMULA",
+        calculation_rule_json={
+            "policy_interest_rate_percent": "1.8",
+            "interest_reduction_rate_percent": "2.2",
+            "max_loan_amount": "200000000",
+            "max_support_months": 24,
+            "repayment_type": "BULLET",
+        },
+        category_code="FINANCE",
+    )
+
+    response = client.post(
+        f"/api/v1/policies/{policy_id}/benefits/{benefit_id}/simulate",
+        json={"user_input": {}},
+        headers=headers,
+    )
+
+    assert response.status_code == 422
+    assert response.json()["code"] == "SIMULATION_ERROR"
+
+
+def test_simulate_returns_422_for_non_numeric_user_input(client: TestClient) -> None:
+    headers = _authenticated_headers(client, email="simulate-422-non-numeric@example.com")
+    policy_id, benefit_id = _seed_policy_with_benefit(
+        external_id="sim-http-non-numeric",
+        benefit_type="LOAN",
+        amount_type="FORMULA",
+        calculation_rule_json={
+            "policy_interest_rate_percent": "1.8",
+            "interest_reduction_rate_percent": "2.2",
+            "max_loan_amount": "200000000",
+            "max_support_months": 24,
+            "repayment_type": "BULLET",
+        },
+        category_code="FINANCE",
+    )
+
+    response = client.post(
+        f"/api/v1/policies/{policy_id}/benefits/{benefit_id}/simulate",
+        json={"user_input": {"loan_amount": "이억원"}},
+        headers=headers,
+    )
+
+    assert response.status_code == 422
+    assert response.json()["code"] == "SIMULATION_ERROR"
+
+
+def test_simulate_rejects_unknown_top_level_fields(client: TestClient) -> None:
+    headers = _authenticated_headers(client, email="simulate-strict-payload@example.com")
+    policy_id, benefit_id = _seed_policy_with_benefit(
+        external_id="sim-http-strict",
+        benefit_type="LOAN",
+        amount_type="FORMULA",
+        calculation_rule_json={
+            "policy_interest_rate_percent": "1.8",
+            "interest_reduction_rate_percent": "2.2",
+            "max_loan_amount": "200000000",
+            "max_support_months": 24,
+            "repayment_type": "BULLET",
+        },
+        category_code="FINANCE",
+    )
+
+    response = client.post(
+        f"/api/v1/policies/{policy_id}/benefits/{benefit_id}/simulate",
+        json={"user_input": {"loan_amount": "100000000"}, "unexpected": "not allowed"},
+        headers=headers,
+    )
+
+    assert response.status_code == 422

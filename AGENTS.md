@@ -60,12 +60,16 @@ Codex, Claude Code 등 모든 AI 코딩 에이전트가 공통으로 준수하�
 
 ## 5. 시뮬레이터 규칙
 
-- 시뮬레이터 입력 필드는 카테고리(주거/교통/금융/세금/고용/복지)마다 다르게 설계한다 (공통 필드로 통일하지 않음)
+- 시뮬레이터는 `PolicyCategory`(주거/교통/금융/세금/고용/복지)가 아니라, `PolicyBenefit.benefit_type` + 정책의 `PolicyCategory` 조합으로 런타임에 도출되는 논리적 분류인 `CalcType`(`LOAN_INTEREST`/`SAVINGS_ASSET`/`CASH_VOUCHER`/`HOUSING_RENT`/`EMPLOYMENT_EDUCATION`/`TAX_DEDUCTION`) 단위로 폼/계산 로직을 나눈다 (카테고리 단위로 통일하지 않음). 도출 로직은 `services/policy_engine/calc_type.py`의 `resolve_calc_type()`에서만 구현하며, 다른 코드는 `benefit_type`을 직접 분기하지 않고 반드시 이 함수를 거친다
+  - `LOAN`→`LOAN_INTEREST`, `SAVINGS`→`SAVINGS_ASSET`, `TAX_REDUCTION`→`TAX_DEDUCTION`은 직접 매핑
+  - `CASH`/`DISCOUNT`는 정책 카테고리가 주거면 `HOUSING_RENT`, 고용이면 `EMPLOYMENT_EDUCATION`, 그 외(교통/복지 등)는 `CASH_VOUCHER`로 흡수된다 — 즉 교통/복지 전용 계산 함수는 두지 않고, `CASH_VOUCHER`의 `amount_type`(`FIXED`/`PERCENTAGE`) 분기가 그 역할을 대신한다
+  - `SERVICE`/`OTHER`는 시뮬레이션을 지원하지 않는다(`resolve_calc_type()`이 `None` 반환)
 - 금액 등 구체적인 입력값은 DB/프로필에 저장하지 않고, 사용자가 시뮬레이터를 열 때마다 매번 직접 입력한다
-- Frontend: `frontend/src/components/simulator/`에 카테고리별 폼 컴포넌트 분리
-  - `HousingSimulatorForm.tsx`(월세/관리비/보증금 등), `TransportSimulatorForm.tsx`, `FinanceSimulatorForm.tsx`, `TaxSimulatorForm.tsx`, `EmploymentSimulatorForm.tsx`, `WelfareSimulatorForm.tsx`
-- Backend: `services/policy_engine/simulator.py`에 카테고리별 계산 함수 분리 (`calculate_housing()`, `calculate_transport()` 등), 공통 함수 하나로 억지로 합치지 않는다
-- 한 카테고리 안에서도 정책별로 계산 로직이 크게 다르면(예: 월세지원 vs 대출이자지원) 함수를 정책 단위로 더 세분화할 수 있다 — 발견 시 팀 논의 후 결정
+- Frontend: `frontend/src/components/simulator/`에 `CalcType`별 폼 컴포넌트 분리
+  - `HousingRentSimulatorForm.tsx`(월세/관리비/보증금 등), `LoanInterestSimulatorForm.tsx`, `SavingsAssetSimulatorForm.tsx`, `CashVoucherSimulatorForm.tsx`, `EmploymentEducationSimulatorForm.tsx`, `TaxDeductionSimulatorForm.tsx`
+- Backend: `services/policy_engine/simulator.py`에 `CalcType`별 계산 함수 분리 (`calculate_loan_interest()`, `calculate_housing_rent()` 등), 공통 함수 하나로 억지로 합치지 않는다
+- 한 `CalcType` 안에서도 정책별로 계산 로직이 크게 다르면 함수를 정책 단위로 더 세분화할 수 있다 — 발견 시 팀 논의 후 결정
+- `calculation_rule_json` 스키마 계약은 `docs/simulator_calc_rules.md`에서 관리
 
 ## 6. 코딩 컨벤션
 

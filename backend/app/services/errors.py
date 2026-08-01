@@ -45,3 +45,10 @@ class ExternalServiceError(ServiceError):
 
     status_code = 503
     code = "EXTERNAL_SERVICE_UNAVAILABLE"
+
+
+class SimulationError(ServiceError):
+    """A benefit has no resolvable CalcType, or its simulator inputs are invalid."""
+
+    status_code = 422
+    code = "SIMULATION_ERROR"
