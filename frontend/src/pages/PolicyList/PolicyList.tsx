@@ -417,35 +417,37 @@ export default function PolicyList() {
       <form
         onSubmit={submitPolicySearch}
         role="search"
-        className="mt-6 flex max-w-2xl items-center gap-2 rounded-lg border border-gray-300 bg-white pl-4 pr-2 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100"
+        className="mt-6 flex w-full max-w-2xl items-center gap-3"
       >
-        <Search size={18} className="shrink-0 text-gray-400" aria-hidden="true" />
-        <label htmlFor="policy-list-search" className="sr-only">
-          정책명 또는 키워드 검색
-        </label>
-        <input
-          key={searchKeyword}
-          ref={searchInputRef}
-          id="policy-list-search"
-          type="search"
-          defaultValue={searchKeyword}
-          maxLength={100}
-          placeholder="예: 청년 월세, 취업 지원금"
-          className="h-11 min-w-0 flex-1 border-0 bg-transparent text-sm outline-none"
-        />
-        {searchKeyword && (
-          <button
-            type="button"
-            onClick={clearPolicySearch}
-            aria-label="검색어 지우기"
-            className="grid h-8 w-8 shrink-0 place-items-center rounded-md text-gray-400 transition hover:bg-slate-100 hover:text-gray-700"
-          >
-            <X size={17} aria-hidden="true" />
-          </button>
-        )}
+        <div className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-lg border border-gray-300 bg-white pl-4 pr-2 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100">
+          <Search size={18} className="shrink-0 text-gray-400" aria-hidden="true" />
+          <label htmlFor="policy-list-search" className="sr-only">
+            정책명 또는 키워드 검색
+          </label>
+          <input
+            key={searchKeyword}
+            ref={searchInputRef}
+            id="policy-list-search"
+            type="search"
+            defaultValue={searchKeyword}
+            maxLength={100}
+            placeholder="예: 청년 월세, 취업 지원금"
+            className="h-full min-w-0 flex-1 border-0 bg-transparent text-sm outline-none"
+          />
+          {searchKeyword && (
+            <button
+              type="button"
+              onClick={clearPolicySearch}
+              aria-label="검색어 지우기"
+              className="grid h-8 w-8 shrink-0 place-items-center rounded-md text-gray-400 transition hover:bg-slate-100 hover:text-gray-700"
+            >
+              <X size={17} aria-hidden="true" />
+            </button>
+          )}
+        </div>
         <button
           type="submit"
-          className="shrink-0 rounded-md bg-blue-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-blue-700"
+          className="h-11 min-w-20 shrink-0 rounded-lg bg-blue-600 px-4 text-sm font-bold text-white transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
         >
           검색
         </button>
