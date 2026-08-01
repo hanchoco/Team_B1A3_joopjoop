@@ -1,65 +1,39 @@
-"""Category-specific policy benefit simulator routes."""
+"""Policy-benefit simulator routes (CalcType-based, see policy_engine.calc_type)."""
 
 from fastapi import APIRouter
 
-from app.schemas.simulator import (
-    EmploymentSimulatorRequest,
-    FinanceSimulatorRequest,
-    HousingSimulatorRequest,
-    SimulatorResult,
-    TaxSimulatorRequest,
-    TransportSimulatorRequest,
-    WelfareSimulatorRequest,
+from app.api.deps import CurrentUser, DbSession
+from app.crud import policies as policy_crud
+from app.schemas.simulator import SimulateBenefitRequest, SimulatorResult
+from app.services import policy_service
+from app.services.errors import NotFoundError, SimulationError
+from app.services.policy_engine.simulator import UnsupportedCalcTypeError, simulate
+
+router = APIRouter(tags=["simulator"])
+
+
+@router.post(
+    "/policies/{policy_id}/benefits/{benefit_id}/simulate",
+    response_model=SimulatorResult,
 )
-from app.services.policy_engine.simulator import (
-    calculate_employment,
-    calculate_finance,
-    calculate_housing,
-    calculate_tax,
-    calculate_transport,
-    calculate_welfare,
-)
+def simulate_policy_benefit(
+    policy_id: int,
+    benefit_id: int,
+    payload: SimulateBenefitRequest,
+    db: DbSession,
+    current_user: CurrentUser,
+) -> SimulatorResult:
+    """Run the CalcType-derived simulator calculation for one policy benefit."""
 
-router = APIRouter(prefix="/simulator", tags=["simulator"])
+    bundle = policy_crud.get_policy_bundle(db, policy_id)
+    if bundle is None or not bundle.policy.is_active:
+        raise NotFoundError("정책을 찾을 수 없습니다.")
+    benefit = next((item for item in bundle.benefits if item.id == benefit_id), None)
+    if benefit is None:
+        raise NotFoundError("정책 혜택을 찾을 수 없습니다.")
 
-
-@router.post("/housing", response_model=SimulatorResult)
-def simulate_housing(payload: HousingSimulatorRequest) -> SimulatorResult:
-    """Compare housing costs before and after a policy."""
-
-    return calculate_housing(payload)
-
-
-@router.post("/transport", response_model=SimulatorResult)
-def simulate_transport(payload: TransportSimulatorRequest) -> SimulatorResult:
-    """Compare transport costs before and after a policy."""
-
-    return calculate_transport(payload)
-
-
-@router.post("/finance", response_model=SimulatorResult)
-def simulate_finance(payload: FinanceSimulatorRequest) -> SimulatorResult:
-    """Compare financing costs before and after a policy."""
-
-    return calculate_finance(payload)
-
-
-@router.post("/tax", response_model=SimulatorResult)
-def simulate_tax(payload: TaxSimulatorRequest) -> SimulatorResult:
-    """Compare tax costs before and after a policy."""
-
-    return calculate_tax(payload)
-
-
-@router.post("/employment", response_model=SimulatorResult)
-def simulate_employment(payload: EmploymentSimulatorRequest) -> SimulatorResult:
-    """Compare disposable income before and after an employment policy."""
-
-    return calculate_employment(payload)
-
-
-@router.post("/welfare", response_model=SimulatorResult)
-def simulate_welfare(payload: WelfareSimulatorRequest) -> SimulatorResult:
-    """Compare living costs before and after a welfare policy."""
-
-    return calculate_welfare(payload)
+    policy_like = policy_service.build_policy_like_for_calc_type(bundle)
+    try:
+        return simulate(benefit, policy_like, payload.user_input)
+    except (UnsupportedCalcTypeError, ValueError) as exc:
+        raise SimulationError(str(exc)) from exc

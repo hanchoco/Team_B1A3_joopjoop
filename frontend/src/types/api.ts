@@ -109,6 +109,7 @@ export interface PolicySummaryResponse {
   max_benefit_amount: number | string | null
   days_until_deadline: number | null
   is_bookmarked: boolean
+  is_simulatable: boolean
 }
 
 export interface PolicyConditionResponse {
@@ -137,8 +138,12 @@ export interface PolicyBenefitResponse {
   payment_cycle: string | null
   duration_months: number | null
   max_total_amount: number | string | null
-  calculation_rule_json: unknown
+  calculation_rule_json: CalcRuleJson | null
   display_text: string | null
+  // Not a DB field - resolved server-side from benefit_type + policy category
+  // (see backend services/policy_engine/calc_type.py). Tells the frontend
+  // which simulator form/calculation_rule_json shape applies, if any.
+  calc_type: CalcType | null
   created_at: string
   updated_at: string
 }
@@ -269,19 +274,83 @@ export interface CategoryAnswerResponse extends CategoryAnswerUpsert {
   updated_at: string
 }
 
-// Simulator DTOs (see backend/app/schemas/simulator.py). Money/percentage
-// fields are plain numbers over the wire.
+// Simulator DTOs (see backend/app/schemas/simulator.py,
+// backend/app/models/policy.py:CalcType, docs/simulator_calc_rules.md).
+// Money/percentage fields are plain numbers over the wire.
 
-export type SimulatorCategory =
-  | 'HOUSING'
-  | 'TRANSPORT'
-  | 'FINANCE'
-  | 'TAX'
-  | 'EMPLOYMENT'
-  | 'WELFARE'
+export type CalcType =
+  | 'LOAN_INTEREST'
+  | 'SAVINGS_ASSET'
+  | 'CASH_VOUCHER'
+  | 'HOUSING_RENT'
+  | 'EMPLOYMENT_EDUCATION'
+  | 'TAX_DEDUCTION'
+
+// calculation_rule_json shapes the policy already knows (docs/simulator_calc_rules.md).
+// These are read-only display values - never rendered as editable inputs.
+
+export interface LoanInterestRuleJson {
+  policy_interest_rate_percent: number
+  interest_reduction_rate_percent?: number
+  max_loan_amount: number
+  max_support_months: number
+  repayment_type: string
+}
+
+export interface SavingsAssetRuleJson {
+  government_match_rate_percent: number
+  monthly_max_support_amount: number
+  maturity_months: number
+  base_interest_rate_percent: number
+  bonus_interest_rate_percent?: number
+}
+
+export interface CashVoucherFixedRuleJson {
+  amount_type: 'FIXED'
+  amount: number
+  payment_cycle: string
+  max_count: number
+}
+
+export interface CashVoucherPercentageRuleJson {
+  amount_type: 'PERCENTAGE'
+  rate_percent: number
+  cap_amount: number
+  payment_cycle: string
+}
+
+export type CashVoucherRuleJson = CashVoucherFixedRuleJson | CashVoucherPercentageRuleJson
+
+export interface HousingRentRuleJson {
+  monthly_support_cap_amount: number
+  support_months: number
+  deposit_limit_amount?: number
+  rent_limit_amount?: number
+}
+
+export interface EmploymentEducationRuleJson {
+  training_allowance_amount?: number
+  education_subsidy_amount?: number
+  employment_success_bonus_amount?: number
+  support_months: number
+}
+
+export interface TaxDeductionRuleJson {
+  deduction_rate_percent: number
+  max_deduction_amount?: number
+  deduction_type: 'TAX_CREDIT' | 'INCOME_DEDUCTION'
+}
+
+export type CalcRuleJson =
+  | LoanInterestRuleJson
+  | SavingsAssetRuleJson
+  | CashVoucherRuleJson
+  | HousingRentRuleJson
+  | EmploymentEducationRuleJson
+  | TaxDeductionRuleJson
 
 export interface SimulatorResult {
-  category: SimulatorCategory
+  category: CalcType
   monthly_before_amount: number | string
   monthly_after_amount: number | string
   monthly_savings_amount: number | string
@@ -294,45 +363,10 @@ export interface SimulatorResult {
   disclaimer: string
 }
 
-export interface HousingSimulatorRequest {
-  monthly_rent_amount: number
-  monthly_management_fee_amount?: number
-  deposit_amount?: number
-  monthly_support_amount: number
-  support_months?: number
-}
-
-export interface TransportSimulatorRequest {
-  monthly_transport_cost_amount: number
-  reimbursement_rate_percent: number
-  monthly_support_cap_amount?: number | null
-  support_months?: number
-}
-
-export interface FinanceSimulatorRequest {
-  principal_amount: number
-  annual_interest_rate_percent: number
-  interest_reduction_rate_percent: number
-  support_months?: number
-}
-
-export interface TaxSimulatorRequest {
-  annual_tax_amount: number
-  tax_reduction_rate_percent: number
-  max_reduction_amount?: number | null
-  support_months?: number
-}
-
-export interface EmploymentSimulatorRequest {
-  monthly_income_amount: number
-  monthly_subsidy_amount: number
-  support_months?: number
-}
-
-export interface WelfareSimulatorRequest {
-  monthly_living_cost_amount: number
-  monthly_benefit_amount: number
-  support_months?: number
+// Transient per-request personal variables only - never persisted, and never
+// includes fields already known from calculation_rule_json.
+export interface SimulateBenefitRequest {
+  user_input: Record<string, number>
 }
 
 // Checklist DTOs (see backend/app/schemas/checklist.py).

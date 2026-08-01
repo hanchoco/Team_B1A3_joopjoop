@@ -37,7 +37,7 @@ def _signup(client: TestClient) -> str:
     return str(response.json()["access_token"])
 
 
-def _seed_policy() -> int:
+def _seed_policy() -> tuple[int, int]:
     with SessionLocal() as db:
         category = get_category_by_code(db, "HOUSING")
         assert category is not None
@@ -75,18 +75,21 @@ def _seed_policy() -> int:
                 sort_order=1,
             )
         )
-        db.add(
-            PolicyBenefit(
-                policy_id=policy.id,
-                benefit_type="CASH",
-                amount_type="FIXED",
-                max_amount=Decimal("200000"),
-                payment_cycle="MONTHLY",
-                duration_months=12,
-                max_total_amount=Decimal("2400000"),
-                display_text="월 최대 20만 원",
-            )
+        benefit = PolicyBenefit(
+            policy_id=policy.id,
+            benefit_type="CASH",
+            amount_type="FIXED",
+            max_amount=Decimal("200000"),
+            payment_cycle="MONTHLY",
+            duration_months=12,
+            max_total_amount=Decimal("2400000"),
+            display_text="월 최대 20만 원",
+            calculation_rule_json={
+                "monthly_support_cap_amount": "200000",
+                "support_months": 12,
+            },
         )
+        db.add(benefit)
         db.add(
             PolicyDocument(
                 policy_id=policy.id,
@@ -100,7 +103,7 @@ def _seed_policy() -> int:
             )
         )
         db.commit()
-        return policy.id
+        return policy.id, benefit.id
 
 
 def test_policy_recommendation_and_checklist_flow(client: TestClient) -> None:
@@ -125,7 +128,7 @@ def test_policy_recommendation_and_checklist_flow(client: TestClient) -> None:
     )
     assert profile_response.status_code == 200, profile_response.text
 
-    policy_id = _seed_policy()
+    policy_id, _benefit_id = _seed_policy()
     list_response = client.get(
         "/api/v1/policies?sort=recommendation",
         headers=headers,
@@ -170,18 +173,18 @@ def test_policy_recommendation_and_checklist_flow(client: TestClient) -> None:
 
 
 def test_simulator_inputs_are_transient(client: TestClient) -> None:
-    """Simulator accepts category-specific values without profile persistence."""
+    """Simulator accepts per-request user_input without persisting it anywhere."""
+
+    token = _signup(client)
+    headers = {"Authorization": f"Bearer {token}"}
+    policy_id, benefit_id = _seed_policy()
 
     response = client.post(
-        "/api/v1/simulator/housing",
-        json={
-            "monthly_rent_amount": "500000",
-            "monthly_management_fee_amount": "100000",
-            "deposit_amount": "10000000",
-            "monthly_support_amount": "200000",
-            "support_months": 12,
-        },
+        f"/api/v1/policies/{policy_id}/benefits/{benefit_id}/simulate",
+        headers=headers,
+        json={"user_input": {"monthly_rent_amount": "500000"}},
     )
     assert response.status_code == 200, response.text
-    assert response.json()["monthly_before_amount"] == "600000.00"
-    assert response.json()["monthly_after_amount"] == "400000.00"
+    assert response.json()["category"] == "HOUSING_RENT"
+    assert response.json()["monthly_before_amount"] == "500000.00"
+    assert response.json()["monthly_after_amount"] == "300000.00"

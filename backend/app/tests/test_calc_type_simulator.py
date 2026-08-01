@@ -101,6 +101,18 @@ def test_loan_interest_missing_required_rule_field_raises() -> None:
         calculate_loan_interest(rule, {"loan_amount": "10000000"})
 
 
+def test_loan_interest_non_numeric_user_input_raises_value_error_not_decimal_error() -> None:
+    rule = {
+        "policy_interest_rate_percent": "1.8",
+        "interest_reduction_rate_percent": "2.2",
+        "max_loan_amount": "200000000",
+        "max_support_months": 24,
+        "repayment_type": "BULLET",
+    }
+    with pytest.raises(ValueError, match="숫자로 변환할 수 없습니다"):
+        calculate_loan_interest(rule, {"loan_amount": "이억원"})
+
+
 # ---------------------------------------------------------------------------
 # calculate_savings_asset
 # ---------------------------------------------------------------------------

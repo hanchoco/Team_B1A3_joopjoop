@@ -30,7 +30,7 @@ Claude Code(claude.ai/code)가 이 레포에서 작업할 때 위 AGENTS.md 공�
 
 - 정책 매칭/시뮬레이션 작업: `backend/app/services/policy_engine/` 기존 코드부터 확인
 - 정책 판정 로직 작업 시 AGENTS.md 4번 섹션(정책 판정 체계)부터 확인 — 조건 레벨과 정책 레벨 둘 다 3단계이지만 값 체계가 다름(조건 레벨: 충족/추가 확인 필요/불충족, 정책 레벨: ELIGIBLE/NEEDS_REVIEW/INELIGIBLE), 서로 섞어 쓰지 않도록 주의
-- 시뮬레이터 작업 시 AGENTS.md 5번 섹션(시뮬레이터 규칙) 확인 — 카테고리별로 폼/계산 함수가 분리되어 있어야 함, 입력값은 저장하지 않고 매 요청 처리
+- 시뮬레이터 작업 시 AGENTS.md 5번 섹션(시뮬레이터 규칙) 확인 — `CalcType`(benefit_type+카테고리로 런타임 도출)별로 폼/계산 함수가 분리되어 있어야 함, 입력값은 저장하지 않고 매 요청 처리
 - AI Q&A/자격조건 추출/체크리스트 생성 작업: `backend/app/services/ai/` 기존 패턴부터 확인, DB 직접 반영 금지 규칙(AGENTS.md 7번) 준수
 - 알림/스케줄링 작업: `backend/app/services/notification/` 기존 코드부터 확인, 발송 시점(D-7/D-3/D-day)은 고정값 준수
 - 프론트 UI 작업: `frontend/src/components/` 내 기존 공통 컴포넌트 재사용 가능 여부 먼저 확인
