@@ -2,6 +2,7 @@ import {
   ArrowRight,
   BadgeDollarSign,
   BriefcaseBusiness,
+  CalendarDays,
   Calculator,
   CreditCard,
   Heart,
@@ -19,6 +20,7 @@ import BenefitCoins from '../../components/common/BenefitCoins'
 import { employmentStatusLabel, housingTypeLabel } from '../../constants/profile'
 import { useApp } from '../../store/useApp'
 import type { CategoryResponse, DashboardSummaryResponse } from '../../types/api'
+import { buildPolicyCardPreview } from '../../utils/policyCardPreview'
 
 const ICON_BY_CODE: Record<string, typeof House> = {
   HOUSING: House,
@@ -37,6 +39,13 @@ function formatAmount(amount: number | string | null | undefined): string {
 
 function formatRegion(sido: string | null | undefined, sigungu: string | null | undefined): string {
   return [sido, sigungu].filter(Boolean).join(' ') || '미입력'
+}
+
+function formatDeadlineDate(value: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value)
+  if (!match) return value
+
+  return `${Number(match[2])}월 ${Number(match[3])}일`
 }
 
 export default function Dashboard() {
@@ -87,6 +96,7 @@ export default function Dashboard() {
 
   const upcomingPolicy = isLoggedIn ? (dashboardSummary?.upcoming_deadline_policy ?? null) : null
   const upcomingCount = isLoggedIn ? (dashboardSummary?.upcoming_deadline_count ?? 0) : 0
+  const upcomingPolicyPreview = upcomingPolicy ? buildPolicyCardPreview(upcomingPolicy) : null
   const dDayLabel = upcomingPolicy
     ? upcomingPolicy.days_until_deadline <= 0
       ? 'D-day'
@@ -208,51 +218,75 @@ export default function Dashboard() {
       </div>{' '}
       <div>
         {' '}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center">
           <h2 className="text-lg font-black text-gray-950">놓치기 직전 정책</h2>{' '}
-          {dDayLabel && (
-            <span className="rounded-full border border-rose-200 bg-rose-50 px-2.5 py-0.5 text-xs font-bold text-rose-500">
-              {dDayLabel}
-            </span>
-          )}{' '}
         </div>{' '}
         <div className="mt-4 grid gap-4 lg:grid-cols-[1.65fr_1fr]">
           {' '}
-          <article className="flex flex-col rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:gap-5">
-            {' '}
-            <span className="grid h-16 w-16 shrink-0 place-items-center rounded-xl bg-slate-50 text-gray-500">
-              <BadgeDollarSign size={32} strokeWidth={1.6} />{' '}
-            </span>{' '}
-            <div className="mt-4 min-w-0 flex-1 sm:mt-0">
+          <article className="flex flex-col rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-blue-50 text-blue-600">
+              <BadgeDollarSign size={28} strokeWidth={1.6} aria-hidden="true" />
+            </span>
+            <div className="mt-4 flex min-w-0 flex-1 flex-col">
               {dashboardLoading ? (
-                <h3 className="text-base font-black text-gray-400">불러오는 중...</h3>
+                <h3 className="text-base font-black text-gray-400">
+                  마감 임박 정책을 불러오는 중...
+                </h3>
               ) : upcomingPolicy ? (
                 <>
-                  <h3 className="text-base font-black">{upcomingPolicy.title}</h3>{' '}
-                  <p className="mt-2 text-sm leading-6 text-gray-500">
-                    {upcomingPolicy.summary ?? '마감이 얼마 남지 않았어요.'}
+                  <h3 className="line-clamp-2 text-lg font-black leading-7 text-gray-950">
+                    {upcomingPolicy.title}
+                  </h3>
+                  <p className="mt-2 line-clamp-2 text-sm leading-6 text-gray-500">
+                    {upcomingPolicyPreview?.summary ||
+                      '마감이 얼마 남지 않았어요. 신청 조건을 자세히 확인해 보세요.'}
+                    {upcomingPolicyPreview?.hasMoreContent && (
+                      <span className="sr-only">
+                        전체 내용은 정책 상세 페이지에서 확인할 수 있습니다.
+                      </span>
+                    )}
                   </p>{' '}
                 </>
               ) : (
                 <>
-                  <h3 className="text-base font-black">놓치기 직전인 정책이 없어요</h3>{' '}
-                  <p className="mt-2 text-sm leading-6 text-gray-500">
+                  <h3 className="text-lg font-black leading-7 text-gray-950">
+                    놓치기 직전인 정책이 없어요
+                  </h3>{' '}
+                  <p className="mt-2 line-clamp-2 text-sm leading-6 text-gray-500">
                     관심 정책으로 저장하면 마감이 가까워질 때 여기서 알려드려요.
                   </p>{' '}
                 </>
               )}
-              <button
-                onClick={() =>
-                  navigate(
-                    upcomingPolicy
-                      ? `/policies/${upcomingPolicy.policy_id}`
-                      : '/mypage/policies?tab=interest&sort=deadline',
-                  )
-                }
-                className="mt-4 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-bold transition hover:bg-slate-50"
-              >
-                자세히 보기
-              </button>{' '}
+              {!dashboardLoading && (
+                <footer className="mt-auto flex flex-col gap-3 pt-5 sm:flex-row sm:items-center sm:justify-between">
+                  {upcomingPolicy && dDayLabel ? (
+                    <div className="flex flex-wrap items-center gap-2 text-sm">
+                      <span className="rounded-full border border-rose-200 bg-rose-50 px-2.5 py-0.5 text-xs font-bold text-rose-600">
+                        {dDayLabel}
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 font-semibold text-gray-700">
+                        <CalendarDays size={16} className="text-gray-400" aria-hidden="true" />
+                        신청 마감 {formatDeadlineDate(upcomingPolicy.application_end_date)}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-sm font-semibold text-gray-500">모집 상태 확인하기</span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      navigate(
+                        upcomingPolicy
+                          ? `/policies/${upcomingPolicy.policy_id}`
+                          : '/mypage/policies?tab=interest&sort=deadline',
+                      )
+                    }
+                    className="self-start rounded-lg border border-blue-600 px-4 py-2 text-sm font-bold text-blue-600 transition hover:bg-blue-50 sm:self-auto"
+                  >
+                    {upcomingPolicy ? '자세히 보기' : '관심 정책 보기'}
+                  </button>
+                </footer>
+              )}
             </div>{' '}
           </article>{' '}
           <article className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
