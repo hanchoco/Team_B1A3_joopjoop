@@ -8,6 +8,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from datetime import date
 from decimal import Decimal
+from types import SimpleNamespace
 
 from sqlalchemy.orm import Session
 
@@ -19,6 +20,7 @@ from app.models.policy import Policy
 from app.models.user_policy import EligibilityStatus, UserPolicyMatch
 from app.schemas.dashboard import DashboardSummaryResponse, DashboardUpcomingPolicy
 from app.services.errors import NotFoundError
+from app.services.policy_engine.calc_type import can_simulate
 from app.services.policy_engine.matcher import PolicyEvaluation, evaluate_policy
 
 ENGINE_VERSION = "joop-policy-engine-1"
@@ -32,6 +34,7 @@ class EvaluatedPolicy:
     evaluation: PolicyEvaluation
     match: UserPolicyMatch
     estimated_benefit_amount: Decimal
+    is_simulatable: bool
 
 
 @dataclass(slots=True)
@@ -130,6 +133,7 @@ def evaluate_policy_for_user(
         evaluation=evaluation,
         match=match,
         estimated_benefit_amount=estimated_benefit,
+        is_simulatable=_is_policy_simulatable(bundle),
     )
 
 
@@ -287,6 +291,22 @@ def _estimate_max_benefit(benefits: list[object]) -> Decimal:
         multiplier = int(months) if cycle == "MONTHLY" else 1
         total += Decimal(maximum) * multiplier
     return total
+
+
+def _is_policy_simulatable(bundle: policy_crud.PolicyBundle) -> bool:
+    """True if the simulator can run at least one benefit on this policy.
+
+    ``resolve_calc_type()``/``can_simulate()`` need a ``policy.category_links``
+    shape (see policy_engine.calc_type), but ``bundle.categories`` already
+    holds the same categories pre-loaded - reuse it instead of touching
+    ``bundle.policy.category_links``, which would trigger an extra lazy-load
+    query per policy.
+    """
+
+    policy_like = SimpleNamespace(
+        category_links=[SimpleNamespace(category=category) for category in bundle.categories]
+    )
+    return any(can_simulate(benefit, policy_like) for benefit in bundle.benefits)
 
 
 def _set_nested_value(target: dict[str, object], dotted_key: str, value: object) -> None:
