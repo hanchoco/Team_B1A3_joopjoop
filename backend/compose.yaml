@@ -12,3 +12,4 @@ services:
     restart: unless-stopped
     volumes:
       - ./review_drafts:/app/review_drafts
+      

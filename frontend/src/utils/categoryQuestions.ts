@@ -2,10 +2,23 @@ import type { CategoryQuestionResponse } from '../types/api'
 
 export const HIDDEN_QUESTION_KEYS = new Set(['finance.total_debt_amount'])
 
-export function hasSavedAnswerValue(value: unknown): boolean {
+const UNCERTAIN_ANSWER_VALUES = new Set(['unknown', 'unsure', 'not_sure'])
+
+function normalizeAnswerValue(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, '_')
+}
+
+export function hasUsableAnswerValue(value: unknown): boolean {
   if (value === null || value === undefined) return false
-  if (typeof value === 'string') return value.trim().length > 0
-  if (Array.isArray(value)) return value.length > 0
+  if (typeof value === 'string') {
+    const normalizedValue = normalizeAnswerValue(value)
+    return normalizedValue.length > 0 && !UNCERTAIN_ANSWER_VALUES.has(normalizedValue)
+  }
+  if (typeof value === 'number') return Number.isFinite(value)
+  if (Array.isArray(value)) return value.length > 0 && value.every(hasUsableAnswerValue)
   return true
 }
 

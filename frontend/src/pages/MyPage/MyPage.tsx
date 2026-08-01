@@ -1,10 +1,12 @@
 import { ArrowRight, Bookmark, CheckCircle2, ClipboardList, UserRound } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { getCategoryAnswers, listCategories, listCategoryQuestions } from '../../api/categories'
 import { listMyPolicies } from '../../api/checklist'
 import { getRecommendations } from '../../api/policies'
 import { useApp } from '../../store/useApp'
 import type { PolicySummaryResponse, UserPolicyItemResponse } from '../../types/api'
+import { calculateProfileAccuracy, type CategoryAccuracyData } from '../../utils/profileAccuracy'
 
 function formatBenefit(amount: number | string | null): string | null {
   if (amount === null) return null
@@ -12,15 +14,6 @@ function formatBenefit(amount: number | string | null): string | null {
   if (!Number.isFinite(numeric) || numeric <= 0) return null
   return `예상 혜택 ${numeric.toLocaleString()}원`
 }
-
-const PROFILE_FIELDS = [
-  'birth_year',
-  'region_code',
-  'income_band_code',
-  'employment_status_code',
-  'household_type_code',
-  'housing_type_code',
-] as const
 
 export default function MyPage() {
   const navigate = useNavigate()
@@ -31,6 +24,35 @@ export default function MyPage() {
   const [preparing, setPreparing] = useState<UserPolicyItemResponse[]>([])
   const [recommendations, setRecommendations] = useState<PolicySummaryResponse[]>([])
   const [recommendationsLoading, setRecommendationsLoading] = useState(true)
+  const [categoryAccuracyData, setCategoryAccuracyData] = useState<CategoryAccuracyData[] | null>(
+    null,
+  )
+  const [accuracyLoadFailed, setAccuracyLoadFailed] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    listCategories()
+      .then((categories) =>
+        Promise.all(
+          categories.map(async (category) => {
+            const [questions, answers] = await Promise.all([
+              listCategoryQuestions(category.id),
+              getCategoryAnswers(category.id),
+            ])
+            return { categoryCode: category.code, questions, answers }
+          }),
+        ),
+      )
+      .then((data) => {
+        if (!cancelled) setCategoryAccuracyData(data)
+      })
+      .catch(() => {
+        if (!cancelled) setAccuracyLoadFailed(true)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -84,8 +106,8 @@ export default function MyPage() {
 
   const continuePolicy = preparing[0]
   const displayName = currentUser?.nickname || currentUser?.email.split('@')[0] || '회원'
-  const filledFieldCount = PROFILE_FIELDS.filter((field) => profile?.[field] != null).length
-  const matchAccuracy = Math.round((filledFieldCount / PROFILE_FIELDS.length) * 100)
+  const matchAccuracy =
+    profile && categoryAccuracyData ? calculateProfileAccuracy(profile, categoryAccuracyData) : null
 
   return (
     <section>
@@ -93,7 +115,11 @@ export default function MyPage() {
         <aside className="rounded-xl border border-gray-200 bg-white p-6">
           <span className="grid h-16 w-16 place-items-center overflow-hidden rounded-full bg-slate-100 text-gray-400">
             {avatarUrl ? (
-              <img src={avatarUrl} alt={`${displayName} 프로필`} className="h-full w-full object-cover" />
+              <img
+                src={avatarUrl}
+                alt={`${displayName} 프로필`}
+                className="h-full w-full object-cover"
+              />
             ) : (
               <UserRound size={32} />
             )}
@@ -111,10 +137,16 @@ export default function MyPage() {
             <div className="mt-3 h-2 rounded-full bg-slate-100">
               <div
                 className="h-full rounded-full bg-blue-600"
-                style={{ width: `${matchAccuracy}%` }}
+                style={{ width: `${matchAccuracy ?? 0}%` }}
               />
             </div>
-            <p className="mt-2 text-xs text-gray-500">프로필 정보 {matchAccuracy}% 입력 완료</p>
+            <p className="mt-2 text-xs text-gray-500">
+              {matchAccuracy === null
+                ? accuracyLoadFailed
+                  ? '입력 정보를 불러오지 못했어요'
+                  : '입력 정보 확인 중...'
+                : `프로필·카테고리 정보 ${matchAccuracy}% 입력 완료`}
+            </p>
           </div>
         </aside>
         <div>
