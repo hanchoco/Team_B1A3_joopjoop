@@ -26,7 +26,9 @@ export default function EmploymentEducationSimulatorForm({
           ...(r.employment_success_bonus_amount !== undefined
             ? [{ label: '취업성공수당', value: formatWon(r.employment_success_bonus_amount) }]
             : []),
-          { label: '지원 기간', value: `${r.support_months}개월` },
+          ...(r.support_months !== undefined
+            ? [{ label: '지원 기간', value: `${r.support_months}개월` }]
+            : []),
         ]}
       />
       <div className="grid gap-4 sm:grid-cols-2">

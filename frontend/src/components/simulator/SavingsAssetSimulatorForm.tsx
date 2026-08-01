@@ -13,10 +13,16 @@ export default function SavingsAssetSimulatorForm({ rule, values, onChange }: Si
     <div>
       <KnownRuleInfo
         items={[
-          { label: '정부매칭비율', value: `${r.government_match_rate_percent}%` },
+          ...(r.government_match_rate_percent !== undefined
+            ? [{ label: '정부매칭비율', value: `${r.government_match_rate_percent}%` }]
+            : []),
           { label: '월 최대 지원금', value: formatWon(r.monthly_max_support_amount) },
-          { label: '만기 기간', value: `${r.maturity_months}개월` },
-          { label: '기본금리', value: `${r.base_interest_rate_percent}%` },
+          ...(r.maturity_months !== undefined
+            ? [{ label: '만기 기간', value: `${r.maturity_months}개월` }]
+            : []),
+          ...(r.base_interest_rate_percent !== undefined
+            ? [{ label: '기본금리', value: `${r.base_interest_rate_percent}%` }]
+            : []),
           ...(r.bonus_interest_rate_percent !== undefined
             ? [{ label: '우대금리', value: `${r.bonus_interest_rate_percent}%` }]
             : []),
