@@ -13,6 +13,24 @@ export interface UserResponse {
   updated_at: string
 }
 
+export interface NotificationSettingResponse {
+  notification_enabled: boolean
+  deadline_d7_enabled: boolean
+  deadline_d3_enabled: boolean
+  deadline_d0_enabled: boolean
+  email_enabled: boolean
+  push_enabled: boolean
+  user_id: number
+  updated_at: string
+}
+
+export type NotificationSettingUpdatePayload = Partial<
+  Pick<
+    NotificationSettingResponse,
+    'notification_enabled' | 'deadline_d7_enabled' | 'deadline_d3_enabled' | 'deadline_d0_enabled'
+  >
+>
+
 export interface TokenResponse {
   access_token: string
   token_type: string

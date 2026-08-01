@@ -1,7 +1,10 @@
 import { Bell, CalendarClock, ChevronRight, KeyRound, Mail, ShieldCheck, X } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { extractErrorMessage } from '../../api/client'
+import { getNotificationSettings, updateNotificationSettings } from '../../api/notifications'
 import { useApp } from '../../store/useApp'
+import type { NotificationSettingResponse, NotificationSettingUpdatePayload } from '../../types/api'
 
 const menuItems = [
   { id: 'notifications', label: '알림 설정', icon: Bell },
@@ -21,6 +24,7 @@ const detailContent = {
 type DetailKey = keyof typeof detailContent
 type MenuId = DetailKey | 'account' | 'privacy' | 'logout' | 'withdraw'
 type DetailContent = (typeof detailContent)[DetailKey]
+type NotificationSettingKey = keyof NotificationSettingUpdatePayload
 
 interface NotificationSwitchProps {
   checked: boolean
@@ -58,9 +62,14 @@ function NotificationSwitch({
 
 export default function Settings() {
   const navigate = useNavigate()
-  const { logout, notificationSettings, updateNotificationSettings } = useApp()
+  const { logout } = useApp()
   const [detail, setDetail] = useState<DetailContent | null>(null)
   const [logoutOpen, setLogoutOpen] = useState(false)
+  const [notificationSettings, setNotificationSettings] =
+    useState<NotificationSettingResponse | null>(null)
+  const [notificationLoading, setNotificationLoading] = useState(false)
+  const [notificationSaving, setNotificationSaving] = useState(false)
+  const [notificationError, setNotificationError] = useState('')
 
   function handleMenu(id: MenuId) {
     if (id === 'logout') {
@@ -80,23 +89,41 @@ export default function Settings() {
       return
     }
     setDetail(detailContent[id])
+    void loadNotificationSettings()
   }
 
-  function toggleAllNotifications(enabled: boolean) {
-    updateNotificationSettings({
-      ...notificationSettings,
-      enabled,
-    })
+  async function loadNotificationSettings() {
+    setNotificationSettings(null)
+    setNotificationLoading(true)
+    setNotificationError('')
+    try {
+      setNotificationSettings(await getNotificationSettings())
+    } catch (err) {
+      setNotificationError(extractErrorMessage(err))
+    } finally {
+      setNotificationLoading(false)
+    }
   }
 
-  function toggleSchedule(
-    schedule: 'sevenDaysBefore' | 'threeDaysBefore' | 'deadlineDay',
-    checked: boolean,
-  ) {
-    updateNotificationSettings({
+  async function toggleNotificationSetting(key: NotificationSettingKey, checked: boolean) {
+    if (!notificationSettings || notificationSaving) return
+
+    const previousSettings = notificationSettings
+    setNotificationSettings({
       ...notificationSettings,
-      [schedule]: checked,
+      [key]: checked,
     })
+    setNotificationSaving(true)
+    setNotificationError('')
+    try {
+      const payload: NotificationSettingUpdatePayload = { [key]: checked }
+      setNotificationSettings(await updateNotificationSettings(payload))
+    } catch (err) {
+      setNotificationSettings(previousSettings)
+      setNotificationError(extractErrorMessage(err))
+    } finally {
+      setNotificationSaving(false)
+    }
   }
 
   return (
@@ -149,65 +176,84 @@ export default function Settings() {
             </p>
             {detail.title === '알림 설정' && (
               <>
-                <div className="mt-5 flex items-center justify-between border-y border-gray-200 py-5">
-                  <div>
-                    <p className="font-bold text-gray-950">전체 마감 알림</p>
-                    <p className="mt-1 text-xs leading-5 text-gray-500">
-                      관심 정책 전체의 마감 알림을 한 번에 관리해요.
-                    </p>
-                  </div>
-                  <NotificationSwitch
-                    checked={notificationSettings.enabled}
-                    label="전체 마감 알림"
-                    onChange={toggleAllNotifications}
-                  />
-                </div>
-
-                <div className="mt-5 flex items-center gap-3 rounded-lg bg-slate-50 px-4 py-3">
-                  <Mail size={18} className="text-blue-600" />
-                  <div>
-                    <p className="text-sm font-semibold text-gray-950">이메일로 알려드려요</p>
-                    <p className="mt-0.5 text-xs text-gray-500">
-                      등록된 계정 이메일로 마감 알림을 보내드려요.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-6">
-                  <div className="flex items-center gap-2">
-                    <CalendarClock size={18} className="text-blue-600" />
-                    <h3 className="text-sm font-bold text-gray-950">알림 시점</h3>
-                  </div>
-                  <div className="mt-3 divide-y divide-gray-100 rounded-lg border border-gray-200">
-                    {[
-                      {
-                        key: 'sevenDaysBefore' as const,
-                        label: '마감 7일 전',
-                      },
-                      {
-                        key: 'threeDaysBefore' as const,
-                        label: '마감 3일 전',
-                      },
-                      {
-                        key: 'deadlineDay' as const,
-                        label: '마감 당일',
-                      },
-                    ].map(({ key, label }) => (
-                      <div key={key} className="flex items-center gap-3 px-4 py-3.5">
-                        <span className="flex-1 text-sm font-semibold">{label}</span>
-                        <NotificationSwitch
-                          checked={notificationSettings[key]}
-                          disabled={!notificationSettings.enabled}
-                          label={`${label} 이메일 알림`}
-                          onChange={(checked) => toggleSchedule(key, checked)}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                  <p className="mt-3 text-xs leading-5 text-gray-500">
-                    전체 알림을 켠 뒤 이메일을 받을 시점을 선택할 수 있어요.
+                {notificationLoading && (
+                  <p className="mt-5 text-sm font-semibold text-gray-500" role="status">
+                    알림 설정을 불러오는 중이에요.
                   </p>
-                </div>
+                )}
+                {notificationError && (
+                  <p className="mt-5 text-sm font-semibold text-rose-600" role="alert">
+                    {notificationError}
+                  </p>
+                )}
+                {!notificationLoading && notificationSettings && (
+                  <>
+                    <div className="mt-5 flex items-center justify-between border-y border-gray-200 py-5">
+                      <div>
+                        <p className="font-bold text-gray-950">전체 마감 알림</p>
+                        <p className="mt-1 text-xs leading-5 text-gray-500">
+                          관심 정책 전체의 마감 알림을 한 번에 관리해요.
+                        </p>
+                      </div>
+                      <NotificationSwitch
+                        checked={notificationSettings.notification_enabled}
+                        disabled={notificationSaving}
+                        label="전체 마감 알림"
+                        onChange={(checked) =>
+                          void toggleNotificationSetting('notification_enabled', checked)
+                        }
+                      />
+                    </div>
+
+                    <div className="mt-5 flex items-center gap-3 rounded-lg bg-slate-50 px-4 py-3">
+                      <Mail size={18} className="text-blue-600" />
+                      <div>
+                        <p className="text-sm font-semibold text-gray-950">이메일로 알려드려요</p>
+                        <p className="mt-0.5 text-xs text-gray-500">
+                          등록된 계정 이메일로 마감 알림을 보내드려요.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-6">
+                      <div className="flex items-center gap-2">
+                        <CalendarClock size={18} className="text-blue-600" />
+                        <h3 className="text-sm font-bold text-gray-950">알림 시점</h3>
+                      </div>
+                      <div className="mt-3 divide-y divide-gray-100 rounded-lg border border-gray-200">
+                        {[
+                          {
+                            key: 'deadline_d7_enabled' as const,
+                            label: '마감 7일 전',
+                          },
+                          {
+                            key: 'deadline_d3_enabled' as const,
+                            label: '마감 3일 전',
+                          },
+                          {
+                            key: 'deadline_d0_enabled' as const,
+                            label: '마감 당일',
+                          },
+                        ].map(({ key, label }) => (
+                          <div key={key} className="flex items-center gap-3 px-4 py-3.5">
+                            <span className="flex-1 text-sm font-semibold">{label}</span>
+                            <NotificationSwitch
+                              checked={notificationSettings[key]}
+                              disabled={
+                                notificationSaving || !notificationSettings.notification_enabled
+                              }
+                              label={`${label} 이메일 알림`}
+                              onChange={(checked) => void toggleNotificationSetting(key, checked)}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                      <p className="mt-3 text-xs leading-5 text-gray-500">
+                        전체 알림을 켠 뒤 이메일을 받을 시점을 선택할 수 있어요.
+                      </p>
+                    </div>
+                  </>
+                )}
               </>
             )}
             <button

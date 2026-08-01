@@ -1,12 +1,5 @@
 import type { SignupRequest, UserProfileResponse, UserProfileUpdate, UserResponse } from './api'
 
-export interface NotificationSettings {
-  enabled: boolean
-  sevenDaysBefore: boolean
-  threeDaysBefore: boolean
-  deadlineDay: boolean
-}
-
 export interface AppContextValue {
   isLoggedIn: boolean
   token: string | null
@@ -20,8 +13,6 @@ export interface AppContextValue {
   updateDisplayName: (nickname: string) => Promise<void>
   avatarUrl?: string
   updateAvatarUrl: (avatarUrl: string | undefined) => void
-  notificationSettings: NotificationSettings
-  updateNotificationSettings: (settings: NotificationSettings) => void
   accountId: string
 }
 

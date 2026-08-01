@@ -16,7 +16,7 @@ import { listCategories } from '../../api/categories'
 import { getDashboardSummary } from '../../api/policies'
 import BrandLogo from '../../components/common/BrandLogo'
 import BenefitCoins from '../../components/common/BenefitCoins'
-import { employmentStatusLabel, housingTypeLabel, regionNameByCode } from '../../constants/profile'
+import { employmentStatusLabel, housingTypeLabel } from '../../constants/profile'
 import { useApp } from '../../store/useApp'
 import type { CategoryResponse, DashboardSummaryResponse } from '../../types/api'
 
@@ -33,6 +33,10 @@ function formatAmount(amount: number | string | null | undefined): string {
   const numeric = Number(amount)
   if (!Number.isFinite(numeric) || numeric <= 0) return '0원'
   return `${numeric.toLocaleString()}원`
+}
+
+function formatRegion(sido: string | null | undefined, sigungu: string | null | undefined): string {
+  return [sido, sigungu].filter(Boolean).join(' ') || '미입력'
 }
 
 export default function Dashboard() {
@@ -128,7 +132,7 @@ export default function Dashboard() {
               <dl className="mt-5 space-y-3 text-sm">
                 {[
                   ['출생연도', profile?.birth_year ? `${profile.birth_year}년` : '미입력'],
-                  ['거주지역', regionNameByCode(profile?.region_code)],
+                  ['거주지역', formatRegion(profile?.region_sido, profile?.region_sigungu)],
                   ['취업 상태', employmentStatusLabel(profile?.employment_status_code)],
                   ['주거형태', housingTypeLabel(profile?.housing_type_code)],
                 ].map(([key, value]) => (
@@ -189,7 +193,7 @@ export default function Dashboard() {
                 onClick={() =>
                   navigate(
                     code === 'TRANSPORT'
-                      ? `/policies?category=${encodeURIComponent(name)}`
+                      ? '/policies?category_code=TRANSPORT&nav=category'
                       : `/categories/${id}/questions?from=home`,
                   )
                 }
