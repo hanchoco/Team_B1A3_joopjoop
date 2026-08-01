@@ -31,6 +31,10 @@ if str(BACKEND_ROOT) not in sys.path:
 from app.integrations.youth_policy_api import YouthPolicyClient
 from app.models.user_category_profile import CategoryCode
 from app.services.ai.benefit_extractor import extract_benefits, validate_benefit_payload
+from app.services.ai.calc_rule_extractor import (
+    extract_calculation_rule,
+    resolve_calc_type_for_codes,
+)
 from app.services.ai.category_classifier import classify_policy_category
 from app.services.ai.checklist_generator import (
     generate_checklist,
@@ -451,6 +455,15 @@ async def create_seed_draft(
                 client=ai_client,
             )
             category_codes = await classify_policy_category(policy_payload, client=ai_client)
+            for benefit in benefits:
+                calc_type = resolve_calc_type_for_codes(benefit.benefit_type, category_codes)
+                if calc_type is not None:
+                    benefit.calculation_rule_json = await extract_calculation_rule(
+                        policy_payload,
+                        calc_type=calc_type,
+                        client=ai_client,
+                        benefit_display_text=benefit.display_text,
+                    )
             bundles.append(
                 {
                     "policy": policy_payload,
