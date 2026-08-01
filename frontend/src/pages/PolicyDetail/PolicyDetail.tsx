@@ -1,10 +1,11 @@
 import { ArrowLeft, Bot, CheckCircle2, ClipboardCheck, Calculator, Star } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { bookmarkPolicy, getPolicy, getPolicyMatch, removeBookmark } from '../../api/policies'
 import { extractErrorMessage } from '../../api/client'
 import OnlineApplicationLink from '../../components/common/OnlineApplicationLink'
 import type { PolicyDetailResponse, PolicyMatchDetailResponse } from '../../types/api'
+import { resolvePolicyListReturnPath } from '../../utils/policyNavigation'
 
 const TABS = ['지원내용', '신청조건', '신청방법', '필요서류'] as const
 type PolicyTab = (typeof TABS)[number]
@@ -39,7 +40,12 @@ function linesOf(text: string | null): string[] {
 export default function PolicyDetail() {
   const navigate = useNavigate()
   const { id } = useParams()
+  const [searchParams] = useSearchParams()
   const policyId = Number(id)
+  const policyListPath = resolvePolicyListReturnPath(
+    searchParams.get('returnTo'),
+    window.location.origin,
+  )
   const [tab, setTab] = useState<PolicyTab>('지원내용')
   const [policy, setPolicy] = useState<PolicyDetailResponse | null>(null)
   const [match, setMatch] = useState<PolicyMatchDetailResponse | null>(null)
@@ -98,7 +104,7 @@ export default function PolicyDetail() {
     return (
       <section>
         <button
-          onClick={() => navigate('/policies')}
+          onClick={() => navigate(policyListPath)}
           className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500"
         >
           <ArrowLeft size={16} /> 정책 목록
@@ -123,7 +129,7 @@ export default function PolicyDetail() {
   return (
     <section>
       <button
-        onClick={() => navigate('/policies')}
+        onClick={() => navigate(policyListPath)}
         className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500"
       >
         <ArrowLeft size={16} /> 정책 목록

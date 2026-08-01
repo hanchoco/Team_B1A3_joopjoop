@@ -17,8 +17,13 @@ import { bookmarkPolicy, listPolicies, removeBookmark } from '../../api/policies
 import { extractErrorMessage } from '../../api/client'
 import type { CategoryResponse, EligibilityStatus, PolicySummaryResponse } from '../../types/api'
 import { useApp } from '../../store/useApp'
+import {
+  buildPolicyDetailPath,
+  POSSIBILITY_FILTERS,
+  resolvePossibilityFilter,
+  type PossibilityFilter,
+} from '../../utils/policyNavigation'
 
-type PossibilityFilter = 'ELIGIBLE' | 'NEEDS_REVIEW' | 'ALL'
 type PolicySort = 'recommended' | 'deadline'
 
 const CARD_STATUS_LABEL: Record<EligibilityStatus, string> = {
@@ -26,12 +31,6 @@ const CARD_STATUS_LABEL: Record<EligibilityStatus, string> = {
   NEEDS_REVIEW: '추가 확인 필요',
   INELIGIBLE: '불충족',
 }
-
-const possibilityFilters = [
-  { value: 'ELIGIBLE', label: '가능성 높음' },
-  { value: 'NEEDS_REVIEW', label: '추가 확인 필요' },
-  { value: 'ALL', label: '전체' },
-]
 
 const categoryIcons: Record<string, typeof House> = {
   주거: House,
@@ -76,17 +75,18 @@ export default function PolicyList() {
     ? (categories.find((category) => category.code === selectedCategoryCode)?.name ?? null)
     : null
   const hasUpdatedAnswers = searchParams.get('answers') === 'updated'
-  const activeFilter = (searchParams.get('filter') || 'ELIGIBLE') as PossibilityFilter
+  const requestedFilter = searchParams.get('filter')
+  const activeFilter = resolvePossibilityFilter(requestedFilter)
   const activeSort: PolicySort =
     searchParams.get('sort') === 'deadline' ? 'deadline' : 'recommended'
 
   useEffect(() => {
-    if (!searchParams.has('filter')) {
+    if (requestedFilter !== activeFilter) {
       const nextParams = new URLSearchParams(searchParams)
-      nextParams.set('filter', 'ELIGIBLE')
+      nextParams.set('filter', activeFilter)
       setSearchParams(nextParams, { replace: true })
     }
-  }, [searchParams, setSearchParams])
+  }, [activeFilter, requestedFilter, searchParams, setSearchParams])
 
   useEffect(() => {
     if (!filterOpen) return
@@ -335,11 +335,11 @@ export default function PolicyList() {
         </div>
       </div>
       <div className="mt-6 flex gap-2 overflow-x-auto border-b border-gray-200">
-        {possibilityFilters.map(({ value, label }) => (
+        {POSSIBILITY_FILTERS.map(({ value, label }) => (
           <button
             key={value}
             type="button"
-            onClick={() => changePossibilityFilter(value as PossibilityFilter)}
+            onClick={() => changePossibilityFilter(value)}
             className={`shrink-0 border-b-2 px-4 py-3 text-sm font-bold transition ${activeFilter === value ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-900'}`}
           >
             {label}
@@ -424,7 +424,7 @@ export default function PolicyList() {
                       </div>
                       <button
                         type="button"
-                        onClick={() => navigate(`/policies/${policy.id}`)}
+                        onClick={() => navigate(buildPolicyDetailPath(policy.id, searchParams))}
                         className="self-end rounded-lg border border-blue-600 px-4 py-2 text-sm font-medium text-blue-600 transition hover:bg-blue-50"
                       >
                         자세히 보기
