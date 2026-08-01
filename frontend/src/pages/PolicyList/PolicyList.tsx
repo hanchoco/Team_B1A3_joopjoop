@@ -5,12 +5,15 @@ import {
   House,
   MoreHorizontal,
   ReceiptText,
+  Search,
   SlidersHorizontal,
   Star,
   TrainFront,
   Users,
+  X,
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import type { FormEvent } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { listCategories } from '../../api/categories'
 import { bookmarkPolicy, listPolicies, removeBookmark } from '../../api/policies'
@@ -21,11 +24,13 @@ import { buildPolicyCardPreview } from '../../utils/policyCardPreview'
 import {
   buildPolicyDetailPath,
   POSSIBILITY_FILTERS,
-  resolvePossibilityFilter,
+  resolvePolicyListFilter,
   type PossibilityFilter,
 } from '../../utils/policyNavigation'
 
 type PolicySort = 'recommended' | 'deadline'
+
+const PAGE_SIZE = 50
 
 const CARD_STATUS_LABEL: Record<EligibilityStatus, string> = {
   ELIGIBLE: '가능성 높음',
@@ -57,6 +62,11 @@ function formatDeadline(days: number | null): string {
   return `마감 D-${days}`
 }
 
+function resolvePage(value: string | null): number {
+  const page = Number(value)
+  return Number.isInteger(page) && page > 0 ? page : 1
+}
+
 export default function PolicyList() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -70,24 +80,42 @@ export default function PolicyList() {
   const [filterOpen, setFilterOpen] = useState(false)
   const [draftSort, setDraftSort] = useState<PolicySort>('recommended')
   const [draftCategoryCode, setDraftCategoryCode] = useState<string | null>(null)
+  const searchInputRef = useRef<HTMLInputElement>(null)
   const filterPanelRef = useRef<HTMLDivElement>(null)
+  const searchKeyword = searchParams.get('search')?.trim() ?? ''
   const selectedCategoryCode = searchParams.get('category_code')
   const selectedCategoryName = selectedCategoryCode
     ? (categories.find((category) => category.code === selectedCategoryCode)?.name ?? null)
     : null
   const hasUpdatedAnswers = searchParams.get('answers') === 'updated'
   const requestedFilter = searchParams.get('filter')
-  const activeFilter = resolvePossibilityFilter(requestedFilter)
+  const activeFilter = resolvePolicyListFilter(searchParams)
   const activeSort: PolicySort =
     searchParams.get('sort') === 'deadline' ? 'deadline' : 'recommended'
+  const activePage = resolvePage(searchParams.get('page'))
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
   useEffect(() => {
-    if (requestedFilter !== activeFilter) {
+    const shouldNormalizeFilter = requestedFilter
+      ? requestedFilter !== activeFilter
+      : !searchKeyword
+
+    if (shouldNormalizeFilter) {
       const nextParams = new URLSearchParams(searchParams)
       nextParams.set('filter', activeFilter)
       setSearchParams(nextParams, { replace: true })
     }
-  }, [activeFilter, requestedFilter, searchParams, setSearchParams])
+  }, [activeFilter, requestedFilter, searchKeyword, searchParams, setSearchParams])
+
+  useEffect(() => {
+    const requestedPage = searchParams.get('page')
+    if (requestedPage && requestedPage !== String(activePage)) {
+      const nextParams = new URLSearchParams(searchParams)
+      if (activePage === 1) nextParams.delete('page')
+      else nextParams.set('page', String(activePage))
+      setSearchParams(nextParams, { replace: true })
+    }
+  }, [activePage, searchParams, setSearchParams])
 
   useEffect(() => {
     if (!filterOpen) return
@@ -135,7 +163,9 @@ export default function PolicyList() {
           category_code: selectedCategoryCode ?? undefined,
           eligibility_status: activeFilter === 'ALL' ? undefined : activeFilter,
           sort: activeSort === 'recommended' ? 'recommendation' : 'deadline',
-          size: 50,
+          keyword: searchKeyword || undefined,
+          page: activePage,
+          size: PAGE_SIZE,
         })
       })
       .then((data) => {
@@ -152,7 +182,16 @@ export default function PolicyList() {
     return () => {
       cancelled = true
     }
-  }, [selectedCategoryCode, activeFilter, activeSort])
+  }, [selectedCategoryCode, activeFilter, activeSort, searchKeyword, activePage])
+
+  useEffect(() => {
+    if (loading || activePage <= totalPages) return
+
+    const nextParams = new URLSearchParams(searchParams)
+    if (totalPages === 1) nextParams.delete('page')
+    else nextParams.set('page', String(totalPages))
+    setSearchParams(nextParams, { replace: true })
+  }, [activePage, loading, searchParams, setSearchParams, totalPages])
 
   async function handleToggleBookmark(policy: PolicySummaryResponse) {
     const nextBookmarked = !policy.is_bookmarked
@@ -180,6 +219,32 @@ export default function PolicyList() {
   function changePossibilityFilter(filter: PossibilityFilter) {
     const nextParams = new URLSearchParams(searchParams)
     nextParams.set('filter', filter)
+    nextParams.delete('page')
+    setSearchParams(nextParams)
+  }
+
+  function submitPolicySearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const nextParams = new URLSearchParams(searchParams)
+    const search = searchInputRef.current?.value.trim() ?? ''
+    if (search) nextParams.set('search', search)
+    else nextParams.delete('search')
+    nextParams.delete('page')
+    setSearchParams(nextParams)
+  }
+
+  function clearPolicySearch() {
+    if (searchInputRef.current) searchInputRef.current.value = ''
+    const nextParams = new URLSearchParams(searchParams)
+    nextParams.delete('search')
+    nextParams.delete('page')
+    setSearchParams(nextParams)
+  }
+
+  function changePage(page: number) {
+    const nextParams = new URLSearchParams(searchParams)
+    if (page === 1) nextParams.delete('page')
+    else nextParams.set('page', String(page))
     setSearchParams(nextParams)
   }
 
@@ -204,6 +269,7 @@ export default function PolicyList() {
       nextParams.delete('category_code')
     }
     nextParams.delete('nav')
+    nextParams.delete('page')
     setSearchParams(nextParams)
     setFilterOpen(false)
   }
@@ -215,6 +281,7 @@ export default function PolicyList() {
     nextParams.delete('sort')
     nextParams.delete('category_code')
     nextParams.delete('nav')
+    nextParams.delete('page')
     setSearchParams(nextParams)
   }
 
@@ -223,20 +290,32 @@ export default function PolicyList() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-sm font-semibold text-blue-600">
-            {selectedCategoryName && hasUpdatedAnswers
-              ? `${selectedCategoryName} 추가 답변 반영 완료`
-              : '맞춤 정책 추천'}
+            {searchKeyword
+              ? '정책 검색 결과'
+              : selectedCategoryName && hasUpdatedAnswers
+                ? `${selectedCategoryName} 추가 답변 반영 완료`
+                : '맞춤 정책 추천'}
           </p>
           <h1 className="mt-2 text-3xl font-black">
-            {currentUser?.nickname ? `${currentUser.nickname} 님을 위한 ` : '맞춤 '}
-            정책 {total}개
+            {searchKeyword ? (
+              <>
+                &lsquo;{searchKeyword}&rsquo; 검색 결과 {total}개
+              </>
+            ) : (
+              <>
+                {currentUser?.nickname ? `${currentUser.nickname} 님을 위한 ` : '맞춤 '}정책 {total}
+                개
+              </>
+            )}
           </h1>
           <p className="mt-2 text-sm text-gray-500">
-            {selectedCategoryName && hasUpdatedAnswers
-              ? `${selectedCategoryName} 분야의 답변을 반영해 추천 정확도를 높였어요.`
-              : selectedCategoryName
-                ? `${selectedCategoryName} 분야의 맞춤 정책을 모았어요.`
-                : '가능성이 높은 정책부터 간결하게 모았어요.'}
+            {searchKeyword
+              ? '정책명과 주요 내용에서 검색어와 일치하는 정책을 모았어요.'
+              : selectedCategoryName && hasUpdatedAnswers
+                ? `${selectedCategoryName} 분야의 답변을 반영해 추천 정확도를 높였어요.`
+                : selectedCategoryName
+                  ? `${selectedCategoryName} 분야의 맞춤 정책을 모았어요.`
+                  : '가능성이 높은 정책부터 간결하게 모았어요.'}
           </p>
         </div>
         <div ref={filterPanelRef} className="relative self-start sm:self-auto">
@@ -335,6 +414,42 @@ export default function PolicyList() {
           )}
         </div>
       </div>
+      <form
+        onSubmit={submitPolicySearch}
+        role="search"
+        className="mt-6 flex max-w-2xl items-center gap-2 rounded-lg border border-gray-300 bg-white pl-4 pr-2 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100"
+      >
+        <Search size={18} className="shrink-0 text-gray-400" aria-hidden="true" />
+        <label htmlFor="policy-list-search" className="sr-only">
+          정책명 또는 키워드 검색
+        </label>
+        <input
+          key={searchKeyword}
+          ref={searchInputRef}
+          id="policy-list-search"
+          type="search"
+          defaultValue={searchKeyword}
+          maxLength={100}
+          placeholder="예: 청년 월세, 취업 지원금"
+          className="h-11 min-w-0 flex-1 border-0 bg-transparent text-sm outline-none"
+        />
+        {searchKeyword && (
+          <button
+            type="button"
+            onClick={clearPolicySearch}
+            aria-label="검색어 지우기"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-md text-gray-400 transition hover:bg-slate-100 hover:text-gray-700"
+          >
+            <X size={17} aria-hidden="true" />
+          </button>
+        )}
+        <button
+          type="submit"
+          className="shrink-0 rounded-md bg-blue-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-blue-700"
+        >
+          검색
+        </button>
+      </form>
       <div className="mt-6 flex gap-2 overflow-x-auto border-b border-gray-200">
         {POSSIBILITY_FILTERS.map(({ value, label }) => (
           <button
@@ -355,7 +470,11 @@ export default function PolicyList() {
       {loading ? (
         <p className="mt-8 text-center text-sm text-gray-500">불러오는 중...</p>
       ) : policies.length === 0 ? (
-        <p className="mt-8 text-center text-sm text-gray-500">조건에 맞는 정책이 없어요.</p>
+        <p className="mt-8 text-center text-sm text-gray-500">
+          {searchKeyword
+            ? `‘${searchKeyword}’와 일치하는 정책이 없어요.`
+            : '조건에 맞는 정책이 없어요.'}
+        </p>
       ) : (
         <div className="mt-6 space-y-3">
           {policies.map((policy) => {
@@ -447,6 +566,29 @@ export default function PolicyList() {
             )
           })}
         </div>
+      )}
+      {!loading && totalPages > 1 && (
+        <nav className="mt-8 flex items-center justify-center gap-3" aria-label="정책 목록 페이지">
+          <button
+            type="button"
+            onClick={() => changePage(activePage - 1)}
+            disabled={activePage === 1}
+            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-600 transition hover:border-blue-300 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            이전
+          </button>
+          <span className="min-w-16 text-center text-sm font-semibold text-gray-600">
+            {activePage} / {totalPages}
+          </span>
+          <button
+            type="button"
+            onClick={() => changePage(activePage + 1)}
+            disabled={activePage === totalPages}
+            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-600 transition hover:border-blue-300 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            다음
+          </button>
+        </nav>
       )}
     </section>
   )

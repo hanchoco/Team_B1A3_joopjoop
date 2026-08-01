@@ -12,9 +12,16 @@ export function resolvePossibilityFilter(value: string | null): PossibilityFilte
   return POSSIBILITY_FILTERS.find((filter) => filter.value === value)?.value ?? 'ELIGIBLE'
 }
 
+export function resolvePolicyListFilter(searchParams: URLSearchParams): PossibilityFilter {
+  const requestedFilter = searchParams.get('filter')
+  if (requestedFilter) return resolvePossibilityFilter(requestedFilter)
+
+  return searchParams.get('search')?.trim() ? 'ALL' : 'ELIGIBLE'
+}
+
 export function buildPolicyDetailPath(policyId: number, searchParams: URLSearchParams): string {
   const listParams = new URLSearchParams(searchParams)
-  listParams.set('filter', resolvePossibilityFilter(listParams.get('filter')))
+  listParams.set('filter', resolvePolicyListFilter(listParams))
   const listPath = `${POLICY_LIST_PATH}?${listParams.toString()}`
   const detailParams = new URLSearchParams({ returnTo: listPath })
   return `${POLICY_LIST_PATH}/${policyId}?${detailParams.toString()}`

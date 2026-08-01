@@ -12,6 +12,7 @@ import {
   TrainFront,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { listCategories } from '../../api/categories'
 import { getDashboardSummary } from '../../api/policies'
@@ -54,7 +55,16 @@ export default function Dashboard() {
   const [categories, setCategories] = useState<CategoryResponse[]>([])
   const [dashboardSummary, setDashboardSummary] = useState<DashboardSummaryResponse | null>(null)
   const [dashboardLoading, setDashboardLoading] = useState(false)
+  const [policySearch, setPolicySearch] = useState('')
   const displayName = currentUser?.nickname || currentUser?.email.split('@')[0] || '회원'
+
+  function submitPolicySearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const search = policySearch.trim()
+    if (!search) return
+
+    navigate(`/policies?${new URLSearchParams({ search }).toString()}`)
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -127,13 +137,32 @@ export default function Dashboard() {
           <p className="mt-3 text-sm leading-7 text-gray-500">
             궁금한 정책이나 키워드를 편하게 검색해보세요.
           </p>{' '}
-          <label className="mt-6 flex max-w-2xl items-center gap-3 rounded-lg border border-gray-300 bg-white px-4 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100">
-            <Search size={19} className="text-gray-400" />{' '}
+          <form
+            onSubmit={submitPolicySearch}
+            role="search"
+            className="mt-6 flex max-w-2xl items-center gap-3 rounded-lg border border-gray-300 bg-white pl-4 pr-2 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100"
+          >
+            <label htmlFor="home-policy-search" className="sr-only">
+              정책명 또는 키워드 검색
+            </label>
             <input
+              id="home-policy-search"
+              type="search"
+              value={policySearch}
+              onChange={(event) => setPolicySearch(event.target.value)}
+              maxLength={100}
               className="h-12 min-w-0 flex-1 border-0 bg-transparent text-sm outline-none"
               placeholder="예: 청년 월세, 취업 지원금"
             />{' '}
-          </label>{' '}
+            <button
+              type="submit"
+              aria-label="정책 검색"
+              disabled={!policySearch.trim()}
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-md text-gray-400 transition hover:bg-blue-50 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Search size={19} aria-hidden="true" />
+            </button>
+          </form>{' '}
         </div>{' '}
         <aside className="rounded-xl border border-gray-200 bg-white p-6">
           {isLoggedIn ? (

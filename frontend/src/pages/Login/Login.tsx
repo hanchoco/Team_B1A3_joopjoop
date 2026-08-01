@@ -1,15 +1,25 @@
 import { ArrowRight, LockKeyhole, UserRound } from 'lucide-react'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { extractErrorMessage } from '../../api/client'
 import BrandLogo from '../../components/common/BrandLogo'
 import { useApp } from '../../store/useApp'
 
 const EXAMPLE_LOGIN_ID = 'nara@example.com'
 
+function resolveLoginReturnPath(state: unknown): string {
+  if (typeof state !== 'object' || state === null || !('returnTo' in state)) return '/'
+
+  const returnTo = (state as { returnTo?: unknown }).returnTo
+  return typeof returnTo === 'string' && returnTo.startsWith('/') && !returnTo.startsWith('//')
+    ? returnTo
+    : '/'
+}
+
 export default function Login() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { login } = useApp()
   const [loginId, setLoginId] = useState(EXAMPLE_LOGIN_ID)
   const [isExampleLoginId, setIsExampleLoginId] = useState(true)
@@ -23,7 +33,7 @@ export default function Login() {
     setIsSubmitting(true)
     try {
       await login(loginId.trim(), password)
-      navigate('/')
+      navigate(resolveLoginReturnPath(location.state), { replace: true })
     } catch (err) {
       setError(extractErrorMessage(err))
     } finally {
