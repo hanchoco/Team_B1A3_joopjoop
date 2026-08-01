@@ -24,6 +24,9 @@ services:
     restart: unless-stopped
     env_file:
       - ./backend/.env
+    volumes:
+      - ./backend/review_drafts:/app/review_drafts
+      - ./backend/joopjoop.db:/app/joopjoop.db
     depends_on:
       db:
         condition: service_healthy

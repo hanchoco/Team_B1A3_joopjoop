@@ -110,3 +110,47 @@ def test_application_period_falls_back_to_operation_period_when_absent() -> None
 
     assert normalized.application_start_date == "2026-01-01"
     assert normalized.application_end_date == "2026-12-01"
+
+
+# ---------------------------------------------------------------------------
+# bizPrdEtcCn(기타 사업기간 설명) 자유텍스트에서 신청기간 파싱 - 구조화 필드가
+# 전부 비어있는 정책에서 실제로 관찰된 케이스.
+# ---------------------------------------------------------------------------
+
+
+def test_application_period_parses_from_bizPrdEtcCn_dot_notation() -> None:
+    """같은 프로그램의 다른 지역 변형(검단구)은 구조화 필드에 같은 날짜가
+    있어서 대조 확인함 - 서해구는 bizPrdEtcCn 자유텍스트로만 적혀 있었다."""
+
+    record = {
+        "plcyNo": "seohae-test",
+        "plcyNm": "(서해구) 인천시 청년월세 지원사업",
+        "bizPrdEtcCn": "* 신청기간 : 2026. 3.30. 09시~5.29. 16시",
+    }
+
+    normalized = normalize_policy(record)
+
+    assert normalized.application_start_date == "2026-03-30"
+    assert normalized.application_end_date == "2026-05-29"
+
+
+def test_application_period_parses_from_bizPrdEtcCn_korean_notation_and_ignores_unrelated_date() -> (
+    None
+):
+    """영종구는 신청기간 뒤에 무관한 '지급기간: 2028년 12월까지'(일자 없음)가
+    같은 텍스트에 있었다. 이 조각이 정규식 백트래킹으로 2028-01-02로
+    잘못 파싱되던 버그의 재현 테스트."""
+
+    record = {
+        "plcyNo": "yeongjong-test",
+        "plcyNm": "(영종구) 인천시 청년월세 지원사업",
+        "bizPrdEtcCn": (
+            "신청기간: 2026년 3월 30일(월) 09:00 ~ 5월 29일(금) 16:00\r\n"
+            "지급기간: 2028년 12월까지"
+        ),
+    }
+
+    normalized = normalize_policy(record)
+
+    assert normalized.application_start_date == "2026-03-30"
+    assert normalized.application_end_date == "2026-05-29"
