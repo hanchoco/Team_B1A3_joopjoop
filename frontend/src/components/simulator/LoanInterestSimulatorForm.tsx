@@ -14,7 +14,7 @@ const REPAYMENT_TYPE_LABEL: Record<string, string> = {
 export default function LoanInterestSimulatorForm({ rule, values, onChange }: SimulatorFormProps) {
   const r = rule as unknown as LoanInterestRuleJson
   const update = (event: ChangeEvent<HTMLInputElement>) =>
-    onChange(event.target.name, Number(event.target.value))
+    onChange(event.target.name, event.target.value === '' ? undefined : Number(event.target.value))
   const needsGeneralRate = r.interest_reduction_rate_percent === undefined
 
   return (
@@ -40,7 +40,8 @@ export default function LoanInterestSimulatorForm({ rule, values, onChange }: Si
             name="loan_amount"
             type="number"
             min={0}
-            value={values.loan_amount ?? 0}
+            required
+            value={values.loan_amount ?? ''}
             onChange={update}
             className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 font-normal"
           />

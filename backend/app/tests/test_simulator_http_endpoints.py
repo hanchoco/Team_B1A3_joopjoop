@@ -258,6 +258,32 @@ def test_simulate_returns_422_for_missing_required_user_input(client: TestClient
     assert response.json()["code"] == "SIMULATION_ERROR"
 
 
+def test_simulate_returns_422_for_non_numeric_user_input(client: TestClient) -> None:
+    headers = _authenticated_headers(client, email="simulate-422-non-numeric@example.com")
+    policy_id, benefit_id = _seed_policy_with_benefit(
+        external_id="sim-http-non-numeric",
+        benefit_type="LOAN",
+        amount_type="FORMULA",
+        calculation_rule_json={
+            "policy_interest_rate_percent": "1.8",
+            "interest_reduction_rate_percent": "2.2",
+            "max_loan_amount": "200000000",
+            "max_support_months": 24,
+            "repayment_type": "BULLET",
+        },
+        category_code="FINANCE",
+    )
+
+    response = client.post(
+        f"/api/v1/policies/{policy_id}/benefits/{benefit_id}/simulate",
+        json={"user_input": {"loan_amount": "이억원"}},
+        headers=headers,
+    )
+
+    assert response.status_code == 422
+    assert response.json()["code"] == "SIMULATION_ERROR"
+
+
 def test_simulate_rejects_unknown_top_level_fields(client: TestClient) -> None:
     headers = _authenticated_headers(client, email="simulate-strict-payload@example.com")
     policy_id, benefit_id = _seed_policy_with_benefit(

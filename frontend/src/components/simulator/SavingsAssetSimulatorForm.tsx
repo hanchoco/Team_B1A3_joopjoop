@@ -7,7 +7,7 @@ import KnownRuleInfo from './KnownRuleInfo'
 export default function SavingsAssetSimulatorForm({ rule, values, onChange }: SimulatorFormProps) {
   const r = rule as unknown as SavingsAssetRuleJson
   const update = (event: ChangeEvent<HTMLInputElement>) =>
-    onChange(event.target.name, Number(event.target.value))
+    onChange(event.target.name, event.target.value === '' ? undefined : Number(event.target.value))
 
   return (
     <div>
@@ -29,7 +29,8 @@ export default function SavingsAssetSimulatorForm({ rule, values, onChange }: Si
             name="monthly_deposit_amount"
             type="number"
             min={0}
-            value={values.monthly_deposit_amount ?? 0}
+            required
+            value={values.monthly_deposit_amount ?? ''}
             onChange={update}
             className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 font-normal"
           />

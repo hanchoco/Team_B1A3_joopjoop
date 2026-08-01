@@ -11,7 +11,7 @@ export default function EmploymentEducationSimulatorForm({
 }: SimulatorFormProps) {
   const r = rule as unknown as EmploymentEducationRuleJson
   const update = (event: ChangeEvent<HTMLInputElement>) =>
-    onChange(event.target.name, Number(event.target.value))
+    onChange(event.target.name, event.target.value === '' ? undefined : Number(event.target.value))
 
   return (
     <div>

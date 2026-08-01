@@ -7,7 +7,7 @@ import KnownRuleInfo from './KnownRuleInfo'
 export default function HousingRentSimulatorForm({ rule, values, onChange }: SimulatorFormProps) {
   const r = rule as unknown as HousingRentRuleJson
   const update = (event: ChangeEvent<HTMLInputElement>) =>
-    onChange(event.target.name, Number(event.target.value))
+    onChange(event.target.name, event.target.value === '' ? undefined : Number(event.target.value))
 
   return (
     <div>
@@ -30,7 +30,8 @@ export default function HousingRentSimulatorForm({ rule, values, onChange }: Sim
             name="monthly_rent_amount"
             type="number"
             min={0}
-            value={values.monthly_rent_amount ?? 0}
+            required
+            value={values.monthly_rent_amount ?? ''}
             onChange={update}
             className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 font-normal"
           />
@@ -45,6 +46,9 @@ export default function HousingRentSimulatorForm({ rule, values, onChange }: Sim
             onChange={update}
             className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 font-normal"
           />
+          <p className="mt-1 text-xs font-normal text-gray-400">
+            관리비는 지원 계산에 포함되지 않으며 참고용으로만 기록돼요.
+          </p>
         </label>
         <label className="text-sm font-semibold">
           보증금(선택)

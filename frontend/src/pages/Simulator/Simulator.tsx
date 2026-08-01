@@ -1,6 +1,6 @@
 import { ArrowLeft, ArrowRight, TrendingDown } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import type { ComponentType } from 'react'
+import type { ComponentType, FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { extractErrorMessage } from '../../api/client'
 import { getPolicy } from '../../api/policies'
@@ -43,7 +43,7 @@ export default function Simulator() {
   const [error, setError] = useState('')
   const [selectedBenefitId, setSelectedBenefitId] = useState<number | null>(null)
   const [period, setPeriod] = useState<'월 기준' | '연 기준'>('월 기준')
-  const [formValues, setFormValues] = useState<Record<string, SimulatorInputValue>>({})
+  const [formValues, setFormValues] = useState<Record<string, SimulatorInputValue | undefined>>({})
   const [result, setResult] = useState<SimulatorResult | null>(null)
   const [calculating, setCalculating] = useState(false)
   const [calcError, setCalcError] = useState('')
@@ -87,7 +87,7 @@ export default function Simulator() {
     setCalcError('')
   }
 
-  function updateFormValue(name: string, value: SimulatorInputValue) {
+  function updateFormValue(name: string, value: SimulatorInputValue | undefined) {
     setFormValues((current) => ({ ...current, [name]: value }))
   }
 
@@ -145,6 +145,11 @@ export default function Simulator() {
     }
   }
 
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    void calculate()
+  }
+
   const CategoryForm = config.Form
   const yearly = period === '연 기준'
   const beforeAmount = result ? (yearly ? result.annual_before_amount : result.monthly_before_amount) : 0
@@ -186,19 +191,18 @@ export default function Simulator() {
         </label>
       )}
 
-      <div className="mt-6 border-y border-gray-200 py-6">
+      <form className="mt-6 border-y border-gray-200 py-6" onSubmit={handleSubmit}>
         <h2 className="mb-4 text-lg font-bold">{config.label} 시뮬레이션 조건</h2>
         <CategoryForm rule={rule} values={formValues} onChange={updateFormValue} />
         {calcError && <p className="mt-4 text-sm font-semibold text-rose-600">{calcError}</p>}
         <button
-          type="button"
-          onClick={() => void calculate()}
+          type="submit"
           disabled={calculating}
           className="mt-5 inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 py-3 font-bold text-white disabled:opacity-60"
         >
           {calculating ? '계산 중...' : '계산하기'} <ArrowRight size={16} />
         </button>
-      </div>
+      </form>
 
       {result && (
         <>

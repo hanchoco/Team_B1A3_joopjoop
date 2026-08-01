@@ -10,8 +10,8 @@ the calculation_rule_json contract per CalcType.
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-from decimal import ROUND_HALF_UP, Decimal
-from typing import Any, Literal
+from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
+from typing import Any, Literal, overload
 
 from app.models.policy import CalcType, Policy, PolicyBenefit
 from app.schemas.simulator import SimulatorResult
@@ -73,7 +73,12 @@ def _build_result(
 def _decimal(value: Decimal | int | str) -> Decimal:
     """Convert through text so a future caller cannot leak binary-float noise."""
 
-    return value if isinstance(value, Decimal) else Decimal(str(value))
+    if isinstance(value, Decimal):
+        return value
+    try:
+        return Decimal(str(value))
+    except (InvalidOperation, ValueError, TypeError) as exc:
+        raise ValueError(f"'{value}'을(를) 숫자로 변환할 수 없습니다.") from exc
 
 
 def _money(value: Decimal | int | str) -> Decimal:
@@ -527,6 +532,23 @@ def _field(
     return value
 
 
+@overload
+def _decimal_field(
+    mapping: Mapping[str, Any], key: str, *, source: str, required: Literal[True] = True
+) -> Decimal: ...
+
+
+@overload
+def _decimal_field(
+    mapping: Mapping[str, Any],
+    key: str,
+    *,
+    source: str,
+    required: Literal[False],
+    default: Decimal | None = None,
+) -> Decimal | None: ...
+
+
 def _decimal_field(
     mapping: Mapping[str, Any],
     key: str,
@@ -539,6 +561,23 @@ def _decimal_field(
     return _decimal(value) if value is not None else None
 
 
+@overload
+def _int_field(
+    mapping: Mapping[str, Any], key: str, *, source: str, required: Literal[True] = True
+) -> int: ...
+
+
+@overload
+def _int_field(
+    mapping: Mapping[str, Any],
+    key: str,
+    *,
+    source: str,
+    required: Literal[False],
+    default: int | None = None,
+) -> int | None: ...
+
+
 def _int_field(
     mapping: Mapping[str, Any],
     key: str,
@@ -549,6 +588,23 @@ def _int_field(
 ) -> int | None:
     value = _field(mapping, key, source=source, required=required, default=default)
     return int(value) if value is not None else None
+
+
+@overload
+def _str_field(
+    mapping: Mapping[str, Any], key: str, *, source: str, required: Literal[True] = True
+) -> str: ...
+
+
+@overload
+def _str_field(
+    mapping: Mapping[str, Any],
+    key: str,
+    *,
+    source: str,
+    required: Literal[False],
+    default: str | None = None,
+) -> str | None: ...
 
 
 def _str_field(

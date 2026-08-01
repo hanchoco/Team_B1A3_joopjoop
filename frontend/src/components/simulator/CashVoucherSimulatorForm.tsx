@@ -15,7 +15,7 @@ const PAYMENT_CYCLE_LABEL: Record<string, string> = {
 export default function CashVoucherSimulatorForm({ rule, values, onChange }: SimulatorFormProps) {
   const r = rule as unknown as CashVoucherRuleJson
   const update = (event: ChangeEvent<HTMLInputElement>) =>
-    onChange(event.target.name, Number(event.target.value))
+    onChange(event.target.name, event.target.value === '' ? undefined : Number(event.target.value))
   const cycleLabel = PAYMENT_CYCLE_LABEL[r.payment_cycle] ?? r.payment_cycle
   const isMonthly = r.payment_cycle === 'MONTHLY'
 
@@ -65,7 +65,8 @@ export default function CashVoucherSimulatorForm({ rule, values, onChange }: Sim
             name="base_amount"
             type="number"
             min={0}
-            value={values.base_amount ?? 0}
+            required
+            value={values.base_amount ?? ''}
             onChange={update}
             className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 font-normal"
           />
