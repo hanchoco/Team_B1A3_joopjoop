@@ -6,8 +6,8 @@ import {
   HOUSEHOLD_TYPE_OPTIONS,
   HOUSING_TYPE_OPTIONS,
   INCOME_BAND_OPTIONS,
-  REGION_OPTIONS,
 } from '../../constants/profile'
+import { SIDO_OPTIONS, SIGUNGU_BY_SIDO_CODE } from '../../constants/regions'
 import { extractErrorMessage } from '../../api/client'
 import { useApp } from '../../store/useApp'
 import type { UserProfileUpdate } from '../../types/api'
@@ -27,7 +27,6 @@ interface Question {
   options?: { value: string; label: string }[]
 }
 
-const NO_REGION_CODE = '__none__'
 const MIN_BIRTH_YEAR = 1950
 const CURRENT_YEAR = new Date().getFullYear()
 const DEFAULT_YEAR_SCROLL_POSITION = 2007
@@ -46,8 +45,8 @@ const questions: Question[] = [
     key: 'region_code',
     title: '현재 거주지역은 어디인가요?',
     hint: '지역별로 신청할 수 있는 정책이 달라요.',
-    options: REGION_OPTIONS.map((option) => ({
-      value: option.code ?? NO_REGION_CODE,
+    options: SIDO_OPTIONS.map((option) => ({
+      value: option.code,
       label: option.name,
     })),
   },
@@ -95,7 +94,7 @@ export default function Onboarding() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [yearListOpen, setYearListOpen] = useState(false)
-  const [customRegion, setCustomRegion] = useState('')
+  const [selectedSigungu, setSelectedSigungu] = useState('')
   const [incomeGuideOpen, setIncomeGuideOpen] = useState(false)
   const yearListRef = useRef<HTMLDivElement>(null)
   const defaultYearRef = useRef<HTMLButtonElement>(null)
@@ -103,10 +102,7 @@ export default function Onboarding() {
   const selectedValue = answers[question.key]
   const isLast = step === questions.length - 1
   const hasValidAnswer =
-    Boolean(selectedValue) &&
-    (question.key !== 'region_code' ||
-      selectedValue !== NO_REGION_CODE ||
-      Boolean(customRegion.trim()))
+    Boolean(selectedValue) && (question.key !== 'region_code' || Boolean(selectedSigungu))
 
   useEffect(() => {
     if (yearListOpen && yearListRef.current && defaultYearRef.current) {
@@ -115,17 +111,27 @@ export default function Onboarding() {
   }, [yearListOpen])
 
   function saveAnswer(value: string) {
+    if (question.key === 'region_code' && value !== answers.region_code) {
+      setSelectedSigungu('')
+    }
     setAnswers((current) => ({ ...current, [question.key]: value }))
   }
 
   async function finish() {
+    const selectedSido = SIDO_OPTIONS.find((option) => option.code === answers.region_code)
+    if (!selectedSido || !selectedSigungu) {
+      setError('거주지역의 시/도와 시/군/구를 모두 선택해주세요.')
+      return
+    }
+
     setSubmitting(true)
     setError('')
     try {
       const payload: UserProfileUpdate = {
         birth_year: Number(answers.birth_year),
-        region_code: answers.region_code === NO_REGION_CODE ? null : answers.region_code,
-        region_sido: answers.region_code === NO_REGION_CODE ? customRegion.trim() : null,
+        region_code: answers.region_code,
+        region_sido: selectedSido.name,
+        region_sigungu: selectedSigungu,
         income_band_code: answers.income_band_code as UserProfileUpdate['income_band_code'],
         employment_status_code:
           answers.employment_status_code as UserProfileUpdate['employment_status_code'],
@@ -286,18 +292,22 @@ export default function Onboarding() {
                 )
               })}
             </div>
-            {question.key === 'region_code' && selectedValue === NO_REGION_CODE && (
+            {question.key === 'region_code' && selectedValue && (
               <label className="mt-4 block text-sm font-bold">
-                거주지역 직접 입력
-                <input
+                시/군/구
+                <select
                   autoFocus
-                  type="text"
-                  maxLength={30}
-                  value={customRegion}
-                  onChange={(event) => setCustomRegion(event.target.value)}
-                  placeholder="예: 울산"
-                  className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3.5 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                />
+                  value={selectedSigungu}
+                  onChange={(event) => setSelectedSigungu(event.target.value)}
+                  className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-4 py-3.5 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                >
+                  <option value="">시/군/구 선택</option>
+                  {(SIGUNGU_BY_SIDO_CODE[selectedValue] ?? []).map((sigungu) => (
+                    <option key={sigungu} value={sigungu}>
+                      {sigungu}
+                    </option>
+                  ))}
+                </select>
               </label>
             )}
           </div>

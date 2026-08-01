@@ -9,6 +9,7 @@ import {
 } from '../../api/categories'
 import { extractErrorMessage } from '../../api/client'
 import type { CategoryAnswerUpsert, CategoryQuestionResponse } from '../../types/api'
+import { filterVisibleCategoryQuestions } from '../../utils/categoryQuestions'
 
 interface SelectOption {
   label: string
@@ -39,44 +40,10 @@ function parseOptions(optionsJson: unknown): SelectOption[] {
   })
 }
 
-function hasSavedAnswerValue(value: unknown): boolean {
-  if (value === null || value === undefined) return false
-  if (typeof value === 'string') return value.trim().length > 0
-  if (Array.isArray(value)) return value.length > 0
-  return true
-}
-
-function removeDuplicateCompanySizeQuestions(
-  questions: CategoryQuestionResponse[],
-): CategoryQuestionResponse[] {
-  const companySizeQuestions = questions.filter(
-    (item) =>
-      item.question_key.includes('company_size') ||
-      (item.label.includes('회사') && item.label.includes('규모')),
-  )
-  if (companySizeQuestions.length < 2) return questions
-
-  const detailedQuestion = companySizeQuestions.at(-1)
-  return questions.filter(
-    (item) => !companySizeQuestions.includes(item) || item.id === detailedQuestion?.id,
-  )
-}
-
-function isRepeatedEmploymentStatusQuestion(question: CategoryQuestionResponse): boolean {
-  if (question.question_key === 'employment.contract_type_code') return false
-
-  return (
-    question.question_key.includes('employment_status') ||
-    question.label.includes('고용 형태') ||
-    question.label.includes('취업 상태') ||
-    question.label.includes('취업상태') ||
-    question.label.includes('경제활동 상태')
-  )
-}
-
-function policiesLinkFor(categoryName: string, answersUpdated = false): string {
-  const params = new URLSearchParams(categoryName ? { category: categoryName } : {})
+function policiesLinkFor(categoryCode: string, answersUpdated = false): string {
+  const params = new URLSearchParams(categoryCode ? { category_code: categoryCode } : {})
   if (answersUpdated) params.set('answers', 'updated')
+  params.set('nav', 'category')
   return `/policies?${params.toString()}`
 }
 
@@ -204,7 +171,6 @@ const AMOUNT_RANGES: Record<string, AmountRange[]> = {
 }
 
 const RESIDENCE_MONTH_OPTIONS = Array.from({ length: 240 }, (_, index) => index + 1)
-const HIDDEN_QUESTION_KEYS = new Set(['finance.total_debt_amount'])
 const COMPANY_SIZE_LABELS: Record<string, string> = {
   MICRO: '1~4인 (5인 미만)',
   SMALL: '5~49인',
@@ -293,25 +259,18 @@ export default function CategoryQuestions() {
         const [categories, categoryQuestions, savedAnswers] = result
         const category = categories.find((item) => item.id === categoryId)
         const categoryCode = category?.code ?? ''
-        const savedQuestionIds = new Set(
-          savedAnswers
-            .filter((answer) => hasSavedAnswerValue(answer.answer_json.value))
-            .map((answer) => answer.question_id),
-        )
+        const savedQuestionIds = new Set(savedAnswers.map((answer) => answer.question_id))
         const unansweredQuestions = categoryQuestions.filter(
           (question) => !savedQuestionIds.has(question.id),
         )
-        const visibleUnansweredQuestions = removeDuplicateCompanySizeQuestions(
-          unansweredQuestions.filter(
-            (question) =>
-              !HIDDEN_QUESTION_KEYS.has(question.question_key) &&
-              !(categoryCode === 'EMPLOYMENT' && isRepeatedEmploymentStatusQuestion(question)),
-          ),
+        const visibleUnansweredQuestions = filterVisibleCategoryQuestions(
+          unansweredQuestions,
+          categoryCode,
         )
         setCategoryName(category?.name ?? '')
         setCategoryCode(categoryCode)
         if (visibleUnansweredQuestions.length === 0) {
-          navigate(policiesLinkFor(category?.name ?? '', savedAnswers.length > 0), {
+          navigate(policiesLinkFor(categoryCode, savedAnswers.length > 0), {
             replace: true,
           })
           return
@@ -401,7 +360,7 @@ export default function CategoryQuestions() {
       if (payload.length > 0) {
         await saveCategoryAnswers(categoryId, payload)
       }
-      navigate(policiesLinkFor(categoryName, true))
+      navigate(policiesLinkFor(categoryCode, true))
     } catch (err) {
       setError(extractErrorMessage(err))
     } finally {
@@ -459,13 +418,7 @@ export default function CategoryQuestions() {
 
   if (questions.length === 0) return null
 
-  const visibleQuestions = removeDuplicateCompanySizeQuestions(
-    questions.filter(
-      (item) =>
-        !HIDDEN_QUESTION_KEYS.has(item.question_key) &&
-        !(categoryCode === 'EMPLOYMENT' && isRepeatedEmploymentStatusQuestion(item)),
-    ),
-  )
+  const visibleQuestions = filterVisibleCategoryQuestions(questions, categoryCode)
   const question = visibleQuestions[step]
   const remaining = visibleQuestions.length - step - 1
   const isLast = step === visibleQuestions.length - 1

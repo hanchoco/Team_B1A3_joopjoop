@@ -37,7 +37,10 @@ export default function Signup() {
   const [confirmation, setConfirmation] = useState('')
   const [termsAgreed, setTermsAgreed] = useState(false)
   const [privacyAgreed, setPrivacyAgreed] = useState(false)
-  const [openConsent, setOpenConsent] = useState<ConsentDetail | null>(null)
+  const [openConsent, setOpenConsent] = useState<Record<ConsentDetail, boolean>>({
+    terms: false,
+    privacy: false,
+  })
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -143,7 +146,7 @@ export default function Signup() {
             ] as const
           ).map(([id, checked, setChecked]) => {
             const detail = consentDetails[id]
-            const isOpen = openConsent === id
+            const isOpen = openConsent[id]
             return (
               <div key={id}>
                 <div className="flex items-center gap-3 p-4 text-sm">
@@ -164,7 +167,12 @@ export default function Signup() {
                   </label>
                   <button
                     type="button"
-                    onClick={() => setOpenConsent(isOpen ? null : id)}
+                    onClick={() =>
+                      setOpenConsent((current) => ({
+                        ...current,
+                        [id]: !current[id],
+                      }))
+                    }
                     className="inline-flex shrink-0 items-center gap-1 text-xs font-bold text-gray-500 hover:text-blue-600"
                     aria-expanded={isOpen}
                   >

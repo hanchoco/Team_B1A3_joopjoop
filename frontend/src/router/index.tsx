@@ -1,5 +1,14 @@
 import { CircleUserRound, LogOut, Menu, Settings as SettingsIcon } from 'lucide-react'
-import { BrowserRouter, NavLink, Navigate, Route, Routes, useNavigate } from 'react-router-dom'
+import {
+  BrowserRouter,
+  Link,
+  NavLink,
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+} from 'react-router-dom'
 import BrandLogo from '../components/common/BrandLogo'
 import Chatbot from '../pages/Chatbot/Chatbot'
 import Checklist from '../pages/Checklist/Checklist'
@@ -24,13 +33,16 @@ import RequireAuth from './RequireAuth'
 
 function AppLayout() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { isLoggedIn, logout } = useApp()
-  const menu = [
-    ['홈', '/'],
-    ['카테고리', '/categories'],
-    ['맞춤 정책', '/policies?filter=ALL'],
-    ['마이페이지', '/mypage'],
-  ]
+  const nav = new URLSearchParams(location.search).get('nav')
+  const isCategoryActive =
+    location.pathname.startsWith('/categories') ||
+    (location.pathname === '/policies' && nav === 'category')
+  const isPoliciesActive = location.pathname === '/policies' && nav !== 'category'
+  const navigationClassName = (isActive: boolean) =>
+    `text-sm font-semibold ${isActive ? 'text-blue-600' : 'text-gray-500 hover:text-gray-950'}`
+
   return (
     <div className="min-h-screen bg-slate-50 text-gray-950">
       <header className="sticky top-0 z-30 border-b border-gray-200 bg-white/95 backdrop-blur">
@@ -39,18 +51,15 @@ function AppLayout() {
             <BrandLogo className="h-8 w-[116px] object-contain" />
           </button>
           <nav className="ml-auto hidden items-center gap-7 md:flex">
-            {menu.slice(0, 3).map(([label, path]) => (
-              <NavLink
-                key={path}
-                to={path}
-                end={path === '/'}
-                className={({ isActive }) =>
-                  `text-sm font-semibold ${isActive ? 'text-blue-600' : 'text-gray-500 hover:text-gray-950'}`
-                }
-              >
-                {label}
-              </NavLink>
-            ))}
+            <NavLink to="/" end className={({ isActive }) => navigationClassName(isActive)}>
+              홈
+            </NavLink>
+            <Link to="/categories" className={navigationClassName(isCategoryActive)}>
+              카테고리
+            </Link>
+            <Link to="/policies?filter=ALL" className={navigationClassName(isPoliciesActive)}>
+              맞춤 정책
+            </Link>
           </nav>
           <div className="ml-6 flex items-center gap-4 text-gray-500">
             {isLoggedIn ? (

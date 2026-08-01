@@ -1,3 +1,0 @@
-docker compose exec -T db mysql -u root -p"$MYSQL_ROOT_PASSWORD" joopjoop < joopjoop_policies_dump.sql
-
-터미널에 입력
