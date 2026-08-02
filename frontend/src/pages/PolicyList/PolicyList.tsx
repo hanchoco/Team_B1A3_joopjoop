@@ -24,12 +24,13 @@ import { getBenefitDisplay } from '../../utils/benefitDisplay'
 import { buildPolicyCardPreview } from '../../utils/policyCardPreview'
 import {
   buildPolicyDetailPath,
+  buildPolicyListPath,
   clearPolicyListScrollPosition,
   POSSIBILITY_FILTERS,
   readPolicyListScrollPosition,
   rememberPolicyListScrollPosition,
   resolvePolicyListFilter,
-  type PolicyListNavigationState,
+  type PolicyDetailNavigationState,
   type PossibilityFilter,
 } from '../../utils/policyNavigation'
 
@@ -231,7 +232,10 @@ export default function PolicyList() {
   function openPolicyDetail(policyId: number) {
     rememberPolicyListScrollPosition(location.key, window.scrollY)
     navigate(buildPolicyDetailPath(policyId, searchParams), {
-      state: { fromPolicyList: true } satisfies PolicyListNavigationState,
+      state: {
+        from: 'policy-list',
+        returnTo: buildPolicyListPath(searchParams),
+      } satisfies PolicyDetailNavigationState,
     })
   }
 

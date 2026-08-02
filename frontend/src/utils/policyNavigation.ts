@@ -8,9 +8,18 @@ export const POSSIBILITY_FILTERS = [
 
 export type PossibilityFilter = (typeof POSSIBILITY_FILTERS)[number]['value']
 
-export interface PolicyListNavigationState {
-  fromPolicyList: true
-}
+export type MyPolicyViewTab = 'interest' | 'preparing' | 'completed'
+
+export type PolicyDetailNavigationState =
+  | {
+      from: 'policy-list'
+      returnTo: string
+    }
+  | {
+      from: 'my-policies'
+      myPolicyTab: MyPolicyViewTab
+      returnTo: string
+    }
 
 const POLICY_LIST_SCROLL_STORAGE_PREFIX = 'joopjoop:policy-list-scroll:'
 
@@ -25,10 +34,14 @@ export function resolvePolicyListFilter(searchParams: URLSearchParams): Possibil
   return searchParams.get('search')?.trim() ? 'ALL' : 'ELIGIBLE'
 }
 
-export function buildPolicyDetailPath(policyId: number, searchParams: URLSearchParams): string {
+export function buildPolicyListPath(searchParams: URLSearchParams): string {
   const listParams = new URLSearchParams(searchParams)
   listParams.set('filter', resolvePolicyListFilter(listParams))
-  const listPath = `${POLICY_LIST_PATH}?${listParams.toString()}`
+  return `${POLICY_LIST_PATH}?${listParams.toString()}`
+}
+
+export function buildPolicyDetailPath(policyId: number, searchParams: URLSearchParams): string {
+  const listPath = buildPolicyListPath(searchParams)
   const detailParams = new URLSearchParams({ returnTo: listPath })
   return `${POLICY_LIST_PATH}/${policyId}?${detailParams.toString()}`
 }
@@ -47,12 +60,27 @@ export function resolvePolicyListReturnPath(value: string | null, origin: string
   }
 }
 
-export function isPolicyListNavigationState(value: unknown): value is PolicyListNavigationState {
+export function isPolicyDetailNavigationState(
+  value: unknown,
+): value is PolicyDetailNavigationState {
+  if (
+    typeof value !== 'object' ||
+    value === null ||
+    !('from' in value) ||
+    !('returnTo' in value) ||
+    typeof value.returnTo !== 'string' ||
+    !value.returnTo.startsWith('/') ||
+    value.returnTo.startsWith('//')
+  ) {
+    return false
+  }
+
+  if (value.from === 'policy-list') return true
+  if (value.from !== 'my-policies' || !('myPolicyTab' in value)) return false
   return (
-    typeof value === 'object' &&
-    value !== null &&
-    'fromPolicyList' in value &&
-    value.fromPolicyList === true
+    value.myPolicyTab === 'interest' ||
+    value.myPolicyTab === 'preparing' ||
+    value.myPolicyTab === 'completed'
   )
 }
 

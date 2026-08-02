@@ -13,7 +13,7 @@ import {
 } from '../../utils/policyContent'
 import { getBenefitDisplay } from '../../utils/benefitDisplay'
 import {
-  isPolicyListNavigationState,
+  isPolicyDetailNavigationState,
   resolvePolicyListReturnPath,
 } from '../../utils/policyNavigation'
 
@@ -42,6 +42,8 @@ export default function PolicyDetail() {
     searchParams.get('returnTo'),
     window.location.origin,
   )
+  const navigationState = isPolicyDetailNavigationState(location.state) ? location.state : null
+  const returnButtonLabel = navigationState?.from === 'my-policies' ? '내 정책 관리' : '정책 목록'
   const [tab, setTab] = useState<PolicyTab>('지원내용')
   const [policy, setPolicy] = useState<PolicyDetailResponse | null>(null)
   const [match, setMatch] = useState<PolicyMatchDetailResponse | null>(null)
@@ -94,7 +96,7 @@ export default function PolicyDetail() {
   }
 
   function returnToPolicyList() {
-    if (isPolicyListNavigationState(location.state)) {
+    if (navigationState) {
       navigate(-1)
       return
     }
@@ -111,7 +113,7 @@ export default function PolicyDetail() {
           onClick={returnToPolicyList}
           className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500"
         >
-          <ArrowLeft size={16} /> 정책 목록
+          <ArrowLeft size={16} /> {returnButtonLabel}
         </button>
         <p className="mt-6 rounded-lg bg-rose-50 p-4 text-sm font-semibold text-rose-600">
           {error || '정책을 찾을 수 없습니다.'}
@@ -144,7 +146,7 @@ export default function PolicyDetail() {
         onClick={returnToPolicyList}
         className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500"
       >
-        <ArrowLeft size={16} /> 정책 목록
+        <ArrowLeft size={16} /> {returnButtonLabel}
       </button>
       <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_300px]">
         <div className="rounded-xl border border-gray-200 bg-white p-6 sm:p-8">

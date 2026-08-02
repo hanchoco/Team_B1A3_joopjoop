@@ -15,11 +15,12 @@ import {
   Users,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { deletePolicyProgress, listMyPolicies } from '../../api/checklist'
 import { extractErrorMessage } from '../../api/client'
 import { removeBookmark } from '../../api/policies'
 import type { MyPoliciesTab, UserPolicyItemResponse } from '../../types/api'
+import type { PolicyDetailNavigationState } from '../../utils/policyNavigation'
 
 type PolicyTab = 'interest' | 'preparing' | 'completed'
 
@@ -54,6 +55,7 @@ function daysUntil(dateString: string | null): number | null {
 
 export default function MyPolicies() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
   const requestedTab = searchParams.get('tab')
   const tab: PolicyTab =
@@ -107,7 +109,8 @@ export default function MyPolicies() {
   }
 
   async function removeProgress(policy: UserPolicyItemResponse, state: PolicyTab) {
-    const stateLabel = state === 'completed' ? '신청 완료 기록과 체크리스트' : '체크리스트 진행 상황'
+    const stateLabel =
+      state === 'completed' ? '신청 완료 기록과 체크리스트' : '체크리스트 진행 상황'
     if (!window.confirm(`“${policy.title}”의 ${stateLabel}을 초기화할까요?`)) return
 
     try {
@@ -116,6 +119,16 @@ export default function MyPolicies() {
     } catch (err) {
       setError(extractErrorMessage(err))
     }
+  }
+
+  function openPolicyDetail(policyId: number) {
+    navigate(`/policies/${policyId}`, {
+      state: {
+        from: 'my-policies',
+        myPolicyTab: tab,
+        returnTo: `${location.pathname}${location.search}`,
+      } satisfies PolicyDetailNavigationState,
+    })
   }
 
   return (
@@ -234,6 +247,13 @@ export default function MyPolicies() {
                       <Trash2 size={18} />
                     </button>
                     <button
+                      type="button"
+                      onClick={() => openPolicyDetail(policy.policy_id)}
+                      className="inline-flex items-center gap-2 text-sm font-bold text-blue-600"
+                    >
+                      자세히 보기 <ArrowRight size={16} />
+                    </button>
+                    <button
                       onClick={() => navigate(`/policies/${policy.policy_id}/prepare`)}
                       className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-bold text-white"
                     >
@@ -264,7 +284,7 @@ export default function MyPolicies() {
                       </button>
                     )}
                     <button
-                      onClick={() => navigate(`/policies/${policy.policy_id}`)}
+                      onClick={() => openPolicyDetail(policy.policy_id)}
                       className="inline-flex items-center gap-2 text-sm font-bold text-blue-600"
                     >
                       자세히 보기 <ArrowRight size={16} />
