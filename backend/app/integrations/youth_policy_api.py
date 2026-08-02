@@ -529,7 +529,7 @@ class YouthPolicyClient:
 
     def _client(self) -> httpx.AsyncClient:
         if self._http_client is None:
-            self._http_client = httpx.AsyncClient(timeout=self._timeout_seconds)
+            self._http_client = httpx.AsyncClient(timeout=self._timeout_seconds,follow_redirects=True)
         return self._http_client
 
     def _request_key(self) -> str:
