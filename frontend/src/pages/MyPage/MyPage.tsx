@@ -6,14 +6,8 @@ import { listMyPolicies } from '../../api/checklist'
 import { getRecommendations } from '../../api/policies'
 import { useApp } from '../../store/useApp'
 import type { PolicySummaryResponse, UserPolicyItemResponse } from '../../types/api'
+import { getBenefitDisplay } from '../../utils/benefitDisplay'
 import { calculateProfileAccuracy, type CategoryAccuracyData } from '../../utils/profileAccuracy'
-
-function formatBenefit(amount: number | string | null): string | null {
-  if (amount === null) return null
-  const numeric = Number(amount)
-  if (!Number.isFinite(numeric) || numeric <= 0) return null
-  return `예상 혜택 ${numeric.toLocaleString()}원`
-}
 
 export default function MyPage() {
   const navigate = useNavigate()
@@ -204,7 +198,7 @@ export default function MyPage() {
             ) : (
               <div className="mt-5 grid gap-3 sm:grid-cols-3">
                 {recommendations.map((policy) => {
-                  const benefitText = formatBenefit(policy.estimated_benefit_amount)
+                  const benefitDisplay = getBenefitDisplay(policy)
                   return (
                     <button
                       key={policy.id}
@@ -216,8 +210,10 @@ export default function MyPage() {
                       {policy.summary && (
                         <p className="mt-1 text-xs text-gray-500">{policy.summary}</p>
                       )}
-                      {benefitText && (
-                        <p className="mt-2 text-xs font-semibold text-blue-600">{benefitText}</p>
+                      {benefitDisplay.kind !== 'hidden' && (
+                        <p className="mt-2 text-xs font-semibold text-blue-600">
+                          {benefitDisplay.label} {benefitDisplay.displayValue}
+                        </p>
                       )}
                     </button>
                   )

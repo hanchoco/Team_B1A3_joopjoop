@@ -20,6 +20,7 @@ import { bookmarkPolicy, listPolicies, removeBookmark } from '../../api/policies
 import { extractErrorMessage } from '../../api/client'
 import type { CategoryResponse, EligibilityStatus, PolicySummaryResponse } from '../../types/api'
 import { useApp } from '../../store/useApp'
+import { getBenefitDisplay } from '../../utils/benefitDisplay'
 import { buildPolicyCardPreview } from '../../utils/policyCardPreview'
 import {
   buildPolicyDetailPath,
@@ -47,13 +48,6 @@ const categoryIcons: Record<string, typeof House> = {
   세금: ReceiptText,
   참여: Users,
   기타: MoreHorizontal,
-}
-
-function formatBenefit(amount: number | string | null): string | null {
-  if (amount === null) return null
-  const numeric = Number(amount)
-  if (!Number.isFinite(numeric) || numeric <= 0) return null
-  return `예상 혜택 ${numeric.toLocaleString()}원`
 }
 
 function formatDeadline(days: number | null): string {
@@ -487,7 +481,7 @@ export default function PolicyList() {
             const categoryName = category?.name
             const CategoryIcon = (categoryName && categoryIcons[categoryName]) || ReceiptText
             const chance = policy.card_status ? CARD_STATUS_LABEL[policy.card_status] : '확인 필요'
-            const benefitText = formatBenefit(policy.estimated_benefit_amount)
+            const benefitDisplay = getBenefitDisplay(policy)
             const preview = buildPolicyCardPreview(policy)
             return (
               <article
@@ -537,8 +531,10 @@ export default function PolicyList() {
                           </span>
                         )}
                       </p>
-                      {benefitText && (
-                        <p className="text-base font-bold leading-7 text-blue-700">{benefitText}</p>
+                      {benefitDisplay.kind !== 'hidden' && (
+                        <p className="text-base font-bold leading-7 text-blue-700">
+                          {benefitDisplay.label} {benefitDisplay.displayValue}
+                        </p>
                       )}
                     </div>
 

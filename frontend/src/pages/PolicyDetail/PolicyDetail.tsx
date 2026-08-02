@@ -11,6 +11,7 @@ import {
   parsePolicyContentLines,
   parsePolicySummary,
 } from '../../utils/policyContent'
+import { getBenefitDisplay } from '../../utils/benefitDisplay'
 import { resolvePolicyListReturnPath } from '../../utils/policyNavigation'
 
 const TABS = ['지원내용', '신청조건', '신청방법', '필요서류'] as const
@@ -26,13 +27,6 @@ const CONDITION_STATUS_STYLE: Record<string, string> = {
   충족: 'text-emerald-600',
   '추가 확인 필요': 'text-amber-600',
   불충족: 'text-rose-600',
-}
-
-function formatAmount(amount: number | string | null): string {
-  if (amount === null) return '정보 없음'
-  const numeric = Number(amount)
-  if (!Number.isFinite(numeric) || numeric <= 0) return '정보 없음'
-  return `${numeric.toLocaleString()}원`
 }
 
 export default function PolicyDetail() {
@@ -123,6 +117,14 @@ export default function PolicyDetail() {
       : policy.days_until_deadline !== null && policy.days_until_deadline < 0
         ? `마감됨 (${policy.application_end_date})`
         : policy.application_end_date
+  const benefitDisplay = getBenefitDisplay(policy)
+  const policySummaryItems = [
+    ...(benefitDisplay.kind === 'hidden'
+      ? []
+      : [{ label: benefitDisplay.label, value: benefitDisplay.displayValue }]),
+    { label: '가능성', value: chance },
+    { label: '신청 마감', value: deadlineText },
+  ]
 
   return (
     <section>
@@ -166,14 +168,10 @@ export default function PolicyDetail() {
             </div>
           )}
           <div className="mt-7 grid gap-3 sm:grid-cols-3">
-            {[
-              ['예상 혜택', formatAmount(policy.estimated_benefit_amount)],
-              ['가능성', chance],
-              ['신청 마감', deadlineText],
-            ].map(([k, v]) => (
-              <div key={k} className="rounded-lg bg-slate-50 p-4">
-                <p className="text-xs text-gray-500">{k}</p>
-                <p className="mt-2 font-bold">{v}</p>
+            {policySummaryItems.map((item) => (
+              <div key={item.label} className="rounded-lg bg-slate-50 p-4">
+                <p className="text-xs text-gray-500">{item.label}</p>
+                <p className="mt-2 font-bold">{item.value}</p>
               </div>
             ))}
           </div>
@@ -263,7 +261,9 @@ export default function PolicyDetail() {
         <button
           onClick={() => navigate(`/policies/${policy.id}/simulation`)}
           disabled={!policy.is_simulatable}
-          title={policy.is_simulatable ? undefined : '이 정책은 아직 예상 시뮬레이션을 지원하지 않아요.'}
+          title={
+            policy.is_simulatable ? undefined : '이 정책은 아직 예상 시뮬레이션을 지원하지 않아요.'
+          }
           className="inline-flex items-center justify-center gap-2 rounded-lg border border-blue-600 bg-white px-4 py-3.5 font-bold text-blue-600 disabled:cursor-not-allowed disabled:border-gray-300 disabled:text-gray-400"
         >
           <Calculator size={18} /> 예상 시뮬레이션 보기
