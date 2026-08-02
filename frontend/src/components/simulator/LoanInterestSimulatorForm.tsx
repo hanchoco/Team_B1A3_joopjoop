@@ -1,6 +1,7 @@
 import type { LoanInterestRuleJson } from '../../types/api'
 import type { SimulatorFormProps } from '../../types/simulator'
 import { formatWon } from '../../utils/formatWon'
+import { hasValue } from '../../utils/hasValue'
 import CurrencyInput from './CurrencyInput'
 import KnownRuleInfo from './KnownRuleInfo'
 import PercentInput from './PercentInput'
@@ -14,20 +15,20 @@ const REPAYMENT_TYPE_LABEL: Record<string, string> = {
 
 export default function LoanInterestSimulatorForm({ rule, values, onChange }: SimulatorFormProps) {
   const r = rule as unknown as LoanInterestRuleJson
-  const needsGeneralRate = r.interest_reduction_rate_percent === undefined
+  const needsGeneralRate = !hasValue(r.interest_reduction_rate_percent)
 
   return (
     <div>
       <KnownRuleInfo
         items={[
-          ...(r.policy_interest_rate_percent !== undefined
+          ...(hasValue(r.policy_interest_rate_percent)
             ? [{ label: '정책 확정 금리', value: `${r.policy_interest_rate_percent}%` }]
             : []),
-          ...(r.interest_reduction_rate_percent !== undefined
+          ...(hasValue(r.interest_reduction_rate_percent)
             ? [{ label: '일반 대출 대비 감면율', value: `${r.interest_reduction_rate_percent}%` }]
             : []),
           { label: '최대 대출한도', value: formatWon(r.max_loan_amount) },
-          ...(r.max_support_months !== undefined
+          ...(hasValue(r.max_support_months)
             ? [{ label: '최대 지원기간', value: `${r.max_support_months}개월` }]
             : []),
           {

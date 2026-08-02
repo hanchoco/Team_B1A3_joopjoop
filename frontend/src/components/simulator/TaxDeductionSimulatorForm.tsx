@@ -1,6 +1,7 @@
 import type { TaxDeductionRuleJson } from '../../types/api'
 import type { SimulatorFormProps } from '../../types/simulator'
 import { formatWon } from '../../utils/formatWon'
+import { hasValue } from '../../utils/hasValue'
 import CurrencyInput from './CurrencyInput'
 import KnownRuleInfo from './KnownRuleInfo'
 
@@ -16,10 +17,10 @@ export default function TaxDeductionSimulatorForm({ rule, values, onChange }: Si
     <div>
       <KnownRuleInfo
         items={[
-          ...(r.deduction_rate_percent !== undefined
+          ...(hasValue(r.deduction_rate_percent)
             ? [{ label: '공제율', value: `${r.deduction_rate_percent}%` }]
             : []),
-          ...(r.max_deduction_amount !== undefined
+          ...(hasValue(r.max_deduction_amount)
             ? [{ label: '공제한도', value: formatWon(r.max_deduction_amount) }]
             : []),
           {

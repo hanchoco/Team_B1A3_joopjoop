@@ -9,7 +9,7 @@ type BenefitDisplayPolicy = Pick<PolicySummaryResponse, 'estimated_benefit_amoun
 export type BenefitDisplay =
   | {
       kind: 'amount'
-      label: '예상 혜택'
+      label: '최대 예상 혜택'
       displayValue: string
     }
   | {
@@ -151,7 +151,7 @@ function hasExplicitAmountMetadata(
 function amountDisplay(value: number): Extract<BenefitDisplay, { kind: 'amount' }> {
   return {
     kind: 'amount',
-    label: '예상 혜택',
+    label: '최대 예상 혜택',
     displayValue: `${value.toLocaleString('ko-KR', { maximumFractionDigits: 20 })}원`,
   }
 }

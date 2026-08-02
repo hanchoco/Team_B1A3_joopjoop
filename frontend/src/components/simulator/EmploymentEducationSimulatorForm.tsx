@@ -1,6 +1,7 @@
 import type { EmploymentEducationRuleJson } from '../../types/api'
 import type { SimulatorFormProps } from '../../types/simulator'
 import { formatWon } from '../../utils/formatWon'
+import { hasValue } from '../../utils/hasValue'
 import CurrencyInput from './CurrencyInput'
 import KnownRuleInfo from './KnownRuleInfo'
 
@@ -15,16 +16,16 @@ export default function EmploymentEducationSimulatorForm({
     <div>
       <KnownRuleInfo
         items={[
-          ...(r.training_allowance_amount !== undefined
+          ...(hasValue(r.training_allowance_amount)
             ? [{ label: '훈련수당', value: formatWon(r.training_allowance_amount) }]
             : []),
-          ...(r.education_subsidy_amount !== undefined
+          ...(hasValue(r.education_subsidy_amount)
             ? [{ label: '교육비 지원액', value: formatWon(r.education_subsidy_amount) }]
             : []),
-          ...(r.employment_success_bonus_amount !== undefined
+          ...(hasValue(r.employment_success_bonus_amount)
             ? [{ label: '취업성공수당', value: formatWon(r.employment_success_bonus_amount) }]
             : []),
-          ...(r.support_months !== undefined
+          ...(hasValue(r.support_months)
             ? [{ label: '지원 기간', value: `${r.support_months}개월` }]
             : []),
         ]}

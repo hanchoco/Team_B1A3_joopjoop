@@ -1,6 +1,7 @@
 import type { HousingRentRuleJson } from '../../types/api'
 import type { SimulatorFormProps } from '../../types/simulator'
 import { formatWon } from '../../utils/formatWon'
+import { hasValue } from '../../utils/hasValue'
 import CurrencyInput from './CurrencyInput'
 import KnownRuleInfo from './KnownRuleInfo'
 import PositiveIntegerInput from './PositiveIntegerInput'
@@ -13,13 +14,13 @@ export default function HousingRentSimulatorForm({ rule, values, onChange }: Sim
       <KnownRuleInfo
         items={[
           { label: '월 지원 한도', value: formatWon(r.monthly_support_cap_amount) },
-          ...(r.support_months !== undefined
+          ...(hasValue(r.support_months)
             ? [{ label: '지원 기간', value: `${r.support_months}개월` }]
             : []),
-          ...(r.rent_limit_amount !== undefined
+          ...(hasValue(r.rent_limit_amount)
             ? [{ label: '월세 제한', value: formatWon(r.rent_limit_amount) }]
             : []),
-          ...(r.deposit_limit_amount !== undefined
+          ...(hasValue(r.deposit_limit_amount)
             ? [{ label: '보증금 제한', value: formatWon(r.deposit_limit_amount) }]
             : []),
         ]}

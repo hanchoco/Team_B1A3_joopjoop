@@ -1,6 +1,7 @@
 import type { CashVoucherRuleJson } from '../../types/api'
 import type { SimulatorFormProps } from '../../types/simulator'
 import { formatWon } from '../../utils/formatWon'
+import { hasValue } from '../../utils/hasValue'
 import CurrencyInput from './CurrencyInput'
 import KnownRuleInfo from './KnownRuleInfo'
 import PositiveIntegerInput from './PositiveIntegerInput'
@@ -48,7 +49,7 @@ export default function CashVoucherSimulatorForm({ rule, values, onChange }: Sim
     <div>
       <KnownRuleInfo
         items={[
-          ...(r.rate_percent !== undefined
+          ...(hasValue(r.rate_percent)
             ? [{ label: '지원 비율', value: `${r.rate_percent}%` }]
             : []),
           { label: '지원 상한액', value: formatWon(r.cap_amount) },
