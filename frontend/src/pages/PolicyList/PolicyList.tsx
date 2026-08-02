@@ -478,7 +478,7 @@ export default function PolicyList() {
             defaultValue={searchKeyword}
             maxLength={100}
             placeholder="예: 청년 월세, 취업 지원금"
-            className="h-full min-w-0 flex-1 border-0 bg-transparent text-sm outline-none"
+            className="policy-search-input h-full min-w-0 flex-1 border-0 bg-transparent text-sm outline-none"
           />
           {searchKeyword && (
             <button
