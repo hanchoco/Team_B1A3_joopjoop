@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, TrendingDown } from 'lucide-react'
+import { ArrowLeft, ArrowRight, TrendingDown, TrendingUp } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import type { ComponentType, FormEvent } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
@@ -332,7 +332,11 @@ export default function Simulator() {
               </div>
 
               <div className="mt-5 flex flex-col items-center rounded-xl border border-blue-200 bg-white p-6 text-center">
-                <TrendingDown className="text-blue-600" />
+                {isReduceDirection ? (
+                  <TrendingDown className="text-blue-600" />
+                ) : (
+                  <TrendingUp className="text-blue-600" />
+                )}
                 <p className="mt-3 text-sm text-gray-500">
                   {period} {isReduceDirection ? '총 절감 금액' : '총 지원 증가액'}
                 </p>

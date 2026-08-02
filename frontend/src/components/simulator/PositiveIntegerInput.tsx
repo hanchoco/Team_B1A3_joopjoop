@@ -15,6 +15,8 @@ interface PositiveIntegerInputProps {
   max?: number
   min?: number
   unit?: string
+  /** Extra note shown below the input, e.g. default-value guidance. */
+  note?: string
 }
 
 function initialInputValue(value: number | undefined, initialValue: number | undefined): string {
@@ -31,6 +33,7 @@ export default function PositiveIntegerInput({
   max,
   min = MIN_POSITIVE_INTEGER,
   unit = '개월',
+  note,
 }: PositiveIntegerInputProps) {
   const [inputValue, setInputValue] = useState(() => initialInputValue(value, initialValue ?? min))
   const [touched, setTouched] = useState(false)
@@ -90,6 +93,7 @@ export default function PositiveIntegerInput({
           {validation.error}
         </p>
       )}
+      {note && <p className="mt-1 px-1 text-xs font-normal text-gray-400">{note}</p>}
     </label>
   )
 }
