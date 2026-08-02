@@ -214,6 +214,9 @@ function CategoryQuestionField({
 export default function EditProfile() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
+  const isFromHome = searchParams.get('from') === 'home'
+  const returnPath = isFromHome ? '/' : '/mypage'
+  const returnLabel = isFromHome ? '홈' : '마이페이지'
   const { currentUser, updateProfile, updateDisplayName, avatarUrl, updateAvatarUrl } = useApp()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [nextAvatarUrl, setNextAvatarUrl] = useState(avatarUrl)
@@ -315,7 +318,7 @@ export default function EditProfile() {
       }
       await Promise.all([updateProfile(payload), updateDisplayName(form.nickname.trim())])
       updateAvatarUrl(nextAvatarUrl)
-      navigate(searchParams.get('from') === 'home' ? '/' : '/mypage')
+      navigate(returnPath)
     } catch (err) {
       setError(extractErrorMessage(err))
     } finally {
@@ -530,11 +533,11 @@ export default function EditProfile() {
     <section className="mx-auto max-w-2xl">
       <button
         type="button"
-        onClick={() => navigate('/mypage')}
+        onClick={() => navigate(returnPath)}
         className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500"
       >
         <ArrowLeft size={16} aria-hidden="true" />
-        <span>마이페이지</span>
+        <span>{returnLabel}</span>
       </button>
       <h1 className="mt-8 text-3xl font-black">내 정보 수정</h1>
       <p className="mt-3 text-sm text-gray-500">
