@@ -1,6 +1,6 @@
 import { ArrowLeft, Bot, CheckCircle2, ClipboardCheck, Calculator, Star } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { bookmarkPolicy, getPolicy, getPolicyMatch, removeBookmark } from '../../api/policies'
 import { extractErrorMessage } from '../../api/client'
 import OnlineApplicationLink from '../../components/common/OnlineApplicationLink'
@@ -12,7 +12,10 @@ import {
   parsePolicySummary,
 } from '../../utils/policyContent'
 import { getBenefitDisplay } from '../../utils/benefitDisplay'
-import { resolvePolicyListReturnPath } from '../../utils/policyNavigation'
+import {
+  isPolicyListNavigationState,
+  resolvePolicyListReturnPath,
+} from '../../utils/policyNavigation'
 
 const TABS = ['지원내용', '신청조건', '신청방법', '필요서류'] as const
 type PolicyTab = (typeof TABS)[number]
@@ -31,6 +34,7 @@ const CONDITION_STATUS_STYLE: Record<string, string> = {
 
 export default function PolicyDetail() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { id } = useParams()
   const [searchParams] = useSearchParams()
   const policyId = Number(id)
@@ -89,6 +93,14 @@ export default function PolicyDetail() {
     }
   }
 
+  function returnToPolicyList() {
+    if (isPolicyListNavigationState(location.state)) {
+      navigate(-1)
+      return
+    }
+    navigate(policyListPath)
+  }
+
   if (loading) {
     return <p className="py-10 text-center text-sm text-gray-500">불러오는 중...</p>
   }
@@ -96,7 +108,7 @@ export default function PolicyDetail() {
     return (
       <section>
         <button
-          onClick={() => navigate(policyListPath)}
+          onClick={returnToPolicyList}
           className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500"
         >
           <ArrowLeft size={16} /> 정책 목록
@@ -129,7 +141,7 @@ export default function PolicyDetail() {
   return (
     <section>
       <button
-        onClick={() => navigate(policyListPath)}
+        onClick={returnToPolicyList}
         className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500"
       >
         <ArrowLeft size={16} /> 정책 목록

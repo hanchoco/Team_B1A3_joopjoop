@@ -14,7 +14,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { listCategories } from '../../api/categories'
 import { bookmarkPolicy, listPolicies, removeBookmark } from '../../api/policies'
 import { extractErrorMessage } from '../../api/client'
@@ -24,8 +24,12 @@ import { getBenefitDisplay } from '../../utils/benefitDisplay'
 import { buildPolicyCardPreview } from '../../utils/policyCardPreview'
 import {
   buildPolicyDetailPath,
+  clearPolicyListScrollPosition,
   POSSIBILITY_FILTERS,
+  readPolicyListScrollPosition,
+  rememberPolicyListScrollPosition,
   resolvePolicyListFilter,
+  type PolicyListNavigationState,
   type PossibilityFilter,
 } from '../../utils/policyNavigation'
 
@@ -63,6 +67,7 @@ function resolvePage(value: string | null): number {
 
 export default function PolicyList() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
   const { currentUser } = useApp()
   const [policies, setPolicies] = useState<PolicySummaryResponse[]>([])
@@ -187,6 +192,19 @@ export default function PolicyList() {
     setSearchParams(nextParams, { replace: true })
   }, [activePage, loading, searchParams, setSearchParams, totalPages])
 
+  useEffect(() => {
+    if (loading) return
+
+    const scrollY = readPolicyListScrollPosition(location.key)
+    if (scrollY === null) return
+
+    const frameId = window.requestAnimationFrame(() => {
+      window.scrollTo({ top: scrollY, left: 0, behavior: 'auto' })
+      clearPolicyListScrollPosition(location.key)
+    })
+    return () => window.cancelAnimationFrame(frameId)
+  }, [loading, location.key])
+
   async function handleToggleBookmark(policy: PolicySummaryResponse) {
     const nextBookmarked = !policy.is_bookmarked
     setPolicies((current) =>
@@ -208,6 +226,13 @@ export default function PolicyList() {
       )
       setError(extractErrorMessage(err))
     }
+  }
+
+  function openPolicyDetail(policyId: number) {
+    rememberPolicyListScrollPosition(location.key, window.scrollY)
+    navigate(buildPolicyDetailPath(policyId, searchParams), {
+      state: { fromPolicyList: true } satisfies PolicyListNavigationState,
+    })
   }
 
   function changePossibilityFilter(filter: PossibilityFilter) {
@@ -261,8 +286,8 @@ export default function PolicyList() {
       nextParams.set('category_code', draftCategoryCode)
     } else {
       nextParams.delete('category_code')
+      nextParams.delete('nav')
     }
-    nextParams.delete('nav')
     nextParams.delete('page')
     setSearchParams(nextParams)
     setFilterOpen(false)
@@ -560,7 +585,7 @@ export default function PolicyList() {
                       </div>
                       <button
                         type="button"
-                        onClick={() => navigate(buildPolicyDetailPath(policy.id, searchParams))}
+                        onClick={() => openPolicyDetail(policy.id)}
                         className="self-end rounded-lg border border-blue-600 px-4 py-2 text-sm font-medium text-blue-600 transition hover:bg-blue-50"
                       >
                         자세히 보기
