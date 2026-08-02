@@ -13,6 +13,7 @@ interface PasswordFieldErrors {
 }
 
 const PASSWORD_MISMATCH_MESSAGE = '새 비밀번호가 일치하지 않습니다.'
+const PASSWORD_REUSE_MESSAGE = '현재 비밀번호와 다른 비밀번호를 입력해 주세요.'
 
 function validatePasswordFields(
   currentPassword: string,
@@ -31,6 +32,8 @@ function validatePasswordFields(
     errors.newPassword = '새 비밀번호를 입력해 주세요.'
   } else if (newPassword.length < 8) {
     errors.newPassword = '새 비밀번호는 8자 이상 입력해 주세요.'
+  } else if (newPassword === currentPassword) {
+    errors.newPassword = PASSWORD_REUSE_MESSAGE
   }
 
   if (!passwordConfirmation) {
@@ -155,7 +158,7 @@ export default function AccountSettings() {
           )}
         </label>
 
-        <div className="mt-5 grid gap-5 sm:grid-cols-2">
+        <div className="mt-5 grid gap-5 md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
           <label className="block text-sm font-bold">
             새 비밀번호
             <input
