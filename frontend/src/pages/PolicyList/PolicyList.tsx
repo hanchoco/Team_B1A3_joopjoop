@@ -88,7 +88,13 @@ export default function PolicyList() {
   const searchInputRef = useRef<HTMLInputElement>(null)
   const filterPanelRef = useRef<HTMLDivElement>(null)
   const searchKeyword = searchParams.get('search')?.trim() ?? ''
-  const isFromMyPage = searchParams.get('origin') === 'mypage'
+  const origin = searchParams.get('origin')
+  const originBackLink =
+    origin === 'mypage'
+      ? { label: '마이페이지', path: '/mypage' }
+      : origin === 'category'
+        ? { label: '카테고리 선택', path: '/categories' }
+        : null
   const selectedCategoryCode = searchParams.get('category_code')
   const selectedCategoryName = selectedCategoryCode
     ? (categories.find((category) => category.code === selectedCategoryCode)?.name ?? null)
@@ -330,18 +336,18 @@ export default function PolicyList() {
 
   return (
     <section>
-      {isFromMyPage && (
+      {originBackLink && (
         <button
           type="button"
-          onClick={() => navigate('/mypage')}
+          onClick={() => navigate(originBackLink.path)}
           className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500"
         >
           <ArrowLeft size={16} aria-hidden="true" />
-          <span>마이페이지</span>
+          <span>{originBackLink.label}</span>
         </button>
       )}
       <div
-        className={`flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between ${isFromMyPage ? 'mt-8' : ''}`}
+        className={`flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between ${originBackLink ? 'mt-8' : ''}`}
       >
         <div>
           <p className="text-sm font-semibold text-blue-600">

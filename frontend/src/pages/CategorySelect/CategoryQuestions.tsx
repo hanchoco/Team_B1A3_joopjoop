@@ -41,10 +41,15 @@ function parseOptions(optionsJson: unknown): SelectOption[] {
   })
 }
 
-function policiesLinkFor(categoryCode: string, answersUpdated = false): string {
+function policiesLinkFor(
+  categoryCode: string,
+  answersUpdated = false,
+  origin?: 'category',
+): string {
   const params = new URLSearchParams(categoryCode ? { category_code: categoryCode } : {})
   if (answersUpdated) params.set('answers', 'updated')
   params.set('nav', 'category')
+  if (origin) params.set('origin', origin)
   return `/policies?${params.toString()}`
 }
 
@@ -263,9 +268,16 @@ export default function CategoryQuestions() {
         setCategoryName(category?.name ?? '')
         setCategoryCode(categoryCode)
         if (visibleUnansweredQuestions.length === 0) {
-          navigate(policiesLinkFor(categoryCode, savedAnswers.length > 0), {
-            replace: true,
-          })
+          navigate(
+            policiesLinkFor(
+              categoryCode,
+              savedAnswers.length > 0,
+              isFromHome ? undefined : 'category',
+            ),
+            {
+              replace: true,
+            },
+          )
           return
         }
         setQuestions(unansweredQuestions)
@@ -279,7 +291,7 @@ export default function CategoryQuestions() {
     return () => {
       cancelled = true
     }
-  }, [categoryId, navigate])
+  }, [categoryId, isFromHome, navigate])
 
   function setAnswerValue(questionId: number, value: unknown) {
     setAnswers((current) => {
@@ -353,7 +365,7 @@ export default function CategoryQuestions() {
       if (payload.length > 0) {
         await saveCategoryAnswers(categoryId, payload)
       }
-      navigate(policiesLinkFor(categoryCode, true))
+      navigate(policiesLinkFor(categoryCode, true, isFromHome ? undefined : 'category'))
     } catch (err) {
       setError(extractErrorMessage(err))
     } finally {

@@ -109,7 +109,7 @@ export default function CategorySelect() {
                   navigate(
                     hasIncompleteQuestions
                       ? `/categories/${category.id}/questions`
-                      : `/policies?category_code=${category.code}&nav=category`,
+                      : `/policies?category_code=${category.code}&nav=category&origin=category`,
                   )
                 }
                 className="rounded-xl border border-gray-200 bg-white p-6 text-left transition hover:border-blue-300 hover:bg-blue-50"
