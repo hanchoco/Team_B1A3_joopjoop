@@ -26,7 +26,7 @@ export interface PolicyListNavigationState {
   policyListScrollKey: string
 }
 
-export interface PolicySimulatorNavigationState {
+export interface PolicyDetailReturnNavigationState {
   from: 'policy-detail'
   policyDetailReturnTo: string
   policyDetailState: PolicyDetailNavigationState | null
@@ -107,9 +107,9 @@ export function isPolicyListNavigationState(value: unknown): value is PolicyList
   )
 }
 
-export function isPolicySimulatorNavigationState(
+export function isPolicyDetailReturnNavigationState(
   value: unknown,
-): value is PolicySimulatorNavigationState {
+): value is PolicyDetailReturnNavigationState {
   return (
     typeof value === 'object' &&
     value !== null &&

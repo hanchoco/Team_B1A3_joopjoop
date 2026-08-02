@@ -17,8 +17,8 @@ import type { ChecklistNavigationState } from '../../utils/checklistNavigation'
 import {
   isPolicyDetailNavigationState,
   resolvePolicyListReturnPath,
+  type PolicyDetailReturnNavigationState,
   type PolicyListNavigationState,
-  type PolicySimulatorNavigationState,
 } from '../../utils/policyNavigation'
 
 const TABS = ['지원내용', '신청조건', '신청방법', '필요서류'] as const
@@ -294,7 +294,7 @@ export default function PolicyDetail() {
                 from: 'policy-detail',
                 policyDetailReturnTo: `${location.pathname}${location.search}`,
                 policyDetailState: navigationState,
-              } satisfies PolicySimulatorNavigationState,
+              } satisfies PolicyDetailReturnNavigationState,
             })
           }
           disabled={!policy.is_simulatable}
@@ -320,7 +320,15 @@ export default function PolicyDetail() {
           <ClipboardCheck size={18} /> 가입 준비하기
         </button>
         <button
-          onClick={() => navigate(`/policies/${policy.id}/ai-chat`)}
+          onClick={() =>
+            navigate(`/policies/${policy.id}/ai-chat`, {
+              state: {
+                from: 'policy-detail',
+                policyDetailReturnTo: `${location.pathname}${location.search}`,
+                policyDetailState: navigationState,
+              } satisfies PolicyDetailReturnNavigationState,
+            })
+          }
           className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-3.5 font-bold"
         >
           <Bot size={18} /> AI에게 물어보기

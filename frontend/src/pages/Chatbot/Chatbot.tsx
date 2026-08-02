@@ -1,10 +1,11 @@
 import { ArrowLeft, Bot, LoaderCircle, Send, UserRound } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { askPolicyQuestion } from '../../api/chatbot'
 import { extractErrorMessage } from '../../api/client'
 import { useApp } from '../../store/useApp'
+import { isPolicyDetailReturnNavigationState } from '../../utils/policyNavigation'
 
 interface ChatMessage {
   role: 'assistant' | 'user'
@@ -20,8 +21,13 @@ const INITIAL_SUGGESTED_QUESTIONS = [
 
 export default function Chatbot() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { id } = useParams()
   const policyId = Number(id)
+  const navigationState = isPolicyDetailReturnNavigationState(location.state)
+    ? location.state
+    : null
+  const policyDetailReturnTo = navigationState?.policyDetailReturnTo ?? `/policies/${id}`
   const { currentUser } = useApp()
   const displayName = currentUser?.nickname || currentUser?.email.split('@')[0] || '회원'
   const scrollAreaRef = useRef<HTMLDivElement>(null)
@@ -68,6 +74,10 @@ export default function Chatbot() {
     void ask(input)
   }
 
+  function returnToPolicyDetail() {
+    navigate(policyDetailReturnTo, { state: navigationState?.policyDetailState })
+  }
+
   if (!Number.isFinite(policyId)) {
     return (
       <section className="mx-auto max-w-4xl">
@@ -88,7 +98,7 @@ export default function Chatbot() {
     <section className="mx-auto max-w-4xl">
       <button
         type="button"
-        onClick={() => navigate(`/policies/${id}`)}
+        onClick={returnToPolicyDetail}
         className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-blue-600"
       >
         <ArrowLeft size={16} /> 정책 상세

@@ -19,7 +19,7 @@ import type {
 } from '../../types/api'
 import type { SimulatorFormProps, SimulatorInputValue } from '../../types/simulator'
 import { formatWon } from '../../utils/formatWon'
-import { isPolicySimulatorNavigationState } from '../../utils/policyNavigation'
+import { isPolicyDetailReturnNavigationState } from '../../utils/policyNavigation'
 
 interface CalcTypeConfig {
   Form: ComponentType<SimulatorFormProps>
@@ -49,7 +49,9 @@ export default function Simulator() {
   const location = useLocation()
   const { id } = useParams()
   const policyId = Number(id)
-  const navigationState = isPolicySimulatorNavigationState(location.state) ? location.state : null
+  const navigationState = isPolicyDetailReturnNavigationState(location.state)
+    ? location.state
+    : null
   const policyDetailReturnTo = navigationState?.policyDetailReturnTo ?? `/policies/${id}`
 
   const [policy, setPolicy] = useState<PolicyDetailResponse | null>(null)
