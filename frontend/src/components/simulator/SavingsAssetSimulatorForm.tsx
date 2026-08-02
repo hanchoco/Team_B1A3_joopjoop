@@ -1,6 +1,7 @@
 import type { SavingsAssetRuleJson } from '../../types/api'
 import type { SimulatorFormProps } from '../../types/simulator'
 import { formatWon } from '../../utils/formatWon'
+import { hasValue } from '../../utils/hasValue'
 import CurrencyInput from './CurrencyInput'
 import KnownRuleInfo from './KnownRuleInfo'
 
@@ -11,17 +12,17 @@ export default function SavingsAssetSimulatorForm({ rule, values, onChange }: Si
     <div>
       <KnownRuleInfo
         items={[
-          ...(r.government_match_rate_percent !== undefined
+          ...(hasValue(r.government_match_rate_percent)
             ? [{ label: '정부매칭비율', value: `${r.government_match_rate_percent}%` }]
             : []),
           { label: '월 최대 지원금', value: formatWon(r.monthly_max_support_amount) },
-          ...(r.maturity_months !== undefined
+          ...(hasValue(r.maturity_months)
             ? [{ label: '만기 기간', value: `${r.maturity_months}개월` }]
             : []),
-          ...(r.base_interest_rate_percent !== undefined
+          ...(hasValue(r.base_interest_rate_percent)
             ? [{ label: '기본금리', value: `${r.base_interest_rate_percent}%` }]
             : []),
-          ...(r.bonus_interest_rate_percent !== undefined
+          ...(hasValue(r.bonus_interest_rate_percent)
             ? [{ label: '우대금리', value: `${r.bonus_interest_rate_percent}%` }]
             : []),
         ]}

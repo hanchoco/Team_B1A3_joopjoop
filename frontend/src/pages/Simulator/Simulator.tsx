@@ -273,6 +273,11 @@ export default function Simulator() {
             <p className="mt-1 text-3xl font-black text-blue-600">+{formatWon(savedAmount)}</p>
           </div>
 
+          <div className="mt-5 flex flex-col items-center rounded-xl border border-gray-200 bg-white p-6 text-center">
+            <p className="text-sm text-gray-500">내 조건 기준 예상 혜택 (1회성 포함 총액)</p>
+            <p className="mt-1 text-2xl font-black">{formatWon(result.total_benefit_amount)}</p>
+          </div>
+
           <p className="mt-4 rounded-lg bg-slate-50 p-4 text-xs leading-6 text-gray-500">
             {result.disclaimer}
           </p>
