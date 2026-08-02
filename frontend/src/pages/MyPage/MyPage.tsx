@@ -1,4 +1,4 @@
-import { ArrowRight, Bookmark, CheckCircle2, ClipboardList, UserRound } from 'lucide-react'
+import { ArrowRight, CheckCircle2, ClipboardList, Star, UserRound } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getCategoryAnswers, listCategories, listCategoryQuestions } from '../../api/categories'
@@ -94,7 +94,7 @@ export default function MyPage() {
   }, [])
 
   const summaries = [
-    { id: 'interest', label: '관심', count: bookmarkedCount, icon: Bookmark },
+    { id: 'interest', label: '관심', count: bookmarkedCount, icon: Star },
     { id: 'preparing', label: '준비 중', count: preparingCount, icon: ClipboardList },
     { id: 'completed', label: '신청 완료', count: appliedCount, icon: CheckCircle2 },
   ]
