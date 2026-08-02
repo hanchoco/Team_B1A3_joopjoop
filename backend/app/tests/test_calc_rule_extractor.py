@@ -296,11 +296,15 @@ def test_extract_calculation_rule_housing_rent_accepts_complete_response() -> No
 
 # ---------------------------------------------------------------------------
 # extract_calculation_rule() - EMPLOYMENT_EDUCATION
-# (support_months가 있거나, 금액 필드 중 하나라도 있으면 완전한 것으로 인정)
+# (금액 필드 중 최소 하나는 반드시 있어야 완전한 것으로 인정 - support_months만
+# 있고 금액이 전부 비어있으면 0원짜리 시뮬레이션이 나오므로 거부한다)
 # ---------------------------------------------------------------------------
 
 
-def test_extract_calculation_rule_employment_education_accepts_support_months_only() -> None:
+def test_extract_calculation_rule_employment_education_rejects_support_months_only() -> None:
+    """support_months만 있고 금액 필드가 전부 비어있으면 실제 지원 금액을 전혀 모르는
+    것이므로 완전한 데이터로 인정하지 않는다(0원짜리 시뮬레이션 방지)."""
+
     client = _FakeSolarClient(
         {
             "training_allowance_amount": None,
@@ -318,8 +322,7 @@ def test_extract_calculation_rule_employment_education_accepts_support_months_on
         )
     )
 
-    assert result is not None
-    assert result["support_months"] == 6
+    assert result is None
 
 
 def test_extract_calculation_rule_employment_education_accepts_amount_without_support_months() -> (
@@ -599,4 +602,35 @@ def test_is_calculation_rule_complete_false_for_partial_loan_interest() -> None:
     assert not is_calculation_rule_complete(
         CalcType.LOAN_INTEREST,
         {"policy_interest_rate_percent": 1.8},
+    )
+
+
+def test_is_calculation_rule_complete_false_for_empty_employment_education() -> None:
+    """calculation_rule_json이 완전히 빈 값({})이면 반드시 False - 이게 통과하면
+    금액이 하나도 없는 정책이 '계산 가능'으로 잘못 통과하는 사고를 막은 것이다."""
+
+    assert not is_calculation_rule_complete(CalcType.EMPLOYMENT_EDUCATION, {})
+
+
+def test_is_calculation_rule_complete_false_for_support_months_only_employment_education() -> None:
+    assert not is_calculation_rule_complete(
+        CalcType.EMPLOYMENT_EDUCATION,
+        {
+            "training_allowance_amount": None,
+            "education_subsidy_amount": None,
+            "employment_success_bonus_amount": None,
+            "support_months": 6,
+        },
+    )
+
+
+def test_is_calculation_rule_complete_true_for_amount_only_employment_education() -> None:
+    assert is_calculation_rule_complete(
+        CalcType.EMPLOYMENT_EDUCATION,
+        {
+            "training_allowance_amount": 300000,
+            "education_subsidy_amount": None,
+            "employment_success_bonus_amount": None,
+            "support_months": None,
+        },
     )

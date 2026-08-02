@@ -90,9 +90,10 @@ _REQUIRED_FIELDS: dict[CalcType, tuple[str, ...]] = {
     CalcType.TAX_DEDUCTION: ("deduction_rate_percent", "deduction_type"),
 }
 
-# EMPLOYMENT_EDUCATION은 support_months가 있거나, 아래 금액 필드 중 하나라도 있으면
-# 완전한 것으로 본다 - services/policy_engine/calc_type.py의
-# _EMPLOYMENT_EDUCATION_AMOUNT_FIELDS와 반드시 함께 갱신한다.
+# EMPLOYMENT_EDUCATION은 아래 금액 필드 중 최소 하나가 있어야 완전한 것으로 본다
+# (support_months만 있고 금액이 전부 비어있으면 불완전 - 0원짜리 시뮬레이션 방지).
+# services/policy_engine/calc_type.py의 _EMPLOYMENT_EDUCATION_AMOUNT_FIELDS와
+# 반드시 함께 갱신한다.
 _EMPLOYMENT_EDUCATION_AMOUNT_FIELDS: tuple[str, ...] = (
     "training_allowance_amount",
     "education_subsidy_amount",
@@ -127,8 +128,6 @@ def is_calculation_rule_complete(calc_type: CalcType, result: dict) -> bool:
             return False
 
     if calc_type is CalcType.EMPLOYMENT_EDUCATION:
-        if result.get("support_months") is not None:
-            return True
         return any(result.get(field) is not None for field in _EMPLOYMENT_EDUCATION_AMOUNT_FIELDS)
 
     required = _REQUIRED_FIELDS.get(calc_type, ())

@@ -83,10 +83,12 @@ _REQUIRED_CASH_VOUCHER_RULE_FIELDS_BY_AMOUNT_TYPE: dict[str, tuple[str, ...]] = 
     "PERCENTAGE": ("rate_percent", "cap_amount", "payment_cycle"),
 }
 
-# EMPLOYMENT_EDUCATION은 support_months가 있거나, 아래 금액 필드 중 하나라도 있으면
-# 완전한 것으로 본다(둘 다 없으면 불완전) - support_months가 없는 경우는 자격증
-# 응시료 지원처럼 "지원 개월" 개념이 없는 1회성 실비 지원으로 간주해
-# calculate_employment_education()에서 1개월로 계산한다.
+# EMPLOYMENT_EDUCATION은 아래 금액 필드 중 최소 하나가 있어야 완전한 것으로 본다.
+# support_months는 필수가 아니다 - 자격증 응시료 지원처럼 "지원 개월" 개념이 없는
+# 1회성 실비 지원은 calculate_employment_education()에서 1개월로 계산한다.
+# 주의: support_months만 있고 금액 필드가 전부 비어있는 경우를 완전한 것으로 보면
+# 실제로는 돈이 얼마인지 전혀 모르는데 "계산 가능"으로 통과해서 0원짜리 시뮬레이션이
+# 나오는 문제가 생긴다(구직촉진수당 사고 사례) - 그래서 금액 필드 존재를 항상 요구한다.
 _EMPLOYMENT_EDUCATION_AMOUNT_FIELDS: tuple[str, ...] = (
     "training_allowance_amount",
     "education_subsidy_amount",
@@ -155,8 +157,6 @@ def _has_required_rule_fields(
         return all(calculation_rule_json.get(field) is not None for field in required_fields)
 
     if calc_type is CalcType.EMPLOYMENT_EDUCATION:
-        if calculation_rule_json.get("support_months") is not None:
-            return True
         return any(
             calculation_rule_json.get(field) is not None
             for field in _EMPLOYMENT_EDUCATION_AMOUNT_FIELDS

@@ -158,12 +158,12 @@ def test_can_simulate_is_false_when_calc_type_resolves_but_rule_json_is_incomple
 @pytest.mark.parametrize(
     "calculation_rule_json",
     [
-        {"support_months": 6},
         {"training_allowance_amount": 300000},
         {"education_subsidy_amount": 100000, "support_months": None},
+        {"employment_success_bonus_amount": 1500000, "support_months": 6},
     ],
 )
-def test_can_simulate_employment_education_accepts_support_months_or_any_amount(
+def test_can_simulate_employment_education_accepts_any_amount_field(
     calculation_rule_json: dict,
 ) -> None:
     """support_months가 없어도 금액 필드 중 하나만 있으면 1회성 지급으로 계산 가능하다."""
@@ -173,22 +173,30 @@ def test_can_simulate_employment_education_accepts_support_months_or_any_amount(
     assert can_simulate(_benefit(BenefitType.CASH, calculation_rule_json), policy) is True
 
 
-def test_can_simulate_employment_education_rejects_when_no_amount_and_no_months() -> None:
+@pytest.mark.parametrize(
+    "calculation_rule_json",
+    [
+        {},
+        {
+            "training_allowance_amount": None,
+            "education_subsidy_amount": None,
+            "employment_success_bonus_amount": None,
+            "support_months": None,
+        },
+        # support_months만 있고 금액이 전부 비어있는 경우 - 실제 지원 금액을 전혀
+        # 모르는데 "계산 가능"으로 통과하면 0원짜리 시뮬레이션이 나온다(구직촉진수당
+        # 사고 사례). support_months 단독으로는 완전한 데이터로 인정하지 않는다.
+        {
+            "training_allowance_amount": None,
+            "education_subsidy_amount": None,
+            "employment_success_bonus_amount": None,
+            "support_months": 6,
+        },
+    ],
+)
+def test_can_simulate_employment_education_rejects_when_no_amount_field(
+    calculation_rule_json: dict,
+) -> None:
     policy = _policy(CategoryCode.EMPLOYMENT)
 
-    assert can_simulate(_benefit(BenefitType.CASH, {}), policy) is False
-    assert (
-        can_simulate(
-            _benefit(
-                BenefitType.CASH,
-                {
-                    "training_allowance_amount": None,
-                    "education_subsidy_amount": None,
-                    "employment_success_bonus_amount": None,
-                    "support_months": None,
-                },
-            ),
-            policy,
-        )
-        is False
-    )
+    assert can_simulate(_benefit(BenefitType.CASH, calculation_rule_json), policy) is False
