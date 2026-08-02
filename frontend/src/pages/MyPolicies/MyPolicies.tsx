@@ -19,6 +19,7 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { deletePolicyProgress, listMyPolicies } from '../../api/checklist'
 import { extractErrorMessage } from '../../api/client'
 import { removeBookmark } from '../../api/policies'
+import ContentStatePanel from '../../components/common/ContentStatePanel'
 import type { MyPoliciesTab, UserPolicyItemResponse } from '../../types/api'
 import type { PolicyDetailNavigationState } from '../../utils/policyNavigation'
 
@@ -65,7 +66,10 @@ export default function MyPolicies() {
 
   const [policies, setPolicies] = useState<UserPolicyItemResponse[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadedRequestKey, setLoadedRequestKey] = useState<string | null>(null)
   const [error, setError] = useState('')
+  const requestKey = JSON.stringify([tab, sort, isUrgentView])
+  const isPoliciesLoading = loading || loadedRequestKey !== requestKey
 
   useEffect(() => {
     let cancelled = false
@@ -88,12 +92,35 @@ export default function MyPolicies() {
         if (!cancelled) setError(extractErrorMessage(err))
       })
       .finally(() => {
-        if (!cancelled) setLoading(false)
+        if (!cancelled) {
+          setLoadedRequestKey(requestKey)
+          setLoading(false)
+        }
       })
     return () => {
       cancelled = true
     }
-  }, [tab, sort, isUrgentView])
+  }, [tab, sort, isUrgentView, requestKey])
+
+  const emptyState = isUrgentView
+    ? {
+        title: '마감이 임박한 정책이 없어요.',
+        description: '현재 30일 안에 마감되는 내 정책이 없어요.',
+      }
+    : tab === 'preparing'
+      ? {
+          title: '준비 중인 정책이 아직 없어요.',
+          description: '정책 준비를 시작하면 진행 상황이 이곳에 표시돼요.',
+        }
+      : tab === 'completed'
+        ? {
+            title: '신청 완료한 정책이 아직 없어요.',
+            description: '신청 완료한 정책이 생기면 이곳에 모아드려요.',
+          }
+        : {
+            title: '관심 정책이 아직 없어요.',
+            description: '관심 있는 정책을 저장하면 이곳에서 확인할 수 있어요.',
+          }
 
   function selectTab(nextTab: PolicyTab) {
     setSearchParams(nextTab === 'interest' ? { tab: nextTab, sort } : { tab: nextTab })
@@ -178,14 +205,22 @@ export default function MyPolicies() {
         </div>
       )}
 
-      {loading ? (
-        <p className="mt-8 text-center text-sm text-gray-500">불러오는 중...</p>
+      {isPoliciesLoading ? (
+        <ContentStatePanel
+          variant="loading"
+          title="정책을 불러오고 있어요."
+          description="잠시만 기다려 주세요."
+        />
       ) : error ? (
         <p className="mt-6 rounded-lg bg-rose-50 p-4 text-sm font-semibold text-rose-600">
           {error}
         </p>
       ) : policies.length === 0 ? (
-        <p className="mt-8 text-center text-sm text-gray-500">표시할 정책이 없어요.</p>
+        <ContentStatePanel
+          variant="empty"
+          title={emptyState.title}
+          description={emptyState.description}
+        />
       ) : (
         <div className="mt-5 space-y-3">
           {policies.map((policy) => {
