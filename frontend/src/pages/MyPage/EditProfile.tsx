@@ -11,6 +11,7 @@ import {
   saveCategoryAnswers,
 } from '../../api/categories'
 import { extractErrorMessage } from '../../api/client'
+import { getCompanySizeOptionLabel } from '../../constants/categoryQuestions'
 import {
   EMPLOYMENT_STATUS_OPTIONS,
   HOUSEHOLD_TYPE_OPTIONS,
@@ -108,7 +109,11 @@ function CategoryQuestionField({
   onChange: (value: unknown) => void
   onToggleMultiOption: (option: string) => void
 }) {
-  const options = parseQuestionOptions(question.options_json)
+  const options = parseQuestionOptions(question.options_json).map((option) =>
+    question.question_key === 'employment.company_size_code'
+      ? { ...option, label: getCompanySizeOptionLabel(option.value, option.label) }
+      : option,
+  )
   const answerValue = value ?? undefined
 
   return (
@@ -780,9 +785,7 @@ export default function EditProfile() {
                                 section.resetting ||
                                 Object.keys(section.answers).length === 0
                               }
-                              onClick={() =>
-                                void resetCategorySection(category.id, category.name)
-                              }
+                              onClick={() => void resetCategorySection(category.id, category.name)}
                               className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-bold text-gray-600 transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               {section.resetting ? '초기화 중...' : '전체 초기화'}
