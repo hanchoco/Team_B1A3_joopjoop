@@ -193,7 +193,7 @@ export default function MyPage() {
                 <p className="mt-1 text-sm text-gray-500">업데이트된 조건에 맞는 정책이에요.</p>
               </div>
               <button
-                onClick={() => navigate('/policies?filter=ELIGIBLE')}
+                onClick={() => navigate('/policies?filter=ELIGIBLE&origin=mypage')}
                 className="text-sm font-bold text-blue-600"
               >
                 더 많은 정보 보기
