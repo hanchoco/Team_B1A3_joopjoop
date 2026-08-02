@@ -297,8 +297,16 @@ export default function PolicyList() {
               </>
             ) : (
               <>
-                {currentUser?.nickname ? `${currentUser.nickname} 님을 위한 ` : '맞춤 '}정책 {total}
-                개
+                <span>
+                  {currentUser?.nickname ? `${currentUser.nickname} 님을 위한 ` : '맞춤 '}
+                </span>
+                {selectedCategoryName && (
+                  <span className="text-blue-600">{selectedCategoryName}</span>
+                )}
+                <span>
+                  {selectedCategoryName ? ' 정책 ' : '정책 '}
+                  {policies.length}개
+                </span>
               </>
             )}
           </h1>
