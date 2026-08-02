@@ -178,6 +178,14 @@ export default function Simulator() {
       ? result.annual_savings_amount
       : result.monthly_savings_amount
     : 0
+  // 훈련수당/교육비 없이 취업성공수당 같은 1회성 혜택만 있으면 월/연 절감액이 항상 0이라,
+  // "총 절감 금액 +0원"만 보고 혜택이 없다고 오해하기 쉽다 - 이 경우 총 예상 혜택 카드를
+  // 상단으로 올리고 1회성 지급임을 배지로 알린다.
+  const isOneTimeOnlyBenefit =
+    result != null &&
+    result.category === 'EMPLOYMENT_EDUCATION' &&
+    Number(result.monthly_savings_amount) === 0 &&
+    Number(result.total_benefit_amount) > 0
 
   return (
     <section className="mx-auto max-w-4xl">
@@ -234,7 +242,14 @@ export default function Simulator() {
 
       {result && (
         <>
-          <div className="mt-6 inline-flex rounded-lg bg-slate-100 p-1">
+          {isOneTimeOnlyBenefit && (
+            <div className="mt-6 flex flex-col items-center rounded-xl border border-gray-200 bg-white p-6 text-center">
+              <p className="text-sm text-gray-500">내 조건 기준 예상 혜택 (1회성 포함 총액)</p>
+              <p className="mt-1 text-2xl font-black">{formatWon(result.total_benefit_amount)}</p>
+            </div>
+          )}
+
+          <div className={`inline-flex rounded-lg bg-slate-100 p-1 ${isOneTimeOnlyBenefit ? 'mt-5' : 'mt-6'}`}>
             {(['월 기준', '연 기준'] as const).map((item) => (
               <button
                 type="button"
@@ -271,12 +286,25 @@ export default function Simulator() {
             <TrendingDown className="text-blue-600" />
             <p className="mt-3 text-sm text-gray-500">{period} 총 절감 금액</p>
             <p className="mt-1 text-3xl font-black text-blue-600">+{formatWon(savedAmount)}</p>
+            {isOneTimeOnlyBenefit && (
+              <span className="mt-3 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-600">
+                정기 지원 없음 · 1회성 지급
+              </span>
+            )}
           </div>
 
-          <div className="mt-5 flex flex-col items-center rounded-xl border border-gray-200 bg-white p-6 text-center">
-            <p className="text-sm text-gray-500">내 조건 기준 예상 혜택 (1회성 포함 총액)</p>
-            <p className="mt-1 text-2xl font-black">{formatWon(result.total_benefit_amount)}</p>
-          </div>
+          {!isOneTimeOnlyBenefit && (
+            <div className="mt-5 flex flex-col items-center rounded-xl border border-gray-200 bg-white p-6 text-center">
+              <p className="text-sm text-gray-500">내 조건 기준 예상 혜택 (1회성 포함 총액)</p>
+              <p className="mt-1 text-2xl font-black">{formatWon(result.total_benefit_amount)}</p>
+            </div>
+          )}
+
+          {result.category === 'SAVINGS_ASSET' && (
+            <p className="mt-4 rounded-lg bg-slate-50 p-4 text-xs leading-6 text-gray-500">
+              ※ 만기 이자는 금리(%)로 안내되며, 실제 이자 금액은 세부 약정 조건에 따라 달라집니다.
+            </p>
+          )}
 
           <p className="mt-4 rounded-lg bg-slate-50 p-4 text-xs leading-6 text-gray-500">
             {result.disclaimer}
