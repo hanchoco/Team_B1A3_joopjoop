@@ -90,6 +90,7 @@ export default function Simulator() {
   const eligibleBenefits = useMemo(() => (policy ? simulatableBenefits(policy) : []), [policy])
   const selectedBenefit =
     eligibleBenefits.find((benefit) => benefit.id === selectedBenefitId) ?? null
+  const hasUnsimulatedBenefits = policy != null && policy.benefits.length > eligibleBenefits.length
 
   function selectBenefit(benefitId: number) {
     setSelectedBenefitId(benefitId)
@@ -204,6 +205,17 @@ export default function Simulator() {
           {policy.title}을(를) 받으면 생활비가 어떻게 달라지는지 한눈에 확인해보세요.
         </p>
       </div>
+
+      {hasUnsimulatedBenefits && (
+        <p className="mt-5 rounded-lg bg-slate-50 p-4 text-xs leading-6 text-gray-500">
+          이 정책에는 혜택 항목이 총 {policy.benefits.length}개 있어요. 그중 {eligibleBenefits.length}
+          개만 지금 시뮬레이션에 반영돼요. 정책 카드의 최대 예상 혜택
+          {policy.estimated_benefit_amount != null
+            ? `(${formatWon(policy.estimated_benefit_amount)})`
+            : ''}
+          은 전체 항목 기준이라 이 결과보다 클 수 있어요.
+        </p>
+      )}
 
       {eligibleBenefits.length > 1 && (
         <label className="mt-5 block max-w-sm text-sm font-semibold">
