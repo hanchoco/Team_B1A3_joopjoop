@@ -224,10 +224,9 @@ export default function Simulator() {
       </button>
 
       <div className="mt-5">
-        <p className="text-sm font-semibold text-blue-600">혜택 계산기</p>
-        <h1 className="mt-2 text-3xl font-black">예상 시뮬레이션</h1>
+        <h1 className="text-3xl font-black">예상 시뮬레이션</h1>
         <p className="mt-2 text-sm leading-6 text-gray-500">
-          {policy.title}을(를) 받으면 생활비가 어떻게 달라지는지 한눈에 확인해보세요.
+          {policy.title} 혜택을 받으면 생활비가 어떻게 달라지는지 한눈에 확인해보세요.
         </p>
       </div>
 
@@ -307,9 +306,11 @@ export default function Simulator() {
               </div>
 
               {isPartialYearSupport && (
-                <p className="mt-4 text-center text-sm text-gray-500">
-                  이 혜택은 {result.support_months}개월간 지급돼요.
-                </p>
+                <div className="mt-4">
+                  <span className="inline-block rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-600">
+                    이 혜택은 {result.support_months}개월간 지급돼요.
+                  </span>
+                </div>
               )}
 
               <div className="mt-5 grid items-stretch gap-4 md:grid-cols-[1fr_auto_1fr]">
