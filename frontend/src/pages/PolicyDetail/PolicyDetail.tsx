@@ -12,9 +12,11 @@ import {
   parsePolicySummary,
 } from '../../utils/policyContent'
 import { getBenefitDisplay } from '../../utils/benefitDisplay'
+import type { ChecklistNavigationState } from '../../utils/checklistNavigation'
 import {
   isPolicyDetailNavigationState,
   resolvePolicyListReturnPath,
+  type PolicyListNavigationState,
 } from '../../utils/policyNavigation'
 
 const TABS = ['지원내용', '신청조건', '신청방법', '필요서류'] as const
@@ -39,7 +41,7 @@ export default function PolicyDetail() {
   const [searchParams] = useSearchParams()
   const policyId = Number(id)
   const policyListPath = resolvePolicyListReturnPath(
-    searchParams.get('returnTo'),
+    searchParams.get('policyListReturnTo'),
     window.location.origin,
   )
   const navigationState = isPolicyDetailNavigationState(location.state) ? location.state : null
@@ -96,11 +98,12 @@ export default function PolicyDetail() {
   }
 
   function returnToPolicyList() {
-    if (navigationState) {
-      navigate(-1)
-      return
-    }
-    navigate(policyListPath)
+    const policyListReturnTo = navigationState?.policyListReturnTo ?? policyListPath
+    const listState: PolicyListNavigationState | undefined =
+      navigationState?.from === 'policy-list'
+        ? { policyListScrollKey: navigationState.policyListScrollKey }
+        : undefined
+    navigate(policyListReturnTo, { state: listState })
   }
 
   if (loading) {
@@ -283,7 +286,15 @@ export default function PolicyDetail() {
           <Calculator size={18} /> 예상 시뮬레이션 보기
         </button>
         <button
-          onClick={() => navigate(`/policies/${policy.id}/prepare`)}
+          onClick={() =>
+            navigate(`/policies/${policy.id}/prepare`, {
+              state: {
+                from: 'policy-detail',
+                policyDetailReturnTo: `${location.pathname}${location.search}`,
+                policyDetailState: navigationState,
+              } satisfies ChecklistNavigationState,
+            })
+          }
           className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3.5 font-bold text-white"
         >
           <ClipboardCheck size={18} /> 가입 준비하기

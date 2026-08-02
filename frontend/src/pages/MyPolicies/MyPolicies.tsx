@@ -1,4 +1,5 @@
 import {
+  ArrowLeft,
   ArrowRight,
   Bookmark,
   BriefcaseBusiness,
@@ -21,6 +22,7 @@ import { extractErrorMessage } from '../../api/client'
 import { removeBookmark } from '../../api/policies'
 import ContentStatePanel from '../../components/common/ContentStatePanel'
 import type { MyPoliciesTab, UserPolicyItemResponse } from '../../types/api'
+import type { ChecklistNavigationState } from '../../utils/checklistNavigation'
 import type { PolicyDetailNavigationState } from '../../utils/policyNavigation'
 
 type PolicyTab = 'interest' | 'preparing' | 'completed'
@@ -153,17 +155,24 @@ export default function MyPolicies() {
       state: {
         from: 'my-policies',
         myPolicyTab: tab,
-        returnTo: `${location.pathname}${location.search}`,
+        policyListReturnTo: `${location.pathname}${location.search}`,
       } satisfies PolicyDetailNavigationState,
     })
   }
 
   return (
     <section>
-      <p className="text-sm font-semibold text-blue-600">마이페이지</p>
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <button
+        type="button"
+        onClick={() => navigate('/mypage')}
+        className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500"
+      >
+        <ArrowLeft size={16} aria-hidden="true" />
+        <span>마이페이지</span>
+      </button>
+      <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="mt-2 text-3xl font-black">
+          <h1 className="text-3xl font-black">
             {isUrgentView ? '신청이 임박한 정책' : '내 정책 관리'}
           </h1>
           <p className="mt-2 text-sm text-gray-500">
@@ -282,14 +291,14 @@ export default function MyPolicies() {
                       <Trash2 size={18} />
                     </button>
                     <button
-                      type="button"
-                      onClick={() => openPolicyDetail(policy.policy_id)}
-                      className="inline-flex items-center gap-2 text-sm font-bold text-blue-600"
-                    >
-                      자세히 보기 <ArrowRight size={16} />
-                    </button>
-                    <button
-                      onClick={() => navigate(`/policies/${policy.policy_id}/prepare`)}
+                      onClick={() =>
+                        navigate(`/policies/${policy.policy_id}/prepare`, {
+                          state: {
+                            from: 'my-policies',
+                            myPoliciesReturnTo: `${location.pathname}${location.search}`,
+                          } satisfies ChecklistNavigationState,
+                        })
+                      }
                       className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-bold text-white"
                     >
                       이어서 준비하기 <ArrowRight size={16} />

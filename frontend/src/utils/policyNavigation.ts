@@ -13,13 +13,18 @@ export type MyPolicyViewTab = 'interest' | 'preparing' | 'completed'
 export type PolicyDetailNavigationState =
   | {
       from: 'policy-list'
-      returnTo: string
+      policyListReturnTo: string
+      policyListScrollKey: string
     }
   | {
       from: 'my-policies'
       myPolicyTab: MyPolicyViewTab
-      returnTo: string
+      policyListReturnTo: string
     }
+
+export interface PolicyListNavigationState {
+  policyListScrollKey: string
+}
 
 const POLICY_LIST_SCROLL_STORAGE_PREFIX = 'joopjoop:policy-list-scroll:'
 
@@ -42,7 +47,7 @@ export function buildPolicyListPath(searchParams: URLSearchParams): string {
 
 export function buildPolicyDetailPath(policyId: number, searchParams: URLSearchParams): string {
   const listPath = buildPolicyListPath(searchParams)
-  const detailParams = new URLSearchParams({ returnTo: listPath })
+  const detailParams = new URLSearchParams({ policyListReturnTo: listPath })
   return `${POLICY_LIST_PATH}/${policyId}?${detailParams.toString()}`
 }
 
@@ -67,20 +72,32 @@ export function isPolicyDetailNavigationState(
     typeof value !== 'object' ||
     value === null ||
     !('from' in value) ||
-    !('returnTo' in value) ||
-    typeof value.returnTo !== 'string' ||
-    !value.returnTo.startsWith('/') ||
-    value.returnTo.startsWith('//')
+    !('policyListReturnTo' in value) ||
+    typeof value.policyListReturnTo !== 'string' ||
+    !value.policyListReturnTo.startsWith('/') ||
+    value.policyListReturnTo.startsWith('//')
   ) {
     return false
   }
 
-  if (value.from === 'policy-list') return true
+  if (value.from === 'policy-list') {
+    return 'policyListScrollKey' in value && typeof value.policyListScrollKey === 'string'
+  }
   if (value.from !== 'my-policies' || !('myPolicyTab' in value)) return false
   return (
     value.myPolicyTab === 'interest' ||
     value.myPolicyTab === 'preparing' ||
     value.myPolicyTab === 'completed'
+  )
+}
+
+export function isPolicyListNavigationState(value: unknown): value is PolicyListNavigationState {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'policyListScrollKey' in value &&
+    typeof value.policyListScrollKey === 'string' &&
+    value.policyListScrollKey.length > 0
   )
 }
 

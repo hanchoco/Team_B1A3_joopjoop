@@ -27,6 +27,7 @@ import {
   buildPolicyDetailPath,
   buildPolicyListPath,
   clearPolicyListScrollPosition,
+  isPolicyListNavigationState,
   POSSIBILITY_FILTERS,
   readPolicyListScrollPosition,
   rememberPolicyListScrollPosition,
@@ -72,6 +73,7 @@ export default function PolicyList() {
   const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
   const { currentUser } = useApp()
+  const navigationState = isPolicyListNavigationState(location.state) ? location.state : null
   const [policies, setPolicies] = useState<PolicySummaryResponse[]>([])
   const [categories, setCategories] = useState<CategoryResponse[]>([])
   const [total, setTotal] = useState(0)
@@ -210,15 +212,16 @@ export default function PolicyList() {
   useEffect(() => {
     if (isPolicyLoading) return
 
-    const scrollY = readPolicyListScrollPosition(location.key)
+    const scrollPositionKey = navigationState?.policyListScrollKey ?? location.key
+    const scrollY = readPolicyListScrollPosition(scrollPositionKey)
     if (scrollY === null) return
 
     const frameId = window.requestAnimationFrame(() => {
       window.scrollTo({ top: scrollY, left: 0, behavior: 'auto' })
-      clearPolicyListScrollPosition(location.key)
+      clearPolicyListScrollPosition(scrollPositionKey)
     })
     return () => window.cancelAnimationFrame(frameId)
-  }, [isPolicyLoading, location.key])
+  }, [isPolicyLoading, location.key, navigationState?.policyListScrollKey])
 
   async function handleToggleBookmark(policy: PolicySummaryResponse) {
     const nextBookmarked = !policy.is_bookmarked
@@ -248,7 +251,8 @@ export default function PolicyList() {
     navigate(buildPolicyDetailPath(policyId, searchParams), {
       state: {
         from: 'policy-list',
-        returnTo: buildPolicyListPath(searchParams),
+        policyListReturnTo: buildPolicyListPath(searchParams),
+        policyListScrollKey: location.key,
       } satisfies PolicyDetailNavigationState,
     })
   }

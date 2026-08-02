@@ -7,6 +7,7 @@ import { getRecommendations } from '../../api/policies'
 import { useApp } from '../../store/useApp'
 import type { PolicySummaryResponse, UserPolicyItemResponse } from '../../types/api'
 import { getBenefitDisplay } from '../../utils/benefitDisplay'
+import type { ChecklistNavigationState } from '../../utils/checklistNavigation'
 import { calculateProfileAccuracy, type CategoryAccuracyData } from '../../utils/profileAccuracy'
 
 export default function MyPage() {
@@ -170,7 +171,14 @@ export default function MyPage() {
                   </p>
                 </div>
                 <button
-                  onClick={() => navigate(`/policies/${continuePolicy.policy_id}/prepare`)}
+                  onClick={() =>
+                    navigate(`/policies/${continuePolicy.policy_id}/prepare`, {
+                      state: {
+                        from: 'mypage',
+                        myPageReturnTo: '/mypage',
+                      } satisfies ChecklistNavigationState,
+                    })
+                  }
                   className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-bold text-white"
                 >
                   이어서 준비하기 <ArrowRight size={16} />

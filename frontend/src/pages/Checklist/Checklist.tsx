@@ -1,6 +1,6 @@
 import { ArrowLeft, Check, CheckCircle2, ExternalLink, FileText, TriangleAlert } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import {
   confirmChecklistCondition,
   recordPolicyApplication,
@@ -17,6 +17,7 @@ import type {
   ChecklistResponse,
   ConditionResultStatus,
 } from '../../types/api'
+import { isChecklistNavigationState } from '../../utils/checklistNavigation'
 
 const CONDITION_LABEL: Record<ConditionResultStatus, string> = {
   SATISFIED: '충족',
@@ -32,8 +33,24 @@ const CONDITION_BADGE: Record<ConditionResultStatus, string> = {
 
 export default function Checklist() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { id } = useParams()
   const policyId = Number(id)
+  const navigationState = isChecklistNavigationState(location.state) ? location.state : null
+  const returnTo =
+    navigationState?.from === 'mypage'
+      ? navigationState.myPageReturnTo
+      : navigationState?.from === 'my-policies'
+        ? navigationState.myPoliciesReturnTo
+        : navigationState?.from === 'policy-detail'
+          ? navigationState.policyDetailReturnTo
+          : `/policies/${id}`
+  const returnButtonLabel =
+    navigationState?.from === 'mypage'
+      ? '마이페이지'
+      : navigationState?.from === 'my-policies'
+        ? '내 정책 관리'
+        : '정책 상세'
 
   const [checklist, setChecklist] = useState<ChecklistResponse | null>(null)
   const [applicationUrl, setApplicationUrl] = useState<string | null>(null)
@@ -42,6 +59,12 @@ export default function Checklist() {
   const [error, setError] = useState('')
   const [busyId, setBusyId] = useState<number | null>(null)
   const [completionAction, setCompletionAction] = useState<'reset' | 'complete' | null>(null)
+
+  function returnToPreviousScreen() {
+    const returnState =
+      navigationState?.from === 'policy-detail' ? navigationState.policyDetailState : undefined
+    navigate(returnTo, { state: returnState })
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -170,10 +193,11 @@ export default function Checklist() {
     return (
       <section className="mx-auto max-w-3xl">
         <button
-          onClick={() => navigate(`/policies/${id}`)}
+          type="button"
+          onClick={returnToPreviousScreen}
           className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500"
         >
-          <ArrowLeft size={16} /> 정책 상세
+          <ArrowLeft size={16} aria-hidden="true" /> {returnButtonLabel}
         </button>
         <p className="mt-6 rounded-lg bg-rose-50 p-4 text-sm font-semibold text-rose-600">
           {error}
@@ -191,10 +215,11 @@ export default function Checklist() {
   return (
     <section>
       <button
-        onClick={() => navigate(`/policies/${id}`)}
+        type="button"
+        onClick={returnToPreviousScreen}
         className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500"
       >
-        <ArrowLeft size={16} /> 정책 상세
+        <ArrowLeft size={16} aria-hidden="true" /> {returnButtonLabel}
       </button>
       <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
