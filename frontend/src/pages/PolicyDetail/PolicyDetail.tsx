@@ -5,6 +5,7 @@ import { bookmarkPolicy, getPolicy, getPolicyMatch, removeBookmark } from '../..
 import { extractErrorMessage } from '../../api/client'
 import OnlineApplicationLink from '../../components/common/OnlineApplicationLink'
 import PolicyContentList from '../../components/policy/PolicyContentList'
+import { HOME_PATH } from '../../constants/routes'
 import type { PolicyDetailResponse, PolicyMatchDetailResponse } from '../../types/api'
 import {
   parsePolicyContent,
@@ -40,12 +41,17 @@ export default function PolicyDetail() {
   const { id } = useParams()
   const [searchParams] = useSearchParams()
   const policyId = Number(id)
+  const isFromHome = searchParams.get('origin') === 'home'
   const policyListPath = resolvePolicyListReturnPath(
     searchParams.get('policyListReturnTo'),
     window.location.origin,
   )
   const navigationState = isPolicyDetailNavigationState(location.state) ? location.state : null
-  const returnButtonLabel = navigationState?.from === 'my-policies' ? '내 정책 관리' : '정책 목록'
+  const returnButtonLabel = isFromHome
+    ? '홈'
+    : navigationState?.from === 'my-policies'
+      ? '내 정책 관리'
+      : '정책 목록'
   const [tab, setTab] = useState<PolicyTab>('지원내용')
   const [policy, setPolicy] = useState<PolicyDetailResponse | null>(null)
   const [match, setMatch] = useState<PolicyMatchDetailResponse | null>(null)
@@ -97,7 +103,12 @@ export default function PolicyDetail() {
     }
   }
 
-  function returnToPolicyList() {
+  function returnToPreviousScreen() {
+    if (isFromHome) {
+      navigate(HOME_PATH)
+      return
+    }
+
     const policyListReturnTo = navigationState?.policyListReturnTo ?? policyListPath
     const listState: PolicyListNavigationState | undefined =
       navigationState?.from === 'policy-list'
@@ -113,7 +124,7 @@ export default function PolicyDetail() {
     return (
       <section>
         <button
-          onClick={returnToPolicyList}
+          onClick={returnToPreviousScreen}
           className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500"
         >
           <ArrowLeft size={16} /> {returnButtonLabel}
@@ -146,7 +157,7 @@ export default function PolicyDetail() {
   return (
     <section>
       <button
-        onClick={returnToPolicyList}
+        onClick={returnToPreviousScreen}
         className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500"
       >
         <ArrowLeft size={16} /> {returnButtonLabel}

@@ -217,7 +217,7 @@ export default function Dashboard() {
             <p className="mt-1 text-sm text-gray-500">관심 분야부터 가볍게 둘러보세요.</p>
           </div>
           <button
-            onClick={() => navigate('/categories')}
+            onClick={() => navigate('/categories?origin=home')}
             className="text-sm font-semibold text-blue-600"
           >
             전체 보기
@@ -232,7 +232,7 @@ export default function Dashboard() {
                 onClick={() =>
                   navigate(
                     code === 'TRANSPORT'
-                      ? '/policies?category_code=TRANSPORT&nav=category'
+                      ? '/policies?category_code=TRANSPORT&nav=category&origin=home'
                       : `/categories/${id}/questions?from=home`,
                   )
                 }
@@ -306,7 +306,7 @@ export default function Dashboard() {
                     onClick={() =>
                       navigate(
                         upcomingPolicy
-                          ? `/policies/${upcomingPolicy.policy_id}`
+                          ? `/policies/${upcomingPolicy.policy_id}?origin=home`
                           : '/mypage/policies?tab=interest&sort=deadline',
                       )
                     }
@@ -330,7 +330,7 @@ export default function Dashboard() {
                 : '아직 마감이 임박한 정책이 없어요.'}
             </p>{' '}
             <button
-              onClick={() => navigate('/mypage/policies?view=urgent&sort=deadline')}
+              onClick={() => navigate('/mypage/policies?view=urgent&sort=deadline&origin=home')}
               className="mt-4 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-bold transition hover:bg-slate-50"
             >
               신청이 임박한 정책 확인하기
@@ -343,7 +343,7 @@ export default function Dashboard() {
               <h2 className="text-lg font-black text-gray-950">내가 놓치고 있는 혜택</h2>
               <div className="ml-6 pt-[35px]">
                 <p className="text-base leading-6 text-gray-500">
-                  현재 기본 조건만으로도{' '}
+                  현재 기본 조건만으로도 최대{' '}
                   <strong className="font-bold text-gray-700">
                     {formatAmount(
                       isLoggedIn ? dashboardSummary?.missed_benefit_total_amount : null,
