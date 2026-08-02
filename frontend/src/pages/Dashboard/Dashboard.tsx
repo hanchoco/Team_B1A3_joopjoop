@@ -306,7 +306,7 @@ export default function Dashboard() {
                     onClick={() =>
                       navigate(
                         upcomingPolicy
-                          ? `/policies/${upcomingPolicy.policy_id}`
+                          ? `/policies/${upcomingPolicy.policy_id}?origin=home`
                           : '/mypage/policies?tab=interest&sort=deadline',
                       )
                     }
