@@ -1,4 +1,4 @@
-import { Camera, CheckCircle2, ChevronDown, UserRound, X } from 'lucide-react'
+import { ArrowLeft, Camera, CheckCircle2, ChevronDown, UserRound, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -519,14 +519,21 @@ export default function EditProfile() {
 
   return (
     <section className="mx-auto max-w-2xl">
-      <p className="text-sm font-semibold text-blue-600">마이페이지</p>
-      <h1 className="mt-2 text-3xl font-black">내 정보 수정</h1>
-      <p className="mt-2 text-sm text-gray-500">
+      <button
+        type="button"
+        onClick={() => navigate('/mypage')}
+        className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500"
+      >
+        <ArrowLeft size={16} aria-hidden="true" />
+        <span>마이페이지</span>
+      </button>
+      <h1 className="mt-8 text-3xl font-black">내 정보 수정</h1>
+      <p className="mt-3 text-sm text-gray-500">
         변경된 정보는 앞으로의 정책 추천과 조건 확인에 반영돼요.
       </p>
       <form
         onSubmit={(event) => void submit(event)}
-        className="mt-6 grid gap-5 rounded-xl border border-gray-200 bg-white p-6 sm:grid-cols-2"
+        className="mt-8 grid gap-5 rounded-xl border border-gray-200 bg-white p-6 sm:grid-cols-2"
       >
         <div className="flex items-center gap-5 border-b border-gray-100 pb-5 sm:col-span-2">
           <span className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-full bg-slate-100 text-gray-400">
