@@ -1,13 +1,11 @@
-import type { ChangeEvent } from 'react'
 import type { SavingsAssetRuleJson } from '../../types/api'
 import type { SimulatorFormProps } from '../../types/simulator'
 import { formatWon } from '../../utils/formatWon'
+import CurrencyInput from './CurrencyInput'
 import KnownRuleInfo from './KnownRuleInfo'
 
 export default function SavingsAssetSimulatorForm({ rule, values, onChange }: SimulatorFormProps) {
   const r = rule as unknown as SavingsAssetRuleJson
-  const update = (event: ChangeEvent<HTMLInputElement>) =>
-    onChange(event.target.name, event.target.value === '' ? undefined : Number(event.target.value))
 
   return (
     <div>
@@ -29,18 +27,14 @@ export default function SavingsAssetSimulatorForm({ rule, values, onChange }: Si
         ]}
       />
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className="text-sm font-semibold">
-          매월 납입 예정 금액
-          <input
-            name="monthly_deposit_amount"
-            type="number"
-            min={0}
-            required
-            value={values.monthly_deposit_amount ?? ''}
-            onChange={update}
-            className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 font-normal"
-          />
-        </label>
+        <CurrencyInput
+          name="monthly_deposit_amount"
+          label="매월 납입 예정 금액"
+          required
+          placeholder="예: 100,000"
+          value={values.monthly_deposit_amount}
+          onChange={onChange}
+        />
       </div>
     </div>
   )
