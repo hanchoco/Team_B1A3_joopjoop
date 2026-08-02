@@ -417,13 +417,7 @@
           "max_total_amount": null,
           "min_amount": 600000,
           "payment_cycle": "MONTHLY",
-          "calculation_rule_json": {
-            "education_subsidy_amount": null,
-            "employment_success_bonus_amount": 1500000,
-            "support_months": 6,
-            "training_allowance_amount": null,
-            "type": "EMPLOYMENT_EDUCATION"
-          }
+          "calculation_rule_json": null
         },
         {
           "amount_type": "FIXED",
@@ -443,7 +437,14 @@
           "max_amount": 1500000,
           "max_total_amount": null,
           "min_amount": 1500000,
-          "payment_cycle": "ONCE"
+          "payment_cycle": "ONCE",
+          "calculation_rule_json": {
+            "training_allowance_amount": null,
+            "education_subsidy_amount": null,
+            "employment_success_bonus_amount": 1500000,
+            "support_months": null,
+            "type": "EMPLOYMENT_EDUCATION"
+          }
         }
       ],
       "category_codes": [

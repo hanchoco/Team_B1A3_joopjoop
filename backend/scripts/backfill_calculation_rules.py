@@ -130,11 +130,15 @@ async def create_calc_rule_backfill_draft(
                     f"(calc_type={calc_type.value})",
                     flush=True,
                 )
+                other_display_texts = [
+                    other.display_text for other in policy.benefits if other.id != benefit.id
+                ]
                 rule = await extract_calculation_rule(
                     policy_payload,
                     calc_type=calc_type,
                     client=ai_client,
                     benefit_display_text=benefit.display_text,
+                    other_benefit_display_texts=other_display_texts,
                 )
                 if rule is None:
                     skipped_incomplete += 1

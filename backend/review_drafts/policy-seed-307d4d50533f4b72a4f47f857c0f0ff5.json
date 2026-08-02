@@ -1666,7 +1666,14 @@
           "max_amount": 500000,
           "max_total_amount": null,
           "min_amount": 0,
-          "payment_cycle": "MONTHLY"
+          "payment_cycle": "MONTHLY",
+          "calculation_rule_json": {
+            "training_allowance_amount": 500000,
+            "education_subsidy_amount": null,
+            "employment_success_bonus_amount": null,
+            "support_months": null,
+            "type": "EMPLOYMENT_EDUCATION"
+          }
         }
       ],
       "category_codes": [

@@ -87,9 +87,17 @@ _REQUIRED_FIELDS: dict[CalcType, tuple[str, ...]] = {
         "base_interest_rate_percent",
     ),
     CalcType.HOUSING_RENT: ("monthly_support_cap_amount", "support_months"),
-    CalcType.EMPLOYMENT_EDUCATION: ("support_months",),
     CalcType.TAX_DEDUCTION: ("deduction_rate_percent", "deduction_type"),
 }
+
+# EMPLOYMENT_EDUCATION은 support_months가 있거나, 아래 금액 필드 중 하나라도 있으면
+# 완전한 것으로 본다 - services/policy_engine/calc_type.py의
+# _EMPLOYMENT_EDUCATION_AMOUNT_FIELDS와 반드시 함께 갱신한다.
+_EMPLOYMENT_EDUCATION_AMOUNT_FIELDS: tuple[str, ...] = (
+    "training_allowance_amount",
+    "education_subsidy_amount",
+    "employment_success_bonus_amount",
+)
 
 ALLOWED_PAYMENT_CYCLES = {"ONCE", "MONTHLY", "YEARLY", "MATURITY", "VARIABLE"}
 ALLOWED_DEDUCTION_TYPES = {"TAX_CREDIT", "INCOME_DEDUCTION"}
@@ -118,6 +126,11 @@ def is_calculation_rule_complete(calc_type: CalcType, result: dict) -> bool:
         if result.get("deduction_type") not in ALLOWED_DEDUCTION_TYPES:
             return False
 
+    if calc_type is CalcType.EMPLOYMENT_EDUCATION:
+        if result.get("support_months") is not None:
+            return True
+        return any(result.get(field) is not None for field in _EMPLOYMENT_EDUCATION_AMOUNT_FIELDS)
+
     required = _REQUIRED_FIELDS.get(calc_type, ())
     return all(result.get(field) is not None for field in required)
 
@@ -133,6 +146,7 @@ async def extract_calculation_rule(
     calc_type: CalcType,
     client: SolarClient,
     benefit_display_text: str | None = None,
+    other_benefit_display_texts: list[str] | None = None,
 ) -> dict | None:
     """calc_type 하나에 대한 calculation_rule_json 필드를 채운다.
 
@@ -142,6 +156,11 @@ async def extract_calculation_rule(
         한 정책에 같은 CalcType의 혜택이 2개 이상 있을 때(예: "사전활동 수당 1만원"과
         "실비 3만원"이 같은 정책 원문에 함께 있는 경우), 이게 없으면 AI가 원문에서 아무
         숫자나 집어서 서로 다른 혜택끼리 값이 뒤섞이는 문제가 실제로 관측됐다.
+    other_benefit_display_texts: 같은 정책의 나머지 혜택 항목들(자기 자신 제외)의 한 줄
+        요약. 혜택이 2개일 때는 benefit_display_text 하나로 충분히 구분됐지만, 3개 이상일
+        때(예: 구직촉진수당/참여수당/취업성공수당처럼 금액이 3개 이상 섞여 있는 정책)는
+        "이 항목만 보라"는 긍정 힌트만으로는 부족해서 실제로 다른 항목의 숫자를 가져오는
+        오류가 관측됐다 - "이 목록의 숫자는 쓰지 말라"는 명시적 제외 목록을 추가로 준다.
     반환: 필수 필드가 모두 채워졌으면 "type" 키를 포함한 dict, 하나라도 비어있으면 None.
     """
 
@@ -153,10 +172,19 @@ async def extract_calculation_rule(
     support_content = (
         raw.get("plcySprtCn", "") or policy_payload.get("support_content_text", "") or "(없음)"
     )
+    other_benefits_block = ""
+    if other_benefit_display_texts:
+        other_lines = "\n".join(f"- {text}" for text in other_benefit_display_texts if text)
+        if other_lines:
+            other_benefits_block = f"""
+같은 정책 안에 다음 다른 혜택 항목들도 있습니다. 이 항목들은 이번 추출 대상이
+아닙니다 - 아래 목록에 나온 금액/기간은 절대 가져오지 마세요:
+{other_lines}
+"""
     benefit_hint = (
         f"""
 [이 혜택 항목] {benefit_display_text}
-
+{other_benefits_block}
 지원 내용에 여러 혜택이 함께 설명되어 있다면, 위 [이 혜택 항목]에 해당하는 금액/조건만
 사용하세요. 다른 혜택 항목의 숫자를 가져오지 마세요.
 """

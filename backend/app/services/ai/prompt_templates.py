@@ -292,10 +292,14 @@ CALC_RULE_EMPLOYMENT_EDUCATION_PROMPT = """당신은 한국 청년 정책 원문
 - training_allowance_amount: 훈련수당(원, 보통 월 단위로 반복 지급).
 - education_subsidy_amount: 교육비 지원액(원).
 - employment_success_bonus_amount: 취업성공수당처럼 1회성으로 추가 지급되는 금액(원).
-- support_months: 지원 기간(개월). 원문에 명시적 기간이 없으면 null.
+- support_months: 지원 기간(개월). 원문에 명시적 기간이 없으면 null로 두세요. 자격증
+  응시료 지원처럼 "연 최대 10만원"처럼 금액은 있지만 지원 개월 수라는 개념 자체가
+  없는 1회성 실비 지원도 있습니다 — 이런 경우 지어내지 말고 null로 두세요.
 
 세 금액 필드는 정책에 따라 하나만 있거나 아예 없을 수 있습니다 — 있는 것만 채우고
-없는 건 null로 두세요. 숫자를 지어내거나 비슷한 다른 정책의 관행으로 채우지 마세요."""
+없는 건 null로 두세요. 단, 세 금액 필드가 전부 null이면서 support_months도 null이면
+안 됩니다 — 최소한 금액 필드 중 하나 또는 support_months 중 하나는 원문에서 찾아
+채워야 합니다. 숫자를 지어내거나 비슷한 다른 정책의 관행으로 채우지 마세요."""
 
 
 CALC_RULE_TAX_DEDUCTION_PROMPT = """당신은 한국 청년 정책 원문에서 "세액/소득 공제"

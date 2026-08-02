@@ -1,0 +1,38 @@
+{
+  "approved_at": "2026-08-01T13:58:12.999477+00:00",
+  "batch_id": "6c2b6514a72b4c129c1a335bd36bb6cf",
+  "generated_at": "2026-08-01T13:55:12.161671+00:00",
+  "kind": "calc_rule_backfill_batch",
+  "policies": [
+    {
+      "benefit_display_text": "참여수당(최대 월 50만원까지)",
+      "benefit_id": 2291,
+      "calc_type": "EMPLOYMENT_EDUCATION",
+      "calculation_rule_json": {
+        "education_subsidy_amount": null,
+        "employment_success_bonus_amount": null,
+        "support_months": null,
+        "training_allowance_amount": 500000,
+        "type": "EMPLOYMENT_EDUCATION"
+      },
+      "policy_id": 56,
+      "policy_title": "k-뉴딜 아카데미"
+    },
+    {
+      "benefit_display_text": "취업성공수당 : 중위소득 60%이하인 자 및 특정계층 참여자, 최대 150만원 지원",
+      "benefit_id": 2249,
+      "calc_type": "EMPLOYMENT_EDUCATION",
+      "calculation_rule_json": {
+        "education_subsidy_amount": null,
+        "employment_success_bonus_amount": 1500000,
+        "support_months": null,
+        "training_allowance_amount": null,
+        "type": "EMPLOYMENT_EDUCATION"
+      },
+      "policy_id": 58,
+      "policy_title": "국민취업지원제도"
+    }
+  ],
+  "schema_version": 1,
+  "status": "approved"
+}

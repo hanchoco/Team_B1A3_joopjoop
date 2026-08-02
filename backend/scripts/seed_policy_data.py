@@ -458,11 +458,15 @@ async def create_seed_draft(
             for benefit in benefits:
                 calc_type = resolve_calc_type_for_codes(benefit.benefit_type, category_codes)
                 if calc_type is not None:
+                    other_display_texts = [
+                        other.display_text for other in benefits if other is not benefit
+                    ]
                     benefit.calculation_rule_json = await extract_calculation_rule(
                         policy_payload,
                         calc_type=calc_type,
                         client=ai_client,
                         benefit_display_text=benefit.display_text,
+                        other_benefit_display_texts=other_display_texts,
                     )
             bundles.append(
                 {

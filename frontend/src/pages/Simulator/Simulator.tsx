@@ -30,7 +30,12 @@ const CALC_TYPE_CONFIG: Record<CalcType, CalcTypeConfig> = {
 }
 
 function simulatableBenefits(policy: PolicyDetailResponse): PolicyBenefitResponse[] {
-  return policy.benefits.filter((benefit) => benefit.calc_type !== null)
+  // calc_type이 있어도 calculation_rule_json이 비어있으면(원문에서 확정 숫자를 못 뽑아
+  // AI가 억지로 채우지 않은 경우) 계산이 불가능하다 - 백엔드가 이미 두 상태를 완전/null
+  // 둘 중 하나로만 보장하므로(부분 채움 없음) null 여부만 확인하면 충분하다.
+  return policy.benefits.filter(
+    (benefit) => benefit.calc_type !== null && benefit.calculation_rule_json !== null,
+  )
 }
 
 export default function Simulator() {

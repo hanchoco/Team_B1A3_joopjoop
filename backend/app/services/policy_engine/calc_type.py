@@ -70,7 +70,6 @@ _REQUIRED_RULE_FIELDS_BY_CALC_TYPE: dict[CalcType, tuple[str, ...]] = {
         "monthly_support_cap_amount",
         "support_months",
     ),
-    CalcType.EMPLOYMENT_EDUCATION: ("support_months",),
     CalcType.TAX_DEDUCTION: (
         "deduction_rate_percent",
         "deduction_type",
@@ -83,6 +82,16 @@ _REQUIRED_CASH_VOUCHER_RULE_FIELDS_BY_AMOUNT_TYPE: dict[str, tuple[str, ...]] = 
     "FIXED": ("amount", "payment_cycle", "max_count"),
     "PERCENTAGE": ("rate_percent", "cap_amount", "payment_cycle"),
 }
+
+# EMPLOYMENT_EDUCATION은 support_months가 있거나, 아래 금액 필드 중 하나라도 있으면
+# 완전한 것으로 본다(둘 다 없으면 불완전) - support_months가 없는 경우는 자격증
+# 응시료 지원처럼 "지원 개월" 개념이 없는 1회성 실비 지원으로 간주해
+# calculate_employment_education()에서 1개월로 계산한다.
+_EMPLOYMENT_EDUCATION_AMOUNT_FIELDS: tuple[str, ...] = (
+    "training_allowance_amount",
+    "education_subsidy_amount",
+    "employment_success_bonus_amount",
+)
 
 
 def resolve_calc_type(benefit: BenefitLike, policy: PolicyLike) -> CalcType | None:
@@ -144,6 +153,14 @@ def _has_required_rule_fields(
         if required_fields is None:
             return False
         return all(calculation_rule_json.get(field) is not None for field in required_fields)
+
+    if calc_type is CalcType.EMPLOYMENT_EDUCATION:
+        if calculation_rule_json.get("support_months") is not None:
+            return True
+        return any(
+            calculation_rule_json.get(field) is not None
+            for field in _EMPLOYMENT_EDUCATION_AMOUNT_FIELDS
+        )
 
     required_fields = _REQUIRED_RULE_FIELDS_BY_CALC_TYPE[calc_type]
     return all(calculation_rule_json.get(field) is not None for field in required_fields)

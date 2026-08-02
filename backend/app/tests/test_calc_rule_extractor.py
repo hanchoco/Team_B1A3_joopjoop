@@ -42,26 +42,27 @@ class _ContextAwareSolarClient:
     """Returns a different response depending on which display_text was named in the
     [이 혜택 항목] hint - simulates the AI correctly disambiguating between multiple
     benefits described in the same policy text (reproduces the real "찐이 4기" bug
-    scenario). Only looks at the hint section, not the full support_content_text
-    (which always contains every benefit's wording regardless of which one is being
-    asked about right now)."""
+    scenario). Only looks at the [이 혜택 항목] line itself, not the whole hint section -
+    when other_benefit_display_texts is used, the exclusion list also mentions the other
+    benefits' wording nearby, so matching against the wider section would spuriously
+    match every marker regardless of which benefit is actually being asked about."""
 
     def __init__(self, responses_by_marker: dict[str, dict]) -> None:
         self._responses_by_marker = responses_by_marker
 
     async def complete_json(self, system_prompt: str, user_content: str) -> dict:
         del system_prompt
-        marker_start = user_content.find("[이 혜택 항목]")
-        content_start = user_content.find("[지원 내용]")
-        hint_section = (
-            user_content[marker_start:content_start]
-            if marker_start != -1 and content_start != -1
-            else ""
-        )
+        label = "[이 혜택 항목] "
+        label_start = user_content.find(label)
+        if label_start == -1:
+            raise AssertionError(f"no [이 혜택 항목] hint found: {user_content!r}")
+        own_hint_start = label_start + len(label)
+        own_hint_end = user_content.find("\n", own_hint_start)
+        own_hint = user_content[own_hint_start : own_hint_end if own_hint_end != -1 else None]
         for marker, response in self._responses_by_marker.items():
-            if marker in hint_section:
+            if marker in own_hint:
                 return response
-        raise AssertionError(f"no marker matched in hint section: {hint_section!r}")
+        raise AssertionError(f"no marker matched in own hint line: {own_hint!r}")
 
 
 def _policy_payload(title: str, support_content: str) -> dict:
@@ -294,7 +295,8 @@ def test_extract_calculation_rule_housing_rent_accepts_complete_response() -> No
 
 
 # ---------------------------------------------------------------------------
-# extract_calculation_rule() - EMPLOYMENT_EDUCATION (only support_months required)
+# extract_calculation_rule() - EMPLOYMENT_EDUCATION
+# (support_months가 있거나, 금액 필드 중 하나라도 있으면 완전한 것으로 인정)
 # ---------------------------------------------------------------------------
 
 
@@ -320,7 +322,11 @@ def test_extract_calculation_rule_employment_education_accepts_support_months_on
     assert result["support_months"] == 6
 
 
-def test_extract_calculation_rule_employment_education_rejects_missing_support_months() -> None:
+def test_extract_calculation_rule_employment_education_accepts_amount_without_support_months() -> (
+    None
+):
+    """support_months가 없어도 금액 필드가 하나라도 있으면 1회성 지급으로 인정한다."""
+
     client = _FakeSolarClient(
         {
             "training_allowance_amount": 300000,
@@ -333,6 +339,29 @@ def test_extract_calculation_rule_employment_education_rejects_missing_support_m
     result = asyncio.run(
         extract_calculation_rule(
             _policy_payload("청년 취업 지원", "훈련수당 30만원, 기간은 불명확"),
+            calc_type=CalcType.EMPLOYMENT_EDUCATION,
+            client=client,
+        )
+    )
+
+    assert result is not None
+    assert result["training_allowance_amount"] == 300000
+    assert result["support_months"] is None
+
+
+def test_extract_calculation_rule_employment_education_rejects_when_both_missing() -> None:
+    client = _FakeSolarClient(
+        {
+            "training_allowance_amount": None,
+            "education_subsidy_amount": None,
+            "employment_success_bonus_amount": None,
+            "support_months": None,
+        }
+    )
+
+    result = asyncio.run(
+        extract_calculation_rule(
+            _policy_payload("청년 취업 지원", "선정자 대상 지원 (금액/기간 모두 불명확)"),
             calc_type=CalcType.EMPLOYMENT_EDUCATION,
             client=client,
         )
@@ -457,6 +486,96 @@ def test_extract_calculation_rule_disambiguates_between_two_benefits_of_same_pol
 
     assert first is not None and first["amount"] == 10000
     assert second is not None and second["amount"] == 30000
+
+
+def test_extract_calculation_rule_includes_other_benefit_exclusion_list_in_prompt() -> None:
+    client = _RecordingSolarClient(
+        {
+            "training_allowance_amount": None,
+            "education_subsidy_amount": None,
+            "employment_success_bonus_amount": 1500000,
+            "support_months": None,
+        }
+    )
+
+    asyncio.run(
+        extract_calculation_rule(
+            _policy_payload("국민취업지원제도", "구직촉진수당 / 참여수당 / 취업성공수당"),
+            calc_type=CalcType.EMPLOYMENT_EDUCATION,
+            client=client,
+            benefit_display_text=(
+                "취업성공수당 : 중위소득 60%이하인 자 및 특정계층 참여자, 최대 150만원 지원"
+            ),
+            other_benefit_display_texts=[
+                "구직촉진수당 : 취업활동계획에 따른 구직활동 이행시 월 60~100만원, 6개월 지원",
+                "참여수당 : 취업활동비용 최대 35만원 지원",
+            ],
+        )
+    )
+
+    assert client.last_user_content is not None
+    assert "구직촉진수당" in client.last_user_content
+    assert "참여수당 : 취업활동비용 최대 35만원 지원" in client.last_user_content
+
+
+def test_extract_calculation_rule_disambiguates_between_three_benefits_of_same_policy() -> None:
+    """Reproduces the real 국민취업지원제도 bug: with 3 CASH benefits sharing one support
+    text (구직촉진수당 월 60~100만원/6개월, 참여수당 35만원, 취업성공수당 150만원), a
+    positive-only hint let the AI reuse 취업성공수당's 150만원 for 참여수당 too. Passing
+    the other two benefits as an explicit exclusion list must keep each call isolated."""
+
+    client = _ContextAwareSolarClient(
+        {
+            "구직촉진수당": {
+                "training_allowance_amount": 850000,
+                "education_subsidy_amount": None,
+                "employment_success_bonus_amount": None,
+                "support_months": 6,
+            },
+            "참여수당": {
+                "training_allowance_amount": None,
+                "education_subsidy_amount": 350000,
+                "employment_success_bonus_amount": None,
+                "support_months": None,
+            },
+            "취업성공수당": {
+                "training_allowance_amount": None,
+                "education_subsidy_amount": None,
+                "employment_success_bonus_amount": 1500000,
+                "support_months": None,
+            },
+        }
+    )
+    policy_payload = _policy_payload(
+        "국민취업지원제도",
+        "(Ⅰ유형) 구직촉진수당 : 취업활동계획에 따른 구직활동 이행시 월 60~100만원, 6개월 지원\n"
+        "(Ⅱ유형) 참여수당 : 취업활동비용 최대 35만원 지원\n"
+        "(취업성공수당) 중위소득 60%이하인 자 및 특정계층 참여자, 최대 150만원 지원",
+    )
+    display_texts = {
+        "job_seeking": (
+            "구직촉진수당 : 취업활동계획에 따른 구직활동 이행시 월 60~100만원, 6개월 지원"
+        ),
+        "participation": "참여수당 : 취업활동비용 최대 35만원 지원",
+        "success": ("취업성공수당 : 중위소득 60%이하인 자 및 특정계층 참여자, 최대 150만원 지원"),
+    }
+
+    results = {}
+    for key, own_text in display_texts.items():
+        others = [text for other_key, text in display_texts.items() if other_key != key]
+        results[key] = asyncio.run(
+            extract_calculation_rule(
+                policy_payload,
+                calc_type=CalcType.EMPLOYMENT_EDUCATION,
+                client=client,
+                benefit_display_text=own_text,
+                other_benefit_display_texts=others,
+            )
+        )
+
+    assert results["job_seeking"]["training_allowance_amount"] == 850000
+    assert results["participation"]["education_subsidy_amount"] == 350000
+    assert results["success"]["employment_success_bonus_amount"] == 1500000
 
 
 # ---------------------------------------------------------------------------

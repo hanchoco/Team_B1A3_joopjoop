@@ -158,7 +158,12 @@
 | `training_allowance_amount` | number | optional | 훈련수당(원) |
 | `education_subsidy_amount` | number | optional | 교육비 지원액(원) |
 | `employment_success_bonus_amount` | number | optional | 취업성공수당(원) |
-| `support_months` | integer | ✅ | 지원 기간(개월) |
+| `support_months` | integer | optional | 지원 기간(개월). 원문에 지원 기간이 없으면 null — 이 경우 1회성 지급으로 간주해 계산 시 1개월로 취급한다 |
+
+> **완전성 조건**: `support_months`가 있거나, 위 세 금액 필드 중 최소 1개가 있어야 한다.
+> 자격증 응시료 지원처럼 "연 최대 10만원"처럼 금액은 명확한데 지원 개월 수 개념이 아예
+> 없는 1회성 실비 지원을 표현하기 위한 규칙이다. 금액도 없고 `support_months`도 없으면
+> 추출을 포기한다(null 전체 반환).
 
 ```json
 {
@@ -167,6 +172,16 @@
   "education_subsidy_amount": 1000000,
   "employment_success_bonus_amount": 1500000,
   "support_months": 6
+}
+```
+
+```json
+{
+  "type": "EMPLOYMENT_EDUCATION",
+  "training_allowance_amount": null,
+  "education_subsidy_amount": 100000,
+  "employment_success_bonus_amount": null,
+  "support_months": null
 }
 ```
 

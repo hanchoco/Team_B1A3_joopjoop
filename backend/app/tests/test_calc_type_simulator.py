@@ -253,6 +253,18 @@ def test_employment_education_without_bonus_leaves_total_unmodified() -> None:
     assert result.total_benefit_amount == Decimal("1800000.00")
 
 
+def test_employment_education_defaults_support_months_to_one_when_absent() -> None:
+    """지원 개월 정보가 없는 1회성 실비 지원(예: 자격증 응시료 지원)은 1개월로 계산한다."""
+
+    rule = {"training_allowance_amount": "100000"}
+    result = calculate_employment_education(rule, {})
+
+    assert result.support_months == 1
+    assert result.monthly_after_amount == Decimal("100000.00")
+    assert result.annual_savings_amount == Decimal("100000.00")
+    assert result.total_benefit_amount == Decimal("100000.00")
+
+
 # ---------------------------------------------------------------------------
 # calculate_tax_deduction
 # ---------------------------------------------------------------------------
