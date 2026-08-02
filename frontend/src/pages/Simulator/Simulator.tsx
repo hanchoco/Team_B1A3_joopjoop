@@ -197,6 +197,13 @@ export default function Simulator() {
     Number(result.monthly_savings_amount) === 0 &&
     Number(result.total_benefit_amount) > 0
   const isReduceDirection = result != null && REDUCE_CALC_TYPES.has(result.category)
+  // support_months가 12 미만이면 연 기준 금액이 월×12가 아니라 실제 지원 개월만큼만
+  // 반영되므로(_build_result의 active_months_in_year), 오해를 막기 위해 안내 문구를 띄운다.
+  const isPartialYearSupport =
+    result != null &&
+    result.category === 'EMPLOYMENT_EDUCATION' &&
+    !isOneTimeOnlyBenefit &&
+    result.support_months < 12
   // 취업성공수당처럼 1회성 성분이 합산된 결과에만 "(1회성 포함 총액)" 부제를 붙인다 -
   // calculate_employment_education()이 이 값을 0으로 채워 넣더라도 breakdown엔 항상
   // employment_success_bonus_amount 키가 있으므로 존재 여부가 아니라 값(> 0)으로 판별한다.
@@ -298,6 +305,12 @@ export default function Simulator() {
                   </button>
                 ))}
               </div>
+
+              {isPartialYearSupport && (
+                <p className="mt-4 text-center text-sm text-gray-500">
+                  이 혜택은 {result.support_months}개월간 지급돼요.
+                </p>
+              )}
 
               <div className="mt-5 grid items-stretch gap-4 md:grid-cols-[1fr_auto_1fr]">
                 <div className="rounded-xl border border-gray-200 bg-white p-6">
