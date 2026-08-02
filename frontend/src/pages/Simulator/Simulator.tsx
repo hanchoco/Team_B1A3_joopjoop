@@ -210,6 +210,7 @@ export default function Simulator() {
   const includesOneTimeComponent =
     result != null &&
     result.category === 'EMPLOYMENT_EDUCATION' &&
+    !isOneTimeOnlyBenefit &&
     Number(result.breakdown.employment_success_bonus_amount ?? 0) > 0
   const totalBenefitLabel = `내 조건 기준 예상 혜택${includesOneTimeComponent ? ' (1회성 포함 총액)' : ''}`
 
@@ -284,9 +285,11 @@ export default function Simulator() {
                 <p className="text-sm text-gray-500">{totalBenefitLabel}</p>
                 <p className="mt-1 text-2xl font-black">{formatWon(result.total_benefit_amount)}</p>
               </div>
-              <p className="mt-4 text-center text-sm text-gray-500">
-                이 정책은 매월 반복 지급이 아닌, 조건 충족 시 1회성으로 지급되는 수당이에요.
-              </p>
+              <div className="mt-4 mb-10 flex justify-center">
+                <span className="inline-block rounded bg-blue-50 px-2 py-1 text-xs font-bold text-blue-600">
+                  이 정책은 매월 반복 지급이 아닌, 조건 충족 시 1회성으로 지급되는 수당이에요.
+                </span>
+              </div>
             </>
           ) : (
             <>
