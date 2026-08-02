@@ -65,6 +65,10 @@ export default function MyPolicies() {
     requestedTab === 'preparing' || requestedTab === 'completed' ? requestedTab : 'interest'
   const sort = searchParams.get('sort') || 'recent'
   const isUrgentView = searchParams.get('view') === 'urgent'
+  const backLink =
+    isUrgentView && searchParams.get('origin') === 'home'
+      ? { label: '홈', path: '/' }
+      : { label: '마이페이지', path: '/mypage' }
 
   const [policies, setPolicies] = useState<UserPolicyItemResponse[]>([])
   const [loading, setLoading] = useState(true)
@@ -164,11 +168,11 @@ export default function MyPolicies() {
     <section>
       <button
         type="button"
-        onClick={() => navigate('/mypage')}
+        onClick={() => navigate(backLink.path)}
         className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500"
       >
         <ArrowLeft size={16} aria-hidden="true" />
-        <span>마이페이지</span>
+        <span>{backLink.label}</span>
       </button>
       <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>

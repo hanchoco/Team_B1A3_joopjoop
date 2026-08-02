@@ -330,7 +330,7 @@ export default function Dashboard() {
                 : '아직 마감이 임박한 정책이 없어요.'}
             </p>{' '}
             <button
-              onClick={() => navigate('/mypage/policies?view=urgent&sort=deadline')}
+              onClick={() => navigate('/mypage/policies?view=urgent&sort=deadline&origin=home')}
               className="mt-4 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-bold transition hover:bg-slate-50"
             >
               신청이 임박한 정책 확인하기
