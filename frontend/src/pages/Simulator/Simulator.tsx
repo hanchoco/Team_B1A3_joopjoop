@@ -34,6 +34,15 @@ const CALC_TYPE_CONFIG: Record<CalcType, CalcTypeConfig> = {
   TAX_DEDUCTION: { Form: TaxDeductionSimulatorForm, label: '세금 공제' },
 }
 
+// 각 calc_type의 계산 함수가 고정으로 갖는 방향성(services/policy_engine/simulator.py의
+// calculate_*() direction 파라미터, API 응답엔 노출되지 않음)을 프론트에서 그대로 재현한다.
+// 정책/benefit별로 달라지지 않고 calc_type 1개당 고정값이라 여기서 하드코딩해도 안전하다.
+const REDUCE_CALC_TYPES: ReadonlySet<CalcType> = new Set([
+  'LOAN_INTEREST',
+  'HOUSING_RENT',
+  'TAX_DEDUCTION',
+])
+
 function simulatableBenefits(policy: PolicyDetailResponse): PolicyBenefitResponse[] {
   // calc_type이 있어도 calculation_rule_json이 비어있으면(원문에서 확정 숫자를 못 뽑아
   // AI가 억지로 채우지 않은 경우) 계산이 불가능하다 - 백엔드가 이미 두 상태를 완전/null
@@ -187,6 +196,15 @@ export default function Simulator() {
     result.category === 'EMPLOYMENT_EDUCATION' &&
     Number(result.monthly_savings_amount) === 0 &&
     Number(result.total_benefit_amount) > 0
+  const isReduceDirection = result != null && REDUCE_CALC_TYPES.has(result.category)
+  // 취업성공수당처럼 1회성 성분이 합산된 결과에만 "(1회성 포함 총액)" 부제를 붙인다 -
+  // calculate_employment_education()이 이 값을 0으로 채워 넣더라도 breakdown엔 항상
+  // employment_success_bonus_amount 키가 있으므로 존재 여부가 아니라 값(> 0)으로 판별한다.
+  const includesOneTimeComponent =
+    result != null &&
+    result.category === 'EMPLOYMENT_EDUCATION' &&
+    Number(result.breakdown.employment_success_bonus_amount ?? 0) > 0
+  const totalBenefitLabel = `내 조건 기준 예상 혜택${includesOneTimeComponent ? ' (1회성 포함 총액)' : ''}`
 
   return (
     <section className="mx-auto max-w-4xl">
@@ -257,7 +275,7 @@ export default function Simulator() {
           {isOneTimeOnlyBenefit ? (
             <>
               <div className="mt-6 flex flex-col items-center rounded-xl border border-gray-200 bg-white p-6 text-center">
-                <p className="text-sm text-gray-500">내 조건 기준 예상 혜택 (1회성 포함 총액)</p>
+                <p className="text-sm text-gray-500">{totalBenefitLabel}</p>
                 <p className="mt-1 text-2xl font-black">{formatWon(result.total_benefit_amount)}</p>
               </div>
               <p className="mt-4 text-center text-sm text-gray-500">
@@ -283,7 +301,9 @@ export default function Simulator() {
 
               <div className="mt-5 grid items-stretch gap-4 md:grid-cols-[1fr_auto_1fr]">
                 <div className="rounded-xl border border-gray-200 bg-white p-6">
-                  <p className="text-sm font-semibold text-gray-500">지원 전 · Before</p>
+                  <p className="text-sm font-semibold text-gray-500">
+                    지원 전 ({isReduceDirection ? '기존 지출' : '기존 수령액'})
+                  </p>
                   <p className="mt-5 text-4xl font-black">{formatWon(beforeAmount)}</p>
                   <p className="mt-6 border-t pt-5 text-sm text-gray-500">현재 기준</p>
                 </div>
@@ -291,7 +311,9 @@ export default function Simulator() {
                   <ArrowRight className="rotate-90 text-blue-600 md:rotate-0" />
                 </div>
                 <div className="rounded-xl border border-blue-200 bg-blue-50 p-6">
-                  <p className="text-sm font-semibold text-blue-700">지원 후 · After</p>
+                  <p className="text-sm font-semibold text-blue-700">
+                    지원 후 ({isReduceDirection ? '예상 지출' : '예상 수령액'})
+                  </p>
                   <p className="mt-5 text-4xl font-black text-blue-700">{formatWon(afterAmount)}</p>
                   <p className="mt-6 border-t border-blue-200 pt-5 text-sm text-blue-700">
                     지원금 반영 후 예상 금액
@@ -301,12 +323,14 @@ export default function Simulator() {
 
               <div className="mt-5 flex flex-col items-center rounded-xl border border-blue-200 bg-white p-6 text-center">
                 <TrendingDown className="text-blue-600" />
-                <p className="mt-3 text-sm text-gray-500">{period} 총 절감 금액</p>
+                <p className="mt-3 text-sm text-gray-500">
+                  {period} {isReduceDirection ? '총 절감 금액' : '총 지원 증가액'}
+                </p>
                 <p className="mt-1 text-3xl font-black text-blue-600">+{formatWon(savedAmount)}</p>
               </div>
 
               <div className="mt-5 flex flex-col items-center rounded-xl border border-gray-200 bg-white p-6 text-center">
-                <p className="text-sm text-gray-500">내 조건 기준 예상 혜택 (1회성 포함 총액)</p>
+                <p className="text-sm text-gray-500">{totalBenefitLabel}</p>
                 <p className="mt-1 text-2xl font-black">{formatWon(result.total_benefit_amount)}</p>
               </div>
             </>
