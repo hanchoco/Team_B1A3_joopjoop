@@ -373,7 +373,7 @@ export default function PolicyList() {
                 )}
                 <span>
                   {selectedCategoryName ? ' 정책' : '정책'}
-                  {showResultCount && ` ${policies.length}개`}
+                  {showResultCount && ` ${total}개`}
                 </span>
               </>
             )}
