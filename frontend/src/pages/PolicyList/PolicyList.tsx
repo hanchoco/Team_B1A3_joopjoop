@@ -20,6 +20,7 @@ import { listCategories } from '../../api/categories'
 import { bookmarkPolicy, listPolicies, removeBookmark } from '../../api/policies'
 import { extractErrorMessage } from '../../api/client'
 import ContentStatePanel from '../../components/common/ContentStatePanel'
+import { HOME_PATH } from '../../constants/routes'
 import type { CategoryResponse, EligibilityStatus, PolicySummaryResponse } from '../../types/api'
 import { useApp } from '../../store/useApp'
 import { getBenefitDisplay } from '../../utils/benefitDisplay'
@@ -90,11 +91,13 @@ export default function PolicyList() {
   const searchKeyword = searchParams.get('search')?.trim() ?? ''
   const origin = searchParams.get('origin')
   const originBackLink =
-    origin === 'mypage'
-      ? { label: '마이페이지', path: '/mypage' }
-      : origin === 'category'
-        ? { label: '카테고리 선택', path: '/categories' }
-        : null
+    origin === 'home'
+      ? { label: '홈', path: HOME_PATH }
+      : origin === 'mypage'
+        ? { label: '마이페이지', path: '/mypage' }
+        : origin === 'category'
+          ? { label: '카테고리 선택', path: '/categories' }
+          : null
   const selectedCategoryCode = searchParams.get('category_code')
   const selectedCategoryName = selectedCategoryCode
     ? (categories.find((category) => category.code === selectedCategoryCode)?.name ?? null)

@@ -217,7 +217,7 @@ export default function Dashboard() {
             <p className="mt-1 text-sm text-gray-500">관심 분야부터 가볍게 둘러보세요.</p>
           </div>
           <button
-            onClick={() => navigate('/categories')}
+            onClick={() => navigate('/categories?origin=home')}
             className="text-sm font-semibold text-blue-600"
           >
             전체 보기
@@ -232,7 +232,7 @@ export default function Dashboard() {
                 onClick={() =>
                   navigate(
                     code === 'TRANSPORT'
-                      ? '/policies?category_code=TRANSPORT&nav=category'
+                      ? '/policies?category_code=TRANSPORT&nav=category&origin=home'
                       : `/categories/${id}/questions?from=home`,
                   )
                 }

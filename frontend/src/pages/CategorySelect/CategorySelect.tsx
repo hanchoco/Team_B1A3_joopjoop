@@ -1,4 +1,5 @@
 import {
+  ArrowLeft,
   BriefcaseBusiness,
   Calculator,
   CreditCard,
@@ -9,9 +10,10 @@ import {
   Users,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { getCategoryAnswers, listCategories, listCategoryQuestions } from '../../api/categories'
 import { extractErrorMessage } from '../../api/client'
+import { HOME_PATH } from '../../constants/routes'
 import type { CategoryResponse } from '../../types/api'
 import { filterVisibleCategoryQuestions } from '../../utils/categoryQuestions'
 
@@ -30,6 +32,8 @@ const ICON_BY_CODE: Record<string, typeof House> = {
 
 export default function CategorySelect() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const isFromHome = searchParams.get('origin') === 'home'
   const [categories, setCategories] = useState<CategoryResponse[]>([])
   const [questionStatusByCategoryId, setQuestionStatusByCategoryId] = useState<
     Map<number, CategoryQuestionStatus>
@@ -84,11 +88,23 @@ export default function CategorySelect() {
 
   return (
     <section>
-      <p className="text-sm font-semibold text-blue-600">분야별 탐색</p>
-      <h1 className="mt-2 text-3xl font-black">카테고리를 선택해주세요</h1>
-      <p className="mt-2 text-sm text-gray-500">
-        원하는 분야를 선택하면 관련 정책과 필요한 추가 질문을 보여드릴게요.
-      </p>
+      {isFromHome && (
+        <button
+          type="button"
+          onClick={() => navigate(HOME_PATH)}
+          className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500"
+        >
+          <ArrowLeft size={16} aria-hidden="true" />
+          <span>홈</span>
+        </button>
+      )}
+      <div className={isFromHome ? 'mt-8' : ''}>
+        <p className="text-sm font-semibold text-blue-600">분야별 탐색</p>
+        <h1 className="mt-2 text-3xl font-black">카테고리를 선택해주세요</h1>
+        <p className="mt-2 text-sm text-gray-500">
+          원하는 분야를 선택하면 관련 정책과 필요한 추가 질문을 보여드릴게요.
+        </p>
+      </div>
       {error && (
         <p className="mt-5 rounded-lg bg-rose-50 p-4 text-sm font-semibold text-rose-600">
           {error}

@@ -9,6 +9,7 @@ import {
 } from '../../api/categories'
 import { extractErrorMessage } from '../../api/client'
 import { getCompanySizeOptionLabel } from '../../constants/categoryQuestions'
+import { HOME_PATH } from '../../constants/routes'
 import type { CategoryAnswerUpsert, CategoryQuestionResponse } from '../../types/api'
 import { filterVisibleCategoryQuestions } from '../../utils/categoryQuestions'
 
@@ -44,7 +45,7 @@ function parseOptions(optionsJson: unknown): SelectOption[] {
 function policiesLinkFor(
   categoryCode: string,
   answersUpdated = false,
-  origin?: 'category',
+  origin?: 'category' | 'home',
 ): string {
   const params = new URLSearchParams(categoryCode ? { category_code: categoryCode } : {})
   if (answersUpdated) params.set('answers', 'updated')
@@ -222,7 +223,7 @@ export default function CategoryQuestions() {
   const [searchParams] = useSearchParams()
   const categoryId = Number(categoryIdParam)
   const isFromHome = searchParams.get('from') === 'home'
-  const previousPath = isFromHome ? '/' : '/categories'
+  const previousPath = isFromHome ? HOME_PATH : '/categories'
   const previousLabel = '돌아가기'
 
   const [categoryName, setCategoryName] = useState('')
@@ -272,7 +273,7 @@ export default function CategoryQuestions() {
             policiesLinkFor(
               categoryCode,
               savedAnswers.length > 0,
-              isFromHome ? undefined : 'category',
+              isFromHome ? 'home' : 'category',
             ),
             {
               replace: true,
@@ -365,7 +366,7 @@ export default function CategoryQuestions() {
       if (payload.length > 0) {
         await saveCategoryAnswers(categoryId, payload)
       }
-      navigate(policiesLinkFor(categoryCode, true, isFromHome ? undefined : 'category'))
+      navigate(policiesLinkFor(categoryCode, true, isFromHome ? 'home' : 'category'))
     } catch (err) {
       setError(extractErrorMessage(err))
     } finally {
