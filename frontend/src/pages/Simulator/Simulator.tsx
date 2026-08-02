@@ -1,7 +1,7 @@
 import { ArrowLeft, ArrowRight, TrendingDown } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import type { ComponentType, FormEvent } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { extractErrorMessage } from '../../api/client'
 import { getPolicy } from '../../api/policies'
 import { simulatePolicyBenefit } from '../../api/simulator'
@@ -19,6 +19,7 @@ import type {
 } from '../../types/api'
 import type { SimulatorFormProps, SimulatorInputValue } from '../../types/simulator'
 import { formatWon } from '../../utils/formatWon'
+import { isPolicySimulatorNavigationState } from '../../utils/policyNavigation'
 
 interface CalcTypeConfig {
   Form: ComponentType<SimulatorFormProps>
@@ -45,8 +46,11 @@ function simulatableBenefits(policy: PolicyDetailResponse): PolicyBenefitRespons
 
 export default function Simulator() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { id } = useParams()
   const policyId = Number(id)
+  const navigationState = isPolicySimulatorNavigationState(location.state) ? location.state : null
+  const policyDetailReturnTo = navigationState?.policyDetailReturnTo ?? `/policies/${id}`
 
   const [policy, setPolicy] = useState<PolicyDetailResponse | null>(null)
   const [loading, setLoading] = useState(true)
@@ -102,6 +106,10 @@ export default function Simulator() {
     setFormValues((current) => ({ ...current, [name]: value }))
   }
 
+  function returnToPolicyDetail() {
+    navigate(policyDetailReturnTo, { state: navigationState?.policyDetailState })
+  }
+
   if (loading) {
     return <p className="py-10 text-center text-sm text-gray-500">불러오는 중...</p>
   }
@@ -109,7 +117,7 @@ export default function Simulator() {
     return (
       <section className="mx-auto max-w-4xl">
         <button
-          onClick={() => navigate(-1)}
+          onClick={returnToPolicyDetail}
           className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-blue-600"
         >
           <ArrowLeft size={16} /> 정책 상세
@@ -125,7 +133,7 @@ export default function Simulator() {
     return (
       <section className="mx-auto max-w-4xl">
         <button
-          onClick={() => navigate(`/policies/${policyId}`)}
+          onClick={returnToPolicyDetail}
           className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-blue-600"
         >
           <ArrowLeft size={16} /> 정책 상세
@@ -183,7 +191,7 @@ export default function Simulator() {
     <section className="mx-auto max-w-4xl">
       <button
         type="button"
-        onClick={() => navigate(`/policies/${policyId}`)}
+        onClick={returnToPolicyDetail}
         className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-blue-600"
       >
         <ArrowLeft size={16} /> 정책 상세

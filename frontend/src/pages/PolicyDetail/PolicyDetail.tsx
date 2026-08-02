@@ -18,6 +18,7 @@ import {
   isPolicyDetailNavigationState,
   resolvePolicyListReturnPath,
   type PolicyListNavigationState,
+  type PolicySimulatorNavigationState,
 } from '../../utils/policyNavigation'
 
 const TABS = ['지원내용', '신청조건', '신청방법', '필요서류'] as const
@@ -287,7 +288,15 @@ export default function PolicyDetail() {
       </div>
       <div className="mt-5 grid gap-3 sm:grid-cols-3">
         <button
-          onClick={() => navigate(`/policies/${policy.id}/simulation`)}
+          onClick={() =>
+            navigate(`/policies/${policy.id}/simulation`, {
+              state: {
+                from: 'policy-detail',
+                policyDetailReturnTo: `${location.pathname}${location.search}`,
+                policyDetailState: navigationState,
+              } satisfies PolicySimulatorNavigationState,
+            })
+          }
           disabled={!policy.is_simulatable}
           title={
             policy.is_simulatable ? undefined : '이 정책은 아직 예상 시뮬레이션을 지원하지 않아요.'

@@ -26,6 +26,12 @@ export interface PolicyListNavigationState {
   policyListScrollKey: string
 }
 
+export interface PolicySimulatorNavigationState {
+  from: 'policy-detail'
+  policyDetailReturnTo: string
+  policyDetailState: PolicyDetailNavigationState | null
+}
+
 const POLICY_LIST_SCROLL_STORAGE_PREFIX = 'joopjoop:policy-list-scroll:'
 
 export function resolvePossibilityFilter(value: string | null): PossibilityFilter {
@@ -98,6 +104,23 @@ export function isPolicyListNavigationState(value: unknown): value is PolicyList
     'policyListScrollKey' in value &&
     typeof value.policyListScrollKey === 'string' &&
     value.policyListScrollKey.length > 0
+  )
+}
+
+export function isPolicySimulatorNavigationState(
+  value: unknown,
+): value is PolicySimulatorNavigationState {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'from' in value &&
+    value.from === 'policy-detail' &&
+    'policyDetailReturnTo' in value &&
+    typeof value.policyDetailReturnTo === 'string' &&
+    value.policyDetailReturnTo.startsWith('/') &&
+    !value.policyDetailReturnTo.startsWith('//') &&
+    'policyDetailState' in value &&
+    (value.policyDetailState === null || isPolicyDetailNavigationState(value.policyDetailState))
   )
 }
 
