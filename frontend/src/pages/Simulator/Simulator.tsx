@@ -254,62 +254,62 @@ export default function Simulator() {
 
       {result && (
         <>
-          {isOneTimeOnlyBenefit && (
-            <div className="mt-6 flex flex-col items-center rounded-xl border border-gray-200 bg-white p-6 text-center">
-              <p className="text-sm text-gray-500">내 조건 기준 예상 혜택 (1회성 포함 총액)</p>
-              <p className="mt-1 text-2xl font-black">{formatWon(result.total_benefit_amount)}</p>
-            </div>
-          )}
-
-          <div className={`inline-flex rounded-lg bg-slate-100 p-1 ${isOneTimeOnlyBenefit ? 'mt-5' : 'mt-6'}`}>
-            {(['월 기준', '연 기준'] as const).map((item) => (
-              <button
-                type="button"
-                key={item}
-                onClick={() => setPeriod(item)}
-                className={`rounded-md px-6 py-2 text-sm font-bold ${
-                  period === item ? 'bg-blue-600 text-white' : 'text-gray-500'
-                }`}
-              >
-                {item}
-              </button>
-            ))}
-          </div>
-
-          <div className="mt-5 grid items-stretch gap-4 md:grid-cols-[1fr_auto_1fr]">
-            <div className="rounded-xl border border-gray-200 bg-white p-6">
-              <p className="text-sm font-semibold text-gray-500">지원 전 · Before</p>
-              <p className="mt-5 text-4xl font-black">{formatWon(beforeAmount)}</p>
-              <p className="mt-6 border-t pt-5 text-sm text-gray-500">현재 기준</p>
-            </div>
-            <div className="grid place-items-center">
-              <ArrowRight className="rotate-90 text-blue-600 md:rotate-0" />
-            </div>
-            <div className="rounded-xl border border-blue-200 bg-blue-50 p-6">
-              <p className="text-sm font-semibold text-blue-700">지원 후 · After</p>
-              <p className="mt-5 text-4xl font-black text-blue-700">{formatWon(afterAmount)}</p>
-              <p className="mt-6 border-t border-blue-200 pt-5 text-sm text-blue-700">
-                지원금 반영 후 예상 금액
+          {isOneTimeOnlyBenefit ? (
+            <>
+              <div className="mt-6 flex flex-col items-center rounded-xl border border-gray-200 bg-white p-6 text-center">
+                <p className="text-sm text-gray-500">내 조건 기준 예상 혜택 (1회성 포함 총액)</p>
+                <p className="mt-1 text-2xl font-black">{formatWon(result.total_benefit_amount)}</p>
+              </div>
+              <p className="mt-4 text-center text-sm text-gray-500">
+                이 정책은 매월 반복 지급이 아닌, 조건 충족 시 1회성으로 지급되는 수당이에요.
               </p>
-            </div>
-          </div>
+            </>
+          ) : (
+            <>
+              <div className="mt-6 inline-flex rounded-lg bg-slate-100 p-1">
+                {(['월 기준', '연 기준'] as const).map((item) => (
+                  <button
+                    type="button"
+                    key={item}
+                    onClick={() => setPeriod(item)}
+                    className={`rounded-md px-6 py-2 text-sm font-bold ${
+                      period === item ? 'bg-blue-600 text-white' : 'text-gray-500'
+                    }`}
+                  >
+                    {item}
+                  </button>
+                ))}
+              </div>
 
-          <div className="mt-5 flex flex-col items-center rounded-xl border border-blue-200 bg-white p-6 text-center">
-            <TrendingDown className="text-blue-600" />
-            <p className="mt-3 text-sm text-gray-500">{period} 총 절감 금액</p>
-            <p className="mt-1 text-3xl font-black text-blue-600">+{formatWon(savedAmount)}</p>
-            {isOneTimeOnlyBenefit && (
-              <span className="mt-3 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-600">
-                정기 지원 없음 · 1회성 지급
-              </span>
-            )}
-          </div>
+              <div className="mt-5 grid items-stretch gap-4 md:grid-cols-[1fr_auto_1fr]">
+                <div className="rounded-xl border border-gray-200 bg-white p-6">
+                  <p className="text-sm font-semibold text-gray-500">지원 전 · Before</p>
+                  <p className="mt-5 text-4xl font-black">{formatWon(beforeAmount)}</p>
+                  <p className="mt-6 border-t pt-5 text-sm text-gray-500">현재 기준</p>
+                </div>
+                <div className="grid place-items-center">
+                  <ArrowRight className="rotate-90 text-blue-600 md:rotate-0" />
+                </div>
+                <div className="rounded-xl border border-blue-200 bg-blue-50 p-6">
+                  <p className="text-sm font-semibold text-blue-700">지원 후 · After</p>
+                  <p className="mt-5 text-4xl font-black text-blue-700">{formatWon(afterAmount)}</p>
+                  <p className="mt-6 border-t border-blue-200 pt-5 text-sm text-blue-700">
+                    지원금 반영 후 예상 금액
+                  </p>
+                </div>
+              </div>
 
-          {!isOneTimeOnlyBenefit && (
-            <div className="mt-5 flex flex-col items-center rounded-xl border border-gray-200 bg-white p-6 text-center">
-              <p className="text-sm text-gray-500">내 조건 기준 예상 혜택 (1회성 포함 총액)</p>
-              <p className="mt-1 text-2xl font-black">{formatWon(result.total_benefit_amount)}</p>
-            </div>
+              <div className="mt-5 flex flex-col items-center rounded-xl border border-blue-200 bg-white p-6 text-center">
+                <TrendingDown className="text-blue-600" />
+                <p className="mt-3 text-sm text-gray-500">{period} 총 절감 금액</p>
+                <p className="mt-1 text-3xl font-black text-blue-600">+{formatWon(savedAmount)}</p>
+              </div>
+
+              <div className="mt-5 flex flex-col items-center rounded-xl border border-gray-200 bg-white p-6 text-center">
+                <p className="text-sm text-gray-500">내 조건 기준 예상 혜택 (1회성 포함 총액)</p>
+                <p className="mt-1 text-2xl font-black">{formatWon(result.total_benefit_amount)}</p>
+              </div>
+            </>
           )}
 
           {result.category === 'SAVINGS_ASSET' && (
