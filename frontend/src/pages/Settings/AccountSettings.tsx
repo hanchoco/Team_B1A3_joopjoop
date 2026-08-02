@@ -158,8 +158,8 @@ export default function AccountSettings() {
           )}
         </label>
 
-        <div className="mt-5 grid gap-5 md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
-          <label className="block text-sm font-bold">
+        <div className="mt-5 grid gap-5 sm:grid-cols-2">
+          <label className="block min-w-0 text-sm font-bold">
             새 비밀번호
             <input
               required
@@ -194,7 +194,7 @@ export default function AccountSettings() {
               </span>
             )}
           </label>
-          <label className="block text-sm font-bold">
+          <label className="block min-w-0 text-sm font-bold">
             새 비밀번호 확인
             <input
               required
