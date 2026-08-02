@@ -1,0 +1,191 @@
+{
+  "schema_version": 1,
+  "kind": "calc_rule_portable_manifest",
+  "generated_at": "2026-08-02T03:27:11.552848+00:00",
+  "generated_from": [
+    "review_drafts/calc-rule-backfill-42f50445ed23443583c65db583eb8707.json",
+    "review_drafts/calc-rule-backfill-6c2b6514a72b4c129c1a335bd36bb6cf.json"
+  ],
+  "entries": [
+    {
+      "source": "ONTONG_YOUTH",
+      "external_id": "20260718005400113262",
+      "policy_title": "경계선지능청년지원",
+      "benefit_type": "CASH",
+      "benefit_display_text": "참여자 참여수당(1인 20만원)",
+      "calc_type": "CASH_VOUCHER",
+      "calculation_rule_json": {
+        "amount": 200000,
+        "amount_type": "FIXED",
+        "max_count": 1,
+        "payment_cycle": "ONCE",
+        "type": "CASH_VOUCHER"
+      }
+    },
+    {
+      "source": "ONTONG_YOUTH",
+      "external_id": "20260718005400113262",
+      "policy_title": "경계선지능청년지원",
+      "benefit_type": "CASH",
+      "benefit_display_text": "지자체 사업비(1인 80만원)",
+      "calc_type": "CASH_VOUCHER",
+      "calculation_rule_json": {
+        "amount": 800000,
+        "amount_type": "FIXED",
+        "max_count": 1,
+        "payment_cycle": "ONCE",
+        "type": "CASH_VOUCHER"
+      }
+    },
+    {
+      "source": "ONTONG_YOUTH",
+      "external_id": "20260702005400213247",
+      "policy_title": "2026년 완도군 청년 자격증 응시료 지원사업",
+      "benefit_type": "CASH",
+      "benefit_display_text": "어학·한국사, 국가자격증 응시료 실비 및 교재비 지원, 최대 10만원",
+      "calc_type": "CASH_VOUCHER",
+      "calculation_rule_json": {
+        "amount": 100000,
+        "amount_type": "FIXED",
+        "max_count": 2,
+        "payment_cycle": "VARIABLE",
+        "type": "CASH_VOUCHER"
+      }
+    },
+    {
+      "source": "ONTONG_YOUTH",
+      "external_id": "20260625005400113245",
+      "policy_title": "사회연대경제 청년일경험",
+      "benefit_type": "CASH",
+      "benefit_display_text": "월 234만원 참여수당 지급(세전, 주 40시간 기준), 4대 보험 가입",
+      "calc_type": "EMPLOYMENT_EDUCATION",
+      "calculation_rule_json": {
+        "education_subsidy_amount": null,
+        "employment_success_bonus_amount": null,
+        "support_months": 5,
+        "training_allowance_amount": 2340000,
+        "type": "EMPLOYMENT_EDUCATION"
+      }
+    },
+    {
+      "source": "ONTONG_YOUTH",
+      "external_id": "20260618005400213239",
+      "policy_title": "2026년 서구 하반기 청년강사 모집",
+      "benefit_type": "CASH",
+      "benefit_display_text": "선정자 대상 강사비 및 재료비 등 지원",
+      "calc_type": "CASH_VOUCHER",
+      "calculation_rule_json": {
+        "amount": 1000000,
+        "amount_type": "FIXED",
+        "max_count": 1,
+        "payment_cycle": "ONCE",
+        "type": "CASH_VOUCHER"
+      }
+    },
+    {
+      "source": "ONTONG_YOUTH",
+      "external_id": "20260615005400213233",
+      "policy_title": "2026년 서구 청년 크리에이터단 참여자 모집",
+      "benefit_type": "CASH",
+      "benefit_display_text": "유튜브 건당 100,000원, 블로그 건당 70,000원, 인스타그램 건당 30,000원, 우수 크리에이터 선정 월 1명 50,000원",
+      "calc_type": "CASH_VOUCHER",
+      "calculation_rule_json": {
+        "amount": 100000,
+        "amount_type": "FIXED",
+        "max_count": 4,
+        "payment_cycle": "ONCE",
+        "type": "CASH_VOUCHER"
+      }
+    },
+    {
+      "source": "ONTONG_YOUTH",
+      "external_id": "20260528005400113226",
+      "policy_title": "(문체부) 청년예술인 예술활동 적립계좌",
+      "benefit_type": "CASH",
+      "benefit_display_text": "매월 10만원 적금 시 24개월 만기 시 240만원 정부지원",
+      "calc_type": "CASH_VOUCHER",
+      "calculation_rule_json": {
+        "amount": 2400000,
+        "amount_type": "FIXED",
+        "max_count": 1,
+        "payment_cycle": "MATURITY",
+        "type": "CASH_VOUCHER"
+      }
+    },
+    {
+      "source": "ONTONG_YOUTH",
+      "external_id": "20260527005400213222",
+      "policy_title": "2026년 청년근로자 교통비 지원사업",
+      "benefit_type": "CASH",
+      "benefit_display_text": "월 5만원, 최대 8개월 지원",
+      "calc_type": "CASH_VOUCHER",
+      "calculation_rule_json": {
+        "amount": 50000,
+        "amount_type": "FIXED",
+        "max_count": 8,
+        "payment_cycle": "MONTHLY",
+        "type": "CASH_VOUCHER"
+      }
+    },
+    {
+      "source": "ONTONG_YOUTH",
+      "external_id": "20260527005400213221",
+      "policy_title": "2026년 청년창업자 임차료 지원사업",
+      "benefit_type": "CASH",
+      "benefit_display_text": "월 임차료 50% 지원(월 최대 40만원), 최대 5개월간",
+      "calc_type": "HOUSING_RENT",
+      "calculation_rule_json": {
+        "deposit_limit_amount": null,
+        "monthly_support_cap_amount": 400000,
+        "rent_limit_amount": null,
+        "support_months": 5,
+        "type": "HOUSING_RENT"
+      }
+    },
+    {
+      "source": "ONTONG_YOUTH",
+      "external_id": "20260522005400213220",
+      "policy_title": "삼척형 일자리 안심공제",
+      "benefit_type": "CASH",
+      "benefit_display_text": "월 50만원씩 5년간 적립 후 만기 시 3천만 원 및 이자 지급",
+      "calc_type": "CASH_VOUCHER",
+      "calculation_rule_json": {
+        "amount": 30000000,
+        "amount_type": "FIXED",
+        "max_count": 1,
+        "payment_cycle": "MATURITY",
+        "type": "CASH_VOUCHER"
+      }
+    },
+    {
+      "source": "ONTONG_YOUTH",
+      "external_id": "20260714005400113258",
+      "policy_title": "k-뉴딜 아카데미",
+      "benefit_type": "CASH",
+      "benefit_display_text": "참여수당(최대 월 50만원까지)",
+      "calc_type": "EMPLOYMENT_EDUCATION",
+      "calculation_rule_json": {
+        "training_allowance_amount": 500000,
+        "education_subsidy_amount": null,
+        "employment_success_bonus_amount": null,
+        "support_months": null,
+        "type": "EMPLOYMENT_EDUCATION"
+      }
+    },
+    {
+      "source": "ONTONG_YOUTH",
+      "external_id": "20260710005400113256",
+      "policy_title": "국민취업지원제도",
+      "benefit_type": "CASH",
+      "benefit_display_text": "취업성공수당 : 중위소득 60%이하인 자 및 특정계층 참여자, 최대 150만원 지원",
+      "calc_type": "EMPLOYMENT_EDUCATION",
+      "calculation_rule_json": {
+        "training_allowance_amount": null,
+        "education_subsidy_amount": null,
+        "employment_success_bonus_amount": 1500000,
+        "support_months": null,
+        "type": "EMPLOYMENT_EDUCATION"
+      }
+    }
+  ]
+}
