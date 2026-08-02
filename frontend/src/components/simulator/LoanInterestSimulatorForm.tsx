@@ -56,11 +56,12 @@ export default function LoanInterestSimulatorForm({ rule, values, onChange }: Si
         )}
         <PositiveIntegerInput
           name="support_months"
-          label="희망 지원 개월 수(선택)"
+          label="희망 지원 개월 수"
           value={values.support_months}
           initialValue={r.max_support_months}
           max={r.max_support_months}
           onChange={onChange}
+          note={`미입력 시 최대 지원 기간(${r.max_support_months}개월)이 기본 적용돼요.`}
         />
       </div>
     </div>

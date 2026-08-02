@@ -34,28 +34,14 @@ export default function HousingRentSimulatorForm({ rule, values, onChange }: Sim
           value={values.monthly_rent_amount}
           onChange={onChange}
         />
-        <CurrencyInput
-          name="monthly_management_fee_amount"
-          label="월 관리비(선택, 지원 대상 아님)"
-          placeholder="예: 100,000"
-          value={values.monthly_management_fee_amount ?? 0}
-          onChange={onChange}
-          note="관리비는 지원 계산에 포함되지 않으며 참고용으로만 기록돼요."
-        />
-        <CurrencyInput
-          name="deposit_amount"
-          label="보증금(선택)"
-          placeholder="예: 10,000,000"
-          value={values.deposit_amount ?? 0}
-          onChange={onChange}
-        />
         <PositiveIntegerInput
           name="support_months"
-          label="희망 지원 개월 수(선택)"
+          label="희망 지원 개월 수"
           value={values.support_months}
           initialValue={r.support_months}
           max={r.support_months}
           onChange={onChange}
+          note={`미입력 시 최대 지원 기간(${r.support_months}개월)이 기본 적용돼요.`}
         />
       </div>
     </div>
