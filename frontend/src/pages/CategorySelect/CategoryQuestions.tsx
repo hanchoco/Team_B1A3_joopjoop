@@ -224,7 +224,7 @@ export default function CategoryQuestions() {
   const categoryId = Number(categoryIdParam)
   const isFromHome = searchParams.get('from') === 'home'
   const previousPath = isFromHome ? HOME_PATH : '/categories'
-  const previousLabel = '돌아가기'
+  const previousLabel = isFromHome ? '홈' : '돌아가기'
 
   const [categoryName, setCategoryName] = useState('')
   const [categoryCode, setCategoryCode] = useState('')
