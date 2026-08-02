@@ -343,7 +343,7 @@ export default function Dashboard() {
               <h2 className="text-lg font-black text-gray-950">내가 놓치고 있는 혜택</h2>
               <div className="ml-6 pt-[35px]">
                 <p className="text-base leading-6 text-gray-500">
-                  현재 기본 조건만으로도{' '}
+                  현재 기본 조건만으로도 최대{' '}
                   <strong className="font-bold text-gray-700">
                     {formatAmount(
                       isLoggedIn ? dashboardSummary?.missed_benefit_total_amount : null,
