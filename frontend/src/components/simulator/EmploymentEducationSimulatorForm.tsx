@@ -11,6 +11,10 @@ export default function EmploymentEducationSimulatorForm({
   onChange,
 }: SimulatorFormProps) {
   const r = rule as unknown as EmploymentEducationRuleJson
+  const isOneTimeOnlyBenefit =
+    !r.training_allowance_amount &&
+    !r.education_subsidy_amount &&
+    !!r.employment_success_bonus_amount
 
   return (
     <div>
@@ -30,15 +34,17 @@ export default function EmploymentEducationSimulatorForm({
             : []),
         ]}
       />
-      <div className="grid gap-4 sm:grid-cols-2">
-        <CurrencyInput
-          name="current_monthly_income_amount"
-          label="현재 월 소득(선택)"
-          placeholder="예: 2,000,000"
-          value={values.current_monthly_income_amount ?? 0}
-          onChange={onChange}
-        />
-      </div>
+      {!isOneTimeOnlyBenefit && (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <CurrencyInput
+            name="current_monthly_income_amount"
+            label="현재 월 소득(선택)"
+            placeholder="예: 2,000,000"
+            value={values.current_monthly_income_amount ?? 0}
+            onChange={onChange}
+          />
+        </div>
+      )}
     </div>
   )
 }
