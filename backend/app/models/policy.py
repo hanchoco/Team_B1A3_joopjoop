@@ -325,7 +325,7 @@ class PolicyBenefit(TimestampMixin, Base):
         nullable=True,
     )
     calculation_rule_json: Mapped[dict[str, Any] | None] = mapped_column(
-        JSON,
+        JSON(none_as_null=True),
         nullable=True,
     )
     display_text: Mapped[str | None] = mapped_column(String(500), nullable=True)

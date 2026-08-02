@@ -1,3 +1,5 @@
+import { Fragment } from 'react'
+
 interface KnownRuleInfoProps {
   items: { label: string; value: string }[]
 }
@@ -8,12 +10,14 @@ export default function KnownRuleInfo({ items }: KnownRuleInfoProps) {
   if (items.length === 0) return null
 
   return (
-    <div className="mb-5 grid gap-2 rounded-lg bg-slate-50 p-4 text-sm sm:grid-cols-2">
-      {items.map((item) => (
-        <div key={item.label} className="flex items-center justify-between gap-2">
-          <span className="text-gray-500">{item.label}</span>
-          <span className="font-semibold">{item.value}</span>
-        </div>
+    <div className="mb-5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-500">
+      {items.map((item, index) => (
+        <Fragment key={item.label}>
+          {index > 0 && <span className="text-gray-300">|</span>}
+          <span>
+            {item.label}: <span className="font-semibold text-gray-900">{item.value}</span>
+          </span>
+        </Fragment>
       ))}
     </div>
   )

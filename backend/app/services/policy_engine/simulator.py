@@ -376,8 +376,15 @@ def calculate_employment_education(
         required=False,
         default=Decimal("0"),
     )
+    # 지원 개월이 원문에 없으면(예: "연 최대 10만원" 같은 1회성 실비 지원) 1개월짜리
+    # 1회성 지급으로 취급한다 - calc_type.py의 EMPLOYMENT_EDUCATION 완전성 판정이
+    # support_months 없이 금액 필드만으로도 통과시키므로 여기서도 기본값이 필요하다.
     support_months = _int_field(
-        calculation_rule_json, "support_months", source="calculation_rule_json"
+        calculation_rule_json,
+        "support_months",
+        source="calculation_rule_json",
+        required=False,
+        default=1,
     )
 
     current_income = _decimal_field(

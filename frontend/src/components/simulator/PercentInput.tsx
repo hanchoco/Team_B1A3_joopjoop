@@ -26,7 +26,7 @@ export default function PercentInput({
           type="number"
           min={0}
           max={100}
-          step={0.01}
+          step={0.1}
           required={required}
           value={value}
           onChange={(event: ChangeEvent<HTMLInputElement>) =>

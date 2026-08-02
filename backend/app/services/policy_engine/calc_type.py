@@ -12,9 +12,9 @@ a one-function change.
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from enum import Enum
-from typing import Protocol
+from typing import Any, Protocol
 
 from app.models.policy import BenefitType, CalcType
 from app.models.user_category_profile import CategoryCode
@@ -32,6 +32,7 @@ class BenefitLike(Protocol):
     """Minimal structural contract accepted from a model or DTO."""
 
     benefit_type: BenefitType | str
+    calculation_rule_json: Mapping[str, Any] | None
 
 
 class PolicyLike(Protocol):
@@ -47,6 +48,52 @@ _DIRECT_CALC_TYPE_BY_BENEFIT_TYPE: dict[BenefitType, CalcType] = {
 }
 
 _CASH_LIKE_BENEFIT_TYPES = frozenset({BenefitType.CASH, BenefitType.DISCOUNT})
+
+# calculation_rule_json에서 각 CalcType의 calculate_*()가 필수(required=True)로
+# 읽는 필드. docs/simulator_calc_rules.md 계약 및
+# services/policy_engine/simulator.py의 _decimal_field()/_int_field()/_str_field()
+# 호출과 반드시 함께 갱신한다.
+_REQUIRED_RULE_FIELDS_BY_CALC_TYPE: dict[CalcType, tuple[str, ...]] = {
+    CalcType.LOAN_INTEREST: (
+        "policy_interest_rate_percent",
+        "max_loan_amount",
+        "max_support_months",
+        "repayment_type",
+    ),
+    CalcType.SAVINGS_ASSET: (
+        "government_match_rate_percent",
+        "monthly_max_support_amount",
+        "maturity_months",
+        "base_interest_rate_percent",
+    ),
+    CalcType.HOUSING_RENT: (
+        "monthly_support_cap_amount",
+        "support_months",
+    ),
+    CalcType.TAX_DEDUCTION: (
+        "deduction_rate_percent",
+        "deduction_type",
+    ),
+}
+
+# CASH_VOUCHER는 calculation_rule_json.amount_type("FIXED"/"PERCENTAGE")에 따라
+# 필수 필드가 갈린다 (calculate_cash_voucher() 참고).
+_REQUIRED_CASH_VOUCHER_RULE_FIELDS_BY_AMOUNT_TYPE: dict[str, tuple[str, ...]] = {
+    "FIXED": ("amount", "payment_cycle", "max_count"),
+    "PERCENTAGE": ("rate_percent", "cap_amount", "payment_cycle"),
+}
+
+# EMPLOYMENT_EDUCATION은 아래 금액 필드 중 최소 하나가 있어야 완전한 것으로 본다.
+# support_months는 필수가 아니다 - 자격증 응시료 지원처럼 "지원 개월" 개념이 없는
+# 1회성 실비 지원은 calculate_employment_education()에서 1개월로 계산한다.
+# 주의: support_months만 있고 금액 필드가 전부 비어있는 경우를 완전한 것으로 보면
+# 실제로는 돈이 얼마인지 전혀 모르는데 "계산 가능"으로 통과해서 0원짜리 시뮬레이션이
+# 나오는 문제가 생긴다(구직촉진수당 사고 사례) - 그래서 금액 필드 존재를 항상 요구한다.
+_EMPLOYMENT_EDUCATION_AMOUNT_FIELDS: tuple[str, ...] = (
+    "training_allowance_amount",
+    "education_subsidy_amount",
+    "employment_success_bonus_amount",
+)
 
 
 def resolve_calc_type(benefit: BenefitLike, policy: PolicyLike) -> CalcType | None:
@@ -81,9 +128,42 @@ def resolve_calc_type(benefit: BenefitLike, policy: PolicyLike) -> CalcType | No
 
 
 def can_simulate(benefit: BenefitLike, policy: PolicyLike) -> bool:
-    """Return whether a simulator calculation can be derived for this benefit."""
+    """Return whether a simulator calculation can actually be run for this benefit.
 
-    return resolve_calc_type(benefit, policy) is not None
+    A ``CalcType`` resolving is necessary but not sufficient: the calculator
+    for that type also needs its required fields present in
+    ``benefit.calculation_rule_json`` (see docs/simulator_calc_rules.md), or
+    ``simulator.simulate()`` would raise ``ValueError`` when called.
+    """
+
+    calc_type = resolve_calc_type(benefit, policy)
+    if calc_type is None:
+        return False
+    return _has_required_rule_fields(calc_type, benefit.calculation_rule_json)
+
+
+def _has_required_rule_fields(
+    calc_type: CalcType,
+    calculation_rule_json: Mapping[str, Any] | None,
+) -> bool:
+    if not calculation_rule_json:
+        return False
+
+    if calc_type is CalcType.CASH_VOUCHER:
+        amount_type = calculation_rule_json.get("amount_type")
+        required_fields = _REQUIRED_CASH_VOUCHER_RULE_FIELDS_BY_AMOUNT_TYPE.get(amount_type)
+        if required_fields is None:
+            return False
+        return all(calculation_rule_json.get(field) is not None for field in required_fields)
+
+    if calc_type is CalcType.EMPLOYMENT_EDUCATION:
+        return any(
+            calculation_rule_json.get(field) is not None
+            for field in _EMPLOYMENT_EDUCATION_AMOUNT_FIELDS
+        )
+
+    required_fields = _REQUIRED_RULE_FIELDS_BY_CALC_TYPE[calc_type]
+    return all(calculation_rule_json.get(field) is not None for field in required_fields)
 
 
 def _normalise_benefit_type(value: BenefitType | str) -> BenefitType:

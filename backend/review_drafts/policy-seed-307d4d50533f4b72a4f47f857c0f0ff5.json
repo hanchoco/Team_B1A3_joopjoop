@@ -1,6 +1,7 @@
 {
-  "batch_id": "a76663d4713c45a2af5f8fb17a304535",
-  "generated_at": "2026-08-01T07:22:04.613892+00:00",
+  "approved_at": "2026-08-01T10:28:34.569262+00:00",
+  "batch_id": "307d4d50533f4b72a4f47f857c0f0ff5",
+  "generated_at": "2026-08-01T10:28:10.897308+00:00",
   "kind": "policy_seed_batch",
   "policies": [
     {
@@ -8,28 +9,36 @@
         {
           "amount_type": "FIXED",
           "benefit_type": "CASH",
-          "calc_category": "FORMULA_RESOLVED",
-          "cap_amount": null,
-          "display_text": "참여자 참여수당 1인 20만원 지급",
+          "display_text": "참여자 참여수당(1인 20만원)",
           "duration_months": null,
           "max_amount": 200000,
           "max_total_amount": null,
           "min_amount": 200000,
           "payment_cycle": "ONCE",
-          "rate_percent": null
+          "calculation_rule_json": {
+            "amount": 200000,
+            "amount_type": "FIXED",
+            "max_count": 1,
+            "payment_cycle": "ONCE",
+            "type": "CASH_VOUCHER"
+          }
         },
         {
           "amount_type": "FIXED",
           "benefit_type": "CASH",
-          "calc_category": "FORMULA_RESOLVED",
-          "cap_amount": null,
-          "display_text": "지자체 사업비 1인 80만원 지급",
+          "display_text": "지자체 사업비(1인 80만원)",
           "duration_months": null,
           "max_amount": 800000,
           "max_total_amount": null,
           "min_amount": 800000,
           "payment_cycle": "ONCE",
-          "rate_percent": null
+          "calculation_rule_json": {
+            "amount": 800000,
+            "amount_type": "FIXED",
+            "max_count": 1,
+            "payment_cycle": "ONCE",
+            "type": "CASH_VOUCHER"
+          }
         }
       ],
       "category_codes": [
@@ -380,7 +389,7 @@
           "earnMinAmt": "0",
           "etcMttrCn": "",
           "frstRegDt": "2026-07-18 14:17:39",
-          "inqCnt": "713",
+          "inqCnt": "722",
           "jobCd": "0013010",
           "lastMdfcnDt": "2026-07-20 09:29:22",
           "lclsfNm": "금융･복지･문화",
@@ -440,41 +449,12 @@
         {
           "amount_type": "VARIABLE",
           "benefit_type": "SERVICE",
-          "calc_category": "NO_CALCULATION_NEEDED",
-          "cap_amount": null,
-          "display_text": "구직청년 대상 취업 컨설팅, 맞춤형 직무교육, 멘토링 제공",
+          "display_text": "구직청년: 취업 컨설팅, 맞춤형 직무교육, 멘토링 제공 / 재직청년: 온보딩 및 직무교육, 멘토링, 경력설계 제공 / 조직문화 개선: 청년친화적 조직문화 조성 교육 제공",
           "duration_months": null,
           "max_amount": null,
           "max_total_amount": null,
           "min_amount": null,
-          "payment_cycle": null,
-          "rate_percent": null
-        },
-        {
-          "amount_type": "VARIABLE",
-          "benefit_type": "SERVICE",
-          "calc_category": "NO_CALCULATION_NEEDED",
-          "cap_amount": null,
-          "display_text": "재직청년 대상 온보딩 및 직무교육, 멘토링, 경력설계 제공",
-          "duration_months": null,
-          "max_amount": null,
-          "max_total_amount": null,
-          "min_amount": null,
-          "payment_cycle": null,
-          "rate_percent": null
-        },
-        {
-          "amount_type": "VARIABLE",
-          "benefit_type": "SERVICE",
-          "calc_category": "NO_CALCULATION_NEEDED",
-          "cap_amount": null,
-          "display_text": "중소·중견기업 CEO, 중간관리자, 인사담당자 대상 청년친화적 조직문화 조성 교육 제공",
-          "duration_months": null,
-          "max_amount": null,
-          "max_total_amount": null,
-          "min_amount": null,
-          "payment_cycle": null,
-          "rate_percent": null
+          "payment_cycle": null
         }
       ],
       "category_codes": [
@@ -768,82 +748,40 @@
           "sort_order": 2
         },
         {
-          "check_mode": "AUTO",
+          "check_mode": "MANUAL",
           "condition_group_no": 1,
-          "condition_key": "profile.employment_status_code",
-          "description": "재직청년 프로그램 참여 자격",
+          "condition_key": "participation_limit",
+          "description": "[신청 제외 대상] 구직청년 프로그램: 재학생은 참여 제한(졸업예정자는 가능)",
           "exception_note": null,
-          "expected_value_json": [
-            "EMPLOYED"
-          ],
-          "failure_message": "재직청년 프로그램 참여를 위해서는 고용 상태여야 합니다.",
-          "is_required": true,
-          "operator": "IN",
+          "expected_value_json": null,
+          "failure_message": null,
+          "is_required": false,
+          "operator": "MANUAL_CHECK",
           "sort_order": 3
         },
         {
-          "check_mode": "AUTO",
+          "check_mode": "MANUAL",
           "condition_group_no": 1,
-          "condition_key": "profile.employment_status_code",
-          "description": "구직청년 프로그램 참여 자격",
+          "condition_key": "participation_limit",
+          "description": "[신청 제외 대상] 재직청년 프로그램: 중견·중소기업에 채용 후 3년 이내인 15세 이상 34세 이하 청년만 참여 가능",
           "exception_note": null,
-          "expected_value_json": [
-            "STUDENT"
-          ],
-          "failure_message": "구직청년 프로그램 참여를 위해서는 학생 신분이어야 합니다.",
-          "is_required": true,
-          "operator": "IN",
+          "expected_value_json": null,
+          "failure_message": null,
+          "is_required": false,
+          "operator": "MANUAL_CHECK",
           "sort_order": 4
         },
         {
-          "check_mode": "AUTO",
+          "check_mode": "MANUAL",
           "condition_group_no": 1,
-          "condition_key": "profile.employment_status_code",
-          "description": "구직청년 프로그램 연령 제한",
+          "condition_key": "participation_limit",
+          "description": "[신청 제외 대상] 조직문화 개선 프로그램: 중견·중소기업에 재직중인 CEO‧중간관리자‧인사담당자만 참여 가능",
           "exception_note": null,
-          "expected_value_json": [
-            "STUDENT"
-          ],
-          "failure_message": "구직청년 프로그램 참여를 위해서는 학생 신분이어야 합니다.",
-          "is_required": true,
-          "operator": "IN",
+          "expected_value_json": null,
+          "failure_message": null,
+          "is_required": false,
+          "operator": "MANUAL_CHECK",
           "sort_order": 5
-        },
-        {
-          "check_mode": "MANUAL",
-          "condition_group_no": 1,
-          "condition_key": "participation_limit",
-          "description": "[신청 제외 대상] 졸업예정자는 구직청년 프로그램 참여 가능",
-          "exception_note": null,
-          "expected_value_json": null,
-          "failure_message": null,
-          "is_required": false,
-          "operator": "MANUAL_CHECK",
-          "sort_order": 6
-        },
-        {
-          "check_mode": "MANUAL",
-          "condition_group_no": 1,
-          "condition_key": "participation_limit",
-          "description": "[신청 제외 대상] 재직청년 프로그램은 중견·중소기업에 채용 후 3년 이내인 15세 이상 34세 이하 청년만 참여 가능",
-          "exception_note": null,
-          "expected_value_json": null,
-          "failure_message": null,
-          "is_required": false,
-          "operator": "MANUAL_CHECK",
-          "sort_order": 7
-        },
-        {
-          "check_mode": "MANUAL",
-          "condition_group_no": 1,
-          "condition_key": "participation_limit",
-          "description": "[신청 제외 대상] 조직문화 개선 프로그램은 중견·중소기업에 재직중인 CEO‧중간관리자‧인사담당자만 참여 가능",
-          "exception_note": null,
-          "expected_value_json": null,
-          "failure_message": null,
-          "is_required": false,
-          "operator": "MANUAL_CHECK",
-          "sort_order": 8
         }
       ],
       "documents": [],
@@ -879,7 +817,7 @@
           "earnMinAmt": "0",
           "etcMttrCn": "\"1. 구직청년 프로그램: 취업컨설팅, 직무교육, 멘토링, 취업연계 등 지원\n2. 재직청년 프로그램: 온보딩 및 직무교육, 멘토링, 경력설계 등 지원\n3. 조직문화 개선 프로그램: 청년세대 이해, 커뮤니케이션, 리더십, 공정채용 등에 관한 교육 지원\n*선정된 운영기관별 모집일자, 산업특화 프로그램 내용 등이 상이할 수 있으므로 운영기관별 모집 내용 확인\"\n",
           "frstRegDt": "2026-07-18 14:12:21",
-          "inqCnt": "1523",
+          "inqCnt": "1529",
           "jobCd": "0013010",
           "lastMdfcnDt": "2026-07-20 09:28:57",
           "lclsfNm": "일자리",
@@ -937,17 +875,14 @@
     {
       "benefits": [
         {
-          "amount_type": "VARIABLE",
-          "benefit_type": "SERVICE",
-          "calc_category": "NO_CALCULATION_NEEDED",
-          "cap_amount": null,
-          "display_text": "청년일자리도약장려금 지원(사업주 및 근로자 지원)",
+          "amount_type": "FIXED",
+          "benefit_type": "CASH",
+          "display_text": "청년일자리도약장려금 (사업주 및 근로자 지원)",
           "duration_months": null,
           "max_amount": null,
           "max_total_amount": null,
           "min_amount": null,
-          "payment_cycle": null,
-          "rate_percent": null
+          "payment_cycle": "MATURITY"
         }
       ],
       "category_codes": [
@@ -1274,7 +1209,7 @@
           "earnMinAmt": "0",
           "etcMttrCn": "□ (기업 요건) 고용보험 상 기준 피보험자수 5인 이상인 우선지원대상기업\n\n     * 지식서비스·문화콘텐츠·신재생에너지 산업, 청년창업기업, 미래유망기업, 지역주력산업에 해당하는 기업은 기준 피보험자 수 1인 이상도 가능. (단, 도약장려금 지원받고자 하는 청년, 대표자 등은 기준 피보험자수에 해당하지 않음)\n\nㅇ (수도권) 취업애로청년을 채용한 수도권 내 5인 이상 우선지원대상기업\n\n     * (취업애로청년) ▴4개월 이상 실업, ▴고졸 이하 청년 등\n\nㅇ (비수도권)  청년을 채용한 비수도권 내 5인 이상 우선지원대상기업 및 중견기업\n\n□ (청년 요건) 채용일 기준 만 15세~34세 청년으로 기업요건을 만족한 기업에 정규직으로 6개월 이상 근속\n\n□ (채용 요건) 주 소정근로시간 28시간 이상, 최저임금법 준수, 월 평균 급여 450만원 이하인 자 등\n\n\n\n*자세한 요건은 2026년도 사업운영 지침 및 2026년도 운영기관을 통해 문의하실 수 있습니다. \n\nhttps://www.work24.go.kr/wk/k/a/1430/operOrgList.do",
           "frstRegDt": "2026-07-16 13:39:41",
-          "inqCnt": "6352",
+          "inqCnt": "6371",
           "jobCd": "0013003",
           "lastMdfcnDt": "2026-07-16 16:51:14",
           "lclsfNm": "일자리",
@@ -1334,15 +1269,12 @@
         {
           "amount_type": "VARIABLE",
           "benefit_type": "SERVICE",
-          "calc_category": "NO_CALCULATION_NEEDED",
-          "cap_amount": null,
-          "display_text": "첨단인재형(AI, 반도체, 이차전지, 항공우주 등) 및 실전인재형(인문, 사회, 예술, 서비스 등) 분야의 직무 중심 AI전환 교육과정 지원",
+          "display_text": "첨단인재형(AI, 반도체, 이차전지, 항공우주 등 첨단분야 중심 교육) 및 실전인재형(인문, 사회, 예술, 서비스 등 직무 중심 AI전환 교육과정) 지원",
           "duration_months": null,
           "max_amount": null,
           "max_total_amount": null,
           "min_amount": null,
-          "payment_cycle": null,
-          "rate_percent": null
+          "payment_cycle": null
         }
       ],
       "category_codes": [
@@ -1669,7 +1601,7 @@
           "earnMinAmt": "0",
           "etcMttrCn": "첨단산업 분야 취·창업을 희망하는 청년(만19세 ~ 34세 이하) 청년",
           "frstRegDt": "2026-07-14 17:58:17",
-          "inqCnt": "1292",
+          "inqCnt": "1294",
           "jobCd": "0013010",
           "lastMdfcnDt": "2026-07-16 17:28:54",
           "lclsfNm": "교육･직업훈련",
@@ -1728,29 +1660,20 @@
       "benefits": [
         {
           "amount_type": "RANGE",
-          "benefit_type": "SERVICE",
-          "calc_category": "FORMULA_RESOLVED",
-          "cap_amount": null,
-          "display_text": "참여수당(최대 월 50만원)",
+          "benefit_type": "CASH",
+          "display_text": "참여수당(최대 월 50만원까지)",
           "duration_months": null,
           "max_amount": 500000,
           "max_total_amount": null,
-          "min_amount": null,
+          "min_amount": 0,
           "payment_cycle": "MONTHLY",
-          "rate_percent": null
-        },
-        {
-          "amount_type": "FIXED",
-          "benefit_type": "SERVICE",
-          "calc_category": "NO_CALCULATION_NEEDED",
-          "cap_amount": null,
-          "display_text": "훈련비 전액 지원(자부담 없음)",
-          "duration_months": null,
-          "max_amount": null,
-          "max_total_amount": null,
-          "min_amount": null,
-          "payment_cycle": null,
-          "rate_percent": null
+          "calculation_rule_json": {
+            "training_allowance_amount": 500000,
+            "education_subsidy_amount": null,
+            "employment_success_bonus_amount": null,
+            "support_months": null,
+            "type": "EMPLOYMENT_EDUCATION"
+          }
         }
       ],
       "category_codes": [
@@ -2058,32 +1981,32 @@
         {
           "check_mode": "AUTO",
           "condition_group_no": 1,
-          "condition_key": "employment.company_size_code",
-          "description": "사업자등록 중인 사람",
+          "condition_key": "profile.household_type_code",
+          "description": "미혼 청년",
           "exception_note": null,
-          "expected_value_json": "NONE",
-          "failure_message": "사업자등록 중인 경우 아카데미 참여가 제한됩니다.",
+          "expected_value_json": "SINGLE",
+          "failure_message": "미혼 청년이 아닌 경우 참여가 제한됩니다.",
           "is_required": true,
           "operator": "EQ",
           "sort_order": 4
-        },
-        {
-          "check_mode": "AUTO",
-          "condition_group_no": 1,
-          "condition_key": "employment.job_field_code",
-          "description": "직업안정기관에 구직등록을 하지 않은 사람",
-          "exception_note": null,
-          "expected_value_json": "NONE",
-          "failure_message": "직업안정기관에 구직등록을 한 경우 아카데미 참여가 제한됩니다.",
-          "is_required": true,
-          "operator": "EQ",
-          "sort_order": 5
         },
         {
           "check_mode": "MANUAL",
           "condition_group_no": 1,
           "condition_key": "participation_limit",
           "description": "[신청 제외 대상] 아카데미 개시 전까지 참여 제한 사유가 해소되는 경우 참여 가능(증빙서류 제출 필요)",
+          "exception_note": null,
+          "expected_value_json": null,
+          "failure_message": null,
+          "is_required": false,
+          "operator": "MANUAL_CHECK",
+          "sort_order": 5
+        },
+        {
+          "check_mode": "MANUAL",
+          "condition_group_no": 1,
+          "condition_key": "participation_limit",
+          "description": "[신청 제외 대상] 대학(원) 졸업예정자(4학년 2학기 이상 또는 마지막 학기 등록자)이거나 휴학 중인 경우 참여 가능",
           "exception_note": null,
           "expected_value_json": null,
           "failure_message": null,
@@ -2125,7 +2048,7 @@
           "earnMinAmt": "0",
           "etcMttrCn": "",
           "frstRegDt": "2026-07-14 16:02:01",
-          "inqCnt": "1339",
+          "inqCnt": "1343",
           "jobCd": "0013003",
           "lastMdfcnDt": "2026-07-16 17:15:37",
           "lclsfNm": "일자리",
@@ -2183,5 +2106,5 @@
   ],
   "schema_version": 1,
   "source": "ONTONG_YOUTH",
-  "status": "pending_review"
+  "status": "approved"
 }

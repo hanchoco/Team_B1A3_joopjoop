@@ -2,6 +2,7 @@ import type { ChangeEvent } from 'react'
 import type { CashVoucherRuleJson } from '../../types/api'
 import type { SimulatorFormProps } from '../../types/simulator'
 import { formatWon } from '../../utils/formatWon'
+import CurrencyInput from './CurrencyInput'
 import KnownRuleInfo from './KnownRuleInfo'
 
 const PAYMENT_CYCLE_LABEL: Record<string, string> = {
@@ -33,15 +34,20 @@ export default function CashVoucherSimulatorForm({ rule, values, onChange }: Sim
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="text-sm font-semibold">
               받고 싶은 개월 수(선택)
-              <input
-                name="count"
-                type="number"
-                min={1}
-                max={r.max_count}
-                value={values.count ?? r.max_count}
-                onChange={update}
-                className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 font-normal"
-              />
+              <div className="relative mt-2">
+                <input
+                  name="count"
+                  type="number"
+                  min={1}
+                  max={r.max_count}
+                  value={values.count ?? r.max_count}
+                  onChange={update}
+                  className="w-full rounded-lg border border-gray-300 px-4 py-3 pr-14 font-normal"
+                />
+                <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400">
+                  개월
+                </span>
+              </div>
             </label>
           </div>
         )}
@@ -53,35 +59,38 @@ export default function CashVoucherSimulatorForm({ rule, values, onChange }: Sim
     <div>
       <KnownRuleInfo
         items={[
-          { label: '지원 비율', value: `${r.rate_percent}%` },
+          ...(r.rate_percent !== undefined
+            ? [{ label: '지원 비율', value: `${r.rate_percent}%` }]
+            : []),
           { label: '지원 상한액', value: formatWon(r.cap_amount) },
           { label: '지급 주기', value: cycleLabel },
         ]}
       />
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className="text-sm font-semibold">
-          지출/구매 금액
-          <input
-            name="base_amount"
-            type="number"
-            min={0}
-            required
-            value={values.base_amount ?? ''}
-            onChange={update}
-            className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 font-normal"
-          />
-        </label>
+        <CurrencyInput
+          name="base_amount"
+          label="지출/구매 금액"
+          required
+          placeholder="예: 100,000"
+          value={values.base_amount}
+          onChange={onChange}
+        />
         {isMonthly && (
           <label className="text-sm font-semibold">
             받고 싶은 개월 수(선택)
-            <input
-              name="count"
-              type="number"
-              min={1}
-              value={values.count ?? 1}
-              onChange={update}
-              className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 font-normal"
-            />
+            <div className="relative mt-2">
+              <input
+                name="count"
+                type="number"
+                min={1}
+                value={values.count ?? 1}
+                onChange={update}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 pr-14 font-normal"
+              />
+              <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400">
+                개월
+              </span>
+            </div>
           </label>
         )}
       </div>
