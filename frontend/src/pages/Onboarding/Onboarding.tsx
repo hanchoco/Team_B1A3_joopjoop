@@ -45,10 +45,6 @@ const questions: Question[] = [
     key: 'region_code',
     title: '현재 거주지역은 어디인가요?',
     hint: '지역별로 신청할 수 있는 정책이 달라요.',
-    options: SIDO_OPTIONS.map((option) => ({
-      value: option.code,
-      label: option.name,
-    })),
   },
   {
     key: 'income_band_code',
@@ -272,43 +268,62 @@ export default function Onboarding() {
                 )}
               </div>
             )}
-            <div className="grid gap-3 sm:grid-cols-2">
-              {question.options?.map((option) => {
-                const selected = selectedValue === option.value
-                return (
-                  <button
-                    type="button"
-                    key={option.value}
-                    onClick={() => saveAnswer(option.value)}
-                    className={`flex min-h-16 items-center justify-between rounded-lg border p-4 text-left font-semibold ${
-                      selected
-                        ? 'border-blue-600 bg-blue-50 text-blue-700'
-                        : 'border-gray-200 bg-white hover:border-blue-300'
-                    }`}
+            {question.key === 'region_code' ? (
+              <div className="max-w-sm space-y-4">
+                <label className="block text-sm font-bold">
+                  시·도
+                  <select
+                    autoFocus
+                    value={selectedValue}
+                    onChange={(event) => saveAnswer(event.target.value)}
+                    className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-4 py-3.5 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                   >
-                    {option.label}
-                    {selected && <CheckCircle2 size={18} />}
-                  </button>
-                )
-              })}
-            </div>
-            {question.key === 'region_code' && selectedValue && (
-              <label className="mt-4 block text-sm font-bold">
-                시/군/구
-                <select
-                  autoFocus
-                  value={selectedSigungu}
-                  onChange={(event) => setSelectedSigungu(event.target.value)}
-                  className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-4 py-3.5 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                >
-                  <option value="">시/군/구 선택</option>
-                  {(SIGUNGU_BY_SIDO_CODE[selectedValue] ?? []).map((sigungu) => (
-                    <option key={sigungu} value={sigungu}>
-                      {sigungu}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                    <option value="">시·도 선택</option>
+                    {SIDO_OPTIONS.map((option) => (
+                      <option key={option.code} value={option.code}>
+                        {option.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="block text-sm font-bold">
+                  시·군·구
+                  <select
+                    value={selectedSigungu}
+                    disabled={!selectedValue}
+                    onChange={(event) => setSelectedSigungu(event.target.value)}
+                    className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-4 py-3.5 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
+                  >
+                    <option value="">시·군·구 선택</option>
+                    {(SIGUNGU_BY_SIDO_CODE[selectedValue] ?? []).map((sigungu) => (
+                      <option key={sigungu} value={sigungu}>
+                        {sigungu}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {question.options?.map((option) => {
+                  const selected = selectedValue === option.value
+                  return (
+                    <button
+                      type="button"
+                      key={option.value}
+                      onClick={() => saveAnswer(option.value)}
+                      className={`flex min-h-16 items-center justify-between rounded-lg border p-4 text-left font-semibold ${
+                        selected
+                          ? 'border-blue-600 bg-blue-50 text-blue-700'
+                          : 'border-gray-200 bg-white hover:border-blue-300'
+                      }`}
+                    >
+                      {option.label}
+                      {selected && <CheckCircle2 size={18} />}
+                    </button>
+                  )
+                })}
+              </div>
             )}
           </div>
         )}

@@ -1,6 +1,6 @@
 import { ArrowLeft, Bot, CheckCircle2, ClipboardCheck, Calculator, Star } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { bookmarkPolicy, getPolicy, getPolicyMatch, removeBookmark } from '../../api/policies'
 import { extractErrorMessage } from '../../api/client'
 import OnlineApplicationLink from '../../components/common/OnlineApplicationLink'
@@ -11,7 +11,13 @@ import {
   parsePolicyContentLines,
   parsePolicySummary,
 } from '../../utils/policyContent'
-import { resolvePolicyListReturnPath } from '../../utils/policyNavigation'
+import { getBenefitDisplay } from '../../utils/benefitDisplay'
+import type { ChecklistNavigationState } from '../../utils/checklistNavigation'
+import {
+  isPolicyDetailNavigationState,
+  resolvePolicyListReturnPath,
+  type PolicyListNavigationState,
+} from '../../utils/policyNavigation'
 
 const TABS = ['지원내용', '신청조건', '신청방법', '필요서류'] as const
 type PolicyTab = (typeof TABS)[number]
@@ -28,22 +34,18 @@ const CONDITION_STATUS_STYLE: Record<string, string> = {
   불충족: 'text-rose-600',
 }
 
-function formatAmount(amount: number | string | null): string {
-  if (amount === null) return '정보 없음'
-  const numeric = Number(amount)
-  if (!Number.isFinite(numeric) || numeric <= 0) return '정보 없음'
-  return `${numeric.toLocaleString()}원`
-}
-
 export default function PolicyDetail() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { id } = useParams()
   const [searchParams] = useSearchParams()
   const policyId = Number(id)
   const policyListPath = resolvePolicyListReturnPath(
-    searchParams.get('returnTo'),
+    searchParams.get('policyListReturnTo'),
     window.location.origin,
   )
+  const navigationState = isPolicyDetailNavigationState(location.state) ? location.state : null
+  const returnButtonLabel = navigationState?.from === 'my-policies' ? '내 정책 관리' : '정책 목록'
   const [tab, setTab] = useState<PolicyTab>('지원내용')
   const [policy, setPolicy] = useState<PolicyDetailResponse | null>(null)
   const [match, setMatch] = useState<PolicyMatchDetailResponse | null>(null)
@@ -95,6 +97,15 @@ export default function PolicyDetail() {
     }
   }
 
+  function returnToPolicyList() {
+    const policyListReturnTo = navigationState?.policyListReturnTo ?? policyListPath
+    const listState: PolicyListNavigationState | undefined =
+      navigationState?.from === 'policy-list'
+        ? { policyListScrollKey: navigationState.policyListScrollKey }
+        : undefined
+    navigate(policyListReturnTo, { state: listState })
+  }
+
   if (loading) {
     return <p className="py-10 text-center text-sm text-gray-500">불러오는 중...</p>
   }
@@ -102,10 +113,10 @@ export default function PolicyDetail() {
     return (
       <section>
         <button
-          onClick={() => navigate(policyListPath)}
+          onClick={returnToPolicyList}
           className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500"
         >
-          <ArrowLeft size={16} /> 정책 목록
+          <ArrowLeft size={16} /> {returnButtonLabel}
         </button>
         <p className="mt-6 rounded-lg bg-rose-50 p-4 text-sm font-semibold text-rose-600">
           {error || '정책을 찾을 수 없습니다.'}
@@ -123,14 +134,22 @@ export default function PolicyDetail() {
       : policy.days_until_deadline !== null && policy.days_until_deadline < 0
         ? `마감됨 (${policy.application_end_date})`
         : policy.application_end_date
+  const benefitDisplay = getBenefitDisplay(policy)
+  const policySummaryItems = [
+    ...(benefitDisplay.kind === 'hidden'
+      ? []
+      : [{ label: benefitDisplay.label, value: benefitDisplay.displayValue }]),
+    { label: '가능성', value: chance },
+    { label: '신청 마감', value: deadlineText },
+  ]
 
   return (
     <section>
       <button
-        onClick={() => navigate(policyListPath)}
+        onClick={returnToPolicyList}
         className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500"
       >
-        <ArrowLeft size={16} /> 정책 목록
+        <ArrowLeft size={16} /> {returnButtonLabel}
       </button>
       <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_300px]">
         <div className="rounded-xl border border-gray-200 bg-white p-6 sm:p-8">
@@ -166,14 +185,10 @@ export default function PolicyDetail() {
             </div>
           )}
           <div className="mt-7 grid gap-3 sm:grid-cols-3">
-            {[
-              ['예상 혜택', formatAmount(policy.estimated_benefit_amount)],
-              ['가능성', chance],
-              ['신청 마감', deadlineText],
-            ].map(([k, v]) => (
-              <div key={k} className="rounded-lg bg-slate-50 p-4">
-                <p className="text-xs text-gray-500">{k}</p>
-                <p className="mt-2 font-bold">{v}</p>
+            {policySummaryItems.map((item) => (
+              <div key={item.label} className="rounded-lg bg-slate-50 p-4">
+                <p className="text-xs text-gray-500">{item.label}</p>
+                <p className="mt-2 font-bold">{item.value}</p>
               </div>
             ))}
           </div>
@@ -263,13 +278,23 @@ export default function PolicyDetail() {
         <button
           onClick={() => navigate(`/policies/${policy.id}/simulation`)}
           disabled={!policy.is_simulatable}
-          title={policy.is_simulatable ? undefined : '이 정책은 아직 예상 시뮬레이션을 지원하지 않아요.'}
+          title={
+            policy.is_simulatable ? undefined : '이 정책은 아직 예상 시뮬레이션을 지원하지 않아요.'
+          }
           className="inline-flex items-center justify-center gap-2 rounded-lg border border-blue-600 bg-white px-4 py-3.5 font-bold text-blue-600 disabled:cursor-not-allowed disabled:border-gray-300 disabled:text-gray-400"
         >
           <Calculator size={18} /> 예상 시뮬레이션 보기
         </button>
         <button
-          onClick={() => navigate(`/policies/${policy.id}/prepare`)}
+          onClick={() =>
+            navigate(`/policies/${policy.id}/prepare`, {
+              state: {
+                from: 'policy-detail',
+                policyDetailReturnTo: `${location.pathname}${location.search}`,
+                policyDetailState: navigationState,
+              } satisfies ChecklistNavigationState,
+            })
+          }
           className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3.5 font-bold text-white"
         >
           <ClipboardCheck size={18} /> 가입 준비하기

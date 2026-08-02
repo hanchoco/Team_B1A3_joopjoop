@@ -8,6 +8,7 @@ import {
   saveCategoryAnswers,
 } from '../../api/categories'
 import { extractErrorMessage } from '../../api/client'
+import { getCompanySizeOptionLabel } from '../../constants/categoryQuestions'
 import type { CategoryAnswerUpsert, CategoryQuestionResponse } from '../../types/api'
 import { filterVisibleCategoryQuestions } from '../../utils/categoryQuestions'
 
@@ -40,10 +41,15 @@ function parseOptions(optionsJson: unknown): SelectOption[] {
   })
 }
 
-function policiesLinkFor(categoryCode: string, answersUpdated = false): string {
+function policiesLinkFor(
+  categoryCode: string,
+  answersUpdated = false,
+  origin?: 'category',
+): string {
   const params = new URLSearchParams(categoryCode ? { category_code: categoryCode } : {})
   if (answersUpdated) params.set('answers', 'updated')
   params.set('nav', 'category')
+  if (origin) params.set('origin', origin)
   return `/policies?${params.toString()}`
 }
 
@@ -171,14 +177,6 @@ const AMOUNT_RANGES: Record<string, AmountRange[]> = {
 }
 
 const RESIDENCE_MONTH_OPTIONS = Array.from({ length: 240 }, (_, index) => index + 1)
-const COMPANY_SIZE_LABELS: Record<string, string> = {
-  MICRO: '1~4인 (5인 미만)',
-  SMALL: '5~49인',
-  MEDIUM: '50~299인',
-  LARGE: '300인 이상',
-  PUBLIC: '공공기관·공기업',
-  UNKNOWN: '현재 근무 중이 아님',
-}
 const CONTRACT_TYPE_LABELS: Record<string, string> = {
   PERMANENT: '정규직 (계약기간을 정하지 않음)',
   FIXED_TERM: '계약직·기간제·인턴 (계약 종료일이 있음)',
@@ -270,9 +268,16 @@ export default function CategoryQuestions() {
         setCategoryName(category?.name ?? '')
         setCategoryCode(categoryCode)
         if (visibleUnansweredQuestions.length === 0) {
-          navigate(policiesLinkFor(categoryCode, savedAnswers.length > 0), {
-            replace: true,
-          })
+          navigate(
+            policiesLinkFor(
+              categoryCode,
+              savedAnswers.length > 0,
+              isFromHome ? undefined : 'category',
+            ),
+            {
+              replace: true,
+            },
+          )
           return
         }
         setQuestions(unansweredQuestions)
@@ -286,7 +291,7 @@ export default function CategoryQuestions() {
     return () => {
       cancelled = true
     }
-  }, [categoryId, navigate])
+  }, [categoryId, isFromHome, navigate])
 
   function setAnswerValue(questionId: number, value: unknown) {
     setAnswers((current) => {
@@ -360,7 +365,7 @@ export default function CategoryQuestions() {
       if (payload.length > 0) {
         await saveCategoryAnswers(categoryId, payload)
       }
-      navigate(policiesLinkFor(categoryCode, true))
+      navigate(policiesLinkFor(categoryCode, true, isFromHome ? undefined : 'category'))
     } catch (err) {
       setError(extractErrorMessage(err))
     } finally {
@@ -778,7 +783,7 @@ export default function CategoryQuestions() {
                     className={`flex min-h-16 items-center justify-between rounded-lg border px-5 py-4 text-left text-sm font-semibold transition ${selected ? 'border-blue-600 bg-blue-50 text-blue-700 ring-2 ring-blue-100' : 'border-gray-200 hover:border-blue-300'}`}
                   >
                     {isCompanySizeQuestion
-                      ? (COMPANY_SIZE_LABELS[option.value] ?? option.label)
+                      ? getCompanySizeOptionLabel(option.value, option.label)
                       : isContractTypeQuestion
                         ? (CONTRACT_TYPE_LABELS[option.value] ?? option.label)
                         : option.label}
@@ -829,11 +834,7 @@ export default function CategoryQuestions() {
           <button
             type="button"
             disabled={!answered || submitting}
-            onClick={
-              isLast
-                ? () => void finish()
-                : goToNextQuestion
-            }
+            onClick={isLast ? () => void finish() : goToNextQuestion}
             className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 py-3.5 font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
           >
             {isLast ? (submitting ? '저장 중...' : '완료하기') : '다음 질문'}{' '}

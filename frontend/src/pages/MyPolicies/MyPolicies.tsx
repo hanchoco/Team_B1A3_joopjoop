@@ -1,4 +1,5 @@
 import {
+  ArrowLeft,
   ArrowRight,
   Bookmark,
   BriefcaseBusiness,
@@ -15,11 +16,14 @@ import {
   Users,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { deletePolicyProgress, listMyPolicies } from '../../api/checklist'
 import { extractErrorMessage } from '../../api/client'
 import { removeBookmark } from '../../api/policies'
+import ContentStatePanel from '../../components/common/ContentStatePanel'
 import type { MyPoliciesTab, UserPolicyItemResponse } from '../../types/api'
+import type { ChecklistNavigationState } from '../../utils/checklistNavigation'
+import type { PolicyDetailNavigationState } from '../../utils/policyNavigation'
 
 type PolicyTab = 'interest' | 'preparing' | 'completed'
 
@@ -54,6 +58,7 @@ function daysUntil(dateString: string | null): number | null {
 
 export default function MyPolicies() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
   const requestedTab = searchParams.get('tab')
   const tab: PolicyTab =
@@ -63,7 +68,10 @@ export default function MyPolicies() {
 
   const [policies, setPolicies] = useState<UserPolicyItemResponse[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadedRequestKey, setLoadedRequestKey] = useState<string | null>(null)
   const [error, setError] = useState('')
+  const requestKey = JSON.stringify([tab, sort, isUrgentView])
+  const isPoliciesLoading = loading || loadedRequestKey !== requestKey
 
   useEffect(() => {
     let cancelled = false
@@ -86,12 +94,35 @@ export default function MyPolicies() {
         if (!cancelled) setError(extractErrorMessage(err))
       })
       .finally(() => {
-        if (!cancelled) setLoading(false)
+        if (!cancelled) {
+          setLoadedRequestKey(requestKey)
+          setLoading(false)
+        }
       })
     return () => {
       cancelled = true
     }
-  }, [tab, sort, isUrgentView])
+  }, [tab, sort, isUrgentView, requestKey])
+
+  const emptyState = isUrgentView
+    ? {
+        title: '마감이 임박한 정책이 없어요.',
+        description: '현재 30일 안에 마감되는 내 정책이 없어요.',
+      }
+    : tab === 'preparing'
+      ? {
+          title: '준비 중인 정책이 아직 없어요.',
+          description: '정책 준비를 시작하면 진행 상황이 이곳에 표시돼요.',
+        }
+      : tab === 'completed'
+        ? {
+            title: '신청 완료한 정책이 아직 없어요.',
+            description: '신청 완료한 정책이 생기면 이곳에 모아드려요.',
+          }
+        : {
+            title: '관심 정책이 아직 없어요.',
+            description: '관심 있는 정책을 저장하면 이곳에서 확인할 수 있어요.',
+          }
 
   function selectTab(nextTab: PolicyTab) {
     setSearchParams(nextTab === 'interest' ? { tab: nextTab, sort } : { tab: nextTab })
@@ -107,7 +138,8 @@ export default function MyPolicies() {
   }
 
   async function removeProgress(policy: UserPolicyItemResponse, state: PolicyTab) {
-    const stateLabel = state === 'completed' ? '신청 완료 기록과 체크리스트' : '체크리스트 진행 상황'
+    const stateLabel =
+      state === 'completed' ? '신청 완료 기록과 체크리스트' : '체크리스트 진행 상황'
     if (!window.confirm(`“${policy.title}”의 ${stateLabel}을 초기화할까요?`)) return
 
     try {
@@ -118,12 +150,29 @@ export default function MyPolicies() {
     }
   }
 
+  function openPolicyDetail(policyId: number) {
+    navigate(`/policies/${policyId}`, {
+      state: {
+        from: 'my-policies',
+        myPolicyTab: tab,
+        policyListReturnTo: `${location.pathname}${location.search}`,
+      } satisfies PolicyDetailNavigationState,
+    })
+  }
+
   return (
     <section>
-      <p className="text-sm font-semibold text-blue-600">마이페이지</p>
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <button
+        type="button"
+        onClick={() => navigate('/mypage')}
+        className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500"
+      >
+        <ArrowLeft size={16} aria-hidden="true" />
+        <span>마이페이지</span>
+      </button>
+      <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="mt-2 text-3xl font-black">
+          <h1 className="text-3xl font-black">
             {isUrgentView ? '신청이 임박한 정책' : '내 정책 관리'}
           </h1>
           <p className="mt-2 text-sm text-gray-500">
@@ -165,14 +214,22 @@ export default function MyPolicies() {
         </div>
       )}
 
-      {loading ? (
-        <p className="mt-8 text-center text-sm text-gray-500">불러오는 중...</p>
+      {isPoliciesLoading ? (
+        <ContentStatePanel
+          variant="loading"
+          title="정책을 불러오고 있어요."
+          description="잠시만 기다려 주세요."
+        />
       ) : error ? (
         <p className="mt-6 rounded-lg bg-rose-50 p-4 text-sm font-semibold text-rose-600">
           {error}
         </p>
       ) : policies.length === 0 ? (
-        <p className="mt-8 text-center text-sm text-gray-500">표시할 정책이 없어요.</p>
+        <ContentStatePanel
+          variant="empty"
+          title={emptyState.title}
+          description={emptyState.description}
+        />
       ) : (
         <div className="mt-5 space-y-3">
           {policies.map((policy) => {
@@ -234,7 +291,14 @@ export default function MyPolicies() {
                       <Trash2 size={18} />
                     </button>
                     <button
-                      onClick={() => navigate(`/policies/${policy.policy_id}/prepare`)}
+                      onClick={() =>
+                        navigate(`/policies/${policy.policy_id}/prepare`, {
+                          state: {
+                            from: 'my-policies',
+                            myPoliciesReturnTo: `${location.pathname}${location.search}`,
+                          } satisfies ChecklistNavigationState,
+                        })
+                      }
                       className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-bold text-white"
                     >
                       이어서 준비하기 <ArrowRight size={16} />
@@ -264,7 +328,7 @@ export default function MyPolicies() {
                       </button>
                     )}
                     <button
-                      onClick={() => navigate(`/policies/${policy.policy_id}`)}
+                      onClick={() => openPolicyDetail(policy.policy_id)}
                       className="inline-flex items-center gap-2 text-sm font-bold text-blue-600"
                     >
                       자세히 보기 <ArrowRight size={16} />

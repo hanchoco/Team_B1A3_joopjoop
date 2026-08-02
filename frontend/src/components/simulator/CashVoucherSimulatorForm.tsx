@@ -1,9 +1,9 @@
-import type { ChangeEvent } from 'react'
 import type { CashVoucherRuleJson } from '../../types/api'
 import type { SimulatorFormProps } from '../../types/simulator'
 import { formatWon } from '../../utils/formatWon'
 import CurrencyInput from './CurrencyInput'
 import KnownRuleInfo from './KnownRuleInfo'
+import PositiveIntegerInput from './PositiveIntegerInput'
 
 const PAYMENT_CYCLE_LABEL: Record<string, string> = {
   ONCE: '1회',
@@ -15,8 +15,6 @@ const PAYMENT_CYCLE_LABEL: Record<string, string> = {
 
 export default function CashVoucherSimulatorForm({ rule, values, onChange }: SimulatorFormProps) {
   const r = rule as unknown as CashVoucherRuleJson
-  const update = (event: ChangeEvent<HTMLInputElement>) =>
-    onChange(event.target.name, event.target.value === '' ? undefined : Number(event.target.value))
   const cycleLabel = PAYMENT_CYCLE_LABEL[r.payment_cycle] ?? r.payment_cycle
   const isMonthly = r.payment_cycle === 'MONTHLY'
 
@@ -32,23 +30,14 @@ export default function CashVoucherSimulatorForm({ rule, values, onChange }: Sim
         />
         {isMonthly && (
           <div className="grid gap-4 sm:grid-cols-2">
-            <label className="text-sm font-semibold">
-              받고 싶은 개월 수(선택)
-              <div className="relative mt-2">
-                <input
-                  name="count"
-                  type="number"
-                  min={1}
-                  max={r.max_count}
-                  value={values.count ?? r.max_count}
-                  onChange={update}
-                  className="w-full rounded-lg border border-gray-300 px-4 py-3 pr-14 font-normal"
-                />
-                <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400">
-                  개월
-                </span>
-              </div>
-            </label>
+            <PositiveIntegerInput
+              name="count"
+              label="받고 싶은 개월 수(선택)"
+              value={values.count}
+              initialValue={r.max_count}
+              max={r.max_count}
+              onChange={onChange}
+            />
           </div>
         )}
       </div>
@@ -76,22 +65,12 @@ export default function CashVoucherSimulatorForm({ rule, values, onChange }: Sim
           onChange={onChange}
         />
         {isMonthly && (
-          <label className="text-sm font-semibold">
-            받고 싶은 개월 수(선택)
-            <div className="relative mt-2">
-              <input
-                name="count"
-                type="number"
-                min={1}
-                value={values.count ?? 1}
-                onChange={update}
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 pr-14 font-normal"
-              />
-              <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400">
-                개월
-              </span>
-            </div>
-          </label>
+          <PositiveIntegerInput
+            name="count"
+            label="받고 싶은 개월 수(선택)"
+            value={values.count}
+            onChange={onChange}
+          />
         )}
       </div>
     </div>

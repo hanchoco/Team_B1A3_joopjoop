@@ -1,14 +1,12 @@
-import type { ChangeEvent } from 'react'
 import type { HousingRentRuleJson } from '../../types/api'
 import type { SimulatorFormProps } from '../../types/simulator'
 import { formatWon } from '../../utils/formatWon'
 import CurrencyInput from './CurrencyInput'
 import KnownRuleInfo from './KnownRuleInfo'
+import PositiveIntegerInput from './PositiveIntegerInput'
 
 export default function HousingRentSimulatorForm({ rule, values, onChange }: SimulatorFormProps) {
   const r = rule as unknown as HousingRentRuleJson
-  const update = (event: ChangeEvent<HTMLInputElement>) =>
-    onChange(event.target.name, event.target.value === '' ? undefined : Number(event.target.value))
 
   return (
     <div>
@@ -50,23 +48,14 @@ export default function HousingRentSimulatorForm({ rule, values, onChange }: Sim
           value={values.deposit_amount ?? 0}
           onChange={onChange}
         />
-        <label className="text-sm font-semibold">
-          희망 지원 개월 수(선택)
-          <div className="relative mt-2">
-            <input
-              name="support_months"
-              type="number"
-              min={1}
-              max={r.support_months}
-              value={values.support_months ?? r.support_months}
-              onChange={update}
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 pr-14 font-normal"
-            />
-            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400">
-              개월
-            </span>
-          </div>
-        </label>
+        <PositiveIntegerInput
+          name="support_months"
+          label="희망 지원 개월 수(선택)"
+          value={values.support_months}
+          initialValue={r.support_months}
+          max={r.support_months}
+          onChange={onChange}
+        />
       </div>
     </div>
   )

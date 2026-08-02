@@ -37,6 +37,19 @@ a {
 button {
   cursor: pointer;
 }
+
+.policy-search-input::-webkit-search-cancel-button,
+.policy-search-input::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.policy-search-input::-ms-clear,
+.policy-search-input::-ms-reveal {
+  display: none;
+  width: 0;
+  height: 0;
+}
 h1,
 h2,
 h3,

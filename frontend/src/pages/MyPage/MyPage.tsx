@@ -6,14 +6,9 @@ import { listMyPolicies } from '../../api/checklist'
 import { getRecommendations } from '../../api/policies'
 import { useApp } from '../../store/useApp'
 import type { PolicySummaryResponse, UserPolicyItemResponse } from '../../types/api'
+import { getBenefitDisplay } from '../../utils/benefitDisplay'
+import type { ChecklistNavigationState } from '../../utils/checklistNavigation'
 import { calculateProfileAccuracy, type CategoryAccuracyData } from '../../utils/profileAccuracy'
-
-function formatBenefit(amount: number | string | null): string | null {
-  if (amount === null) return null
-  const numeric = Number(amount)
-  if (!Number.isFinite(numeric) || numeric <= 0) return null
-  return `예상 혜택 ${numeric.toLocaleString()}원`
-}
 
 export default function MyPage() {
   const navigate = useNavigate()
@@ -176,7 +171,14 @@ export default function MyPage() {
                   </p>
                 </div>
                 <button
-                  onClick={() => navigate(`/policies/${continuePolicy.policy_id}/prepare`)}
+                  onClick={() =>
+                    navigate(`/policies/${continuePolicy.policy_id}/prepare`, {
+                      state: {
+                        from: 'mypage',
+                        myPageReturnTo: '/mypage',
+                      } satisfies ChecklistNavigationState,
+                    })
+                  }
                   className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-bold text-white"
                 >
                   이어서 준비하기 <ArrowRight size={16} />
@@ -191,7 +193,7 @@ export default function MyPage() {
                 <p className="mt-1 text-sm text-gray-500">업데이트된 조건에 맞는 정책이에요.</p>
               </div>
               <button
-                onClick={() => navigate('/policies?filter=ELIGIBLE')}
+                onClick={() => navigate('/policies?filter=ELIGIBLE&origin=mypage')}
                 className="text-sm font-bold text-blue-600"
               >
                 더 많은 정보 보기
@@ -204,7 +206,7 @@ export default function MyPage() {
             ) : (
               <div className="mt-5 grid gap-3 sm:grid-cols-3">
                 {recommendations.map((policy) => {
-                  const benefitText = formatBenefit(policy.estimated_benefit_amount)
+                  const benefitDisplay = getBenefitDisplay(policy)
                   return (
                     <button
                       key={policy.id}
@@ -216,8 +218,10 @@ export default function MyPage() {
                       {policy.summary && (
                         <p className="mt-1 text-xs text-gray-500">{policy.summary}</p>
                       )}
-                      {benefitText && (
-                        <p className="mt-2 text-xs font-semibold text-blue-600">{benefitText}</p>
+                      {benefitDisplay.kind !== 'hidden' && (
+                        <p className="mt-2 text-xs font-semibold text-blue-600">
+                          {benefitDisplay.label} {benefitDisplay.displayValue}
+                        </p>
                       )}
                     </button>
                   )

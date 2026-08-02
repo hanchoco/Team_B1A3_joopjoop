@@ -11,7 +11,12 @@ import HousingRentSimulatorForm from '../../components/simulator/HousingRentSimu
 import LoanInterestSimulatorForm from '../../components/simulator/LoanInterestSimulatorForm'
 import SavingsAssetSimulatorForm from '../../components/simulator/SavingsAssetSimulatorForm'
 import TaxDeductionSimulatorForm from '../../components/simulator/TaxDeductionSimulatorForm'
-import type { CalcType, PolicyBenefitResponse, PolicyDetailResponse, SimulatorResult } from '../../types/api'
+import type {
+  CalcType,
+  PolicyBenefitResponse,
+  PolicyDetailResponse,
+  SimulatorResult,
+} from '../../types/api'
 import type { SimulatorFormProps, SimulatorInputValue } from '../../types/simulator'
 import { formatWon } from '../../utils/formatWon'
 
@@ -83,7 +88,8 @@ export default function Simulator() {
   }, [policyId])
 
   const eligibleBenefits = useMemo(() => (policy ? simulatableBenefits(policy) : []), [policy])
-  const selectedBenefit = eligibleBenefits.find((benefit) => benefit.id === selectedBenefitId) ?? null
+  const selectedBenefit =
+    eligibleBenefits.find((benefit) => benefit.id === selectedBenefitId) ?? null
 
   function selectBenefit(benefitId: number) {
     setSelectedBenefitId(benefitId)
@@ -157,9 +163,21 @@ export default function Simulator() {
 
   const CategoryForm = config.Form
   const yearly = period === '연 기준'
-  const beforeAmount = result ? (yearly ? result.annual_before_amount : result.monthly_before_amount) : 0
-  const afterAmount = result ? (yearly ? result.annual_after_amount : result.monthly_after_amount) : 0
-  const savedAmount = result ? (yearly ? result.annual_savings_amount : result.monthly_savings_amount) : 0
+  const beforeAmount = result
+    ? yearly
+      ? result.annual_before_amount
+      : result.monthly_before_amount
+    : 0
+  const afterAmount = result
+    ? yearly
+      ? result.annual_after_amount
+      : result.monthly_after_amount
+    : 0
+  const savedAmount = result
+    ? yearly
+      ? result.annual_savings_amount
+      : result.monthly_savings_amount
+    : 0
 
   return (
     <section className="mx-auto max-w-4xl">
@@ -198,7 +216,12 @@ export default function Simulator() {
 
       <form className="mt-6 border-y border-gray-200 py-6" onSubmit={handleSubmit}>
         <h2 className="mb-4 text-lg font-bold">{config.label} 시뮬레이션 조건</h2>
-        <CategoryForm rule={rule} values={formValues} onChange={updateFormValue} />
+        <CategoryForm
+          key={selectedBenefit.id}
+          rule={rule}
+          values={formValues}
+          onChange={updateFormValue}
+        />
         {calcError && <p className="mt-4 text-sm font-semibold text-rose-600">{calcError}</p>}
         <button
           type="submit"
