@@ -3,6 +3,7 @@ import type { SignupRequest, UserProfileResponse, UserProfileUpdate, UserRespons
 export interface AppContextValue {
   isLoggedIn: boolean
   token: string | null
+  hasExplicitlyLoggedOut: boolean
   currentUser: UserResponse | null
   login: (email: string, password: string) => Promise<void>
   signup: (payload: SignupRequest) => Promise<void>

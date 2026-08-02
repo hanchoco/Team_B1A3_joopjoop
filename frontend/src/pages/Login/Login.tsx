@@ -20,7 +20,7 @@ function resolveLoginReturnPath(state: unknown): string {
 export default function Login() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { login } = useApp()
+  const { login, hasExplicitlyLoggedOut } = useApp()
   const [loginId, setLoginId] = useState(EXAMPLE_LOGIN_ID)
   const [isExampleLoginId, setIsExampleLoginId] = useState(true)
   const [password, setPassword] = useState('')
@@ -32,8 +32,9 @@ export default function Login() {
     setError('')
     setIsSubmitting(true)
     try {
+      const returnPath = hasExplicitlyLoggedOut ? '/' : resolveLoginReturnPath(location.state)
       await login(loginId.trim(), password)
-      navigate(resolveLoginReturnPath(location.state), { replace: true })
+      navigate(returnPath, { replace: true })
     } catch (err) {
       setError(extractErrorMessage(err))
     } finally {

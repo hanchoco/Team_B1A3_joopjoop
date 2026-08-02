@@ -3,14 +3,18 @@ import type { PropsWithChildren } from 'react'
 import { useApp } from '../store/useApp'
 
 export default function RequireAuth({ children }: PropsWithChildren) {
-  const { token } = useApp()
+  const { token, hasExplicitlyLoggedOut } = useApp()
   const location = useLocation()
   if (!token) {
     return (
       <Navigate
         to="/login"
         replace
-        state={{ returnTo: `${location.pathname}${location.search}` }}
+        state={
+          hasExplicitlyLoggedOut
+            ? undefined
+            : { returnTo: `${location.pathname}${location.search}` }
+        }
       />
     )
   }

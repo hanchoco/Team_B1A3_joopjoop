@@ -2,12 +2,27 @@ import { useEffect, useMemo, useState } from 'react'
 import type { PropsWithChildren } from 'react'
 import { login as apiLogin, signup as apiSignup } from '../api/auth'
 import { clearToken, getToken, setToken as persistToken } from '../api/client'
-import { getCurrentUser, getMyProfile, updateDisplayName as apiUpdateDisplayName, updateMyProfile } from '../api/users'
-import type { SignupRequest, UserProfileResponse, UserProfileUpdate, UserResponse } from '../types/api'
+import {
+  getCurrentUser,
+  getMyProfile,
+  updateDisplayName as apiUpdateDisplayName,
+  updateMyProfile,
+} from '../api/users'
+import type {
+  SignupRequest,
+  UserProfileResponse,
+  UserProfileUpdate,
+  UserResponse,
+} from '../types/api'
 import { AppContext } from './context'
+
+const EXPLICIT_LOGOUT_STORAGE_KEY = 'joopjoop-explicit-logout'
 
 export function AppProvider({ children }: PropsWithChildren) {
   const [token, setToken] = useState<string | null>(() => getToken())
+  const [hasExplicitlyLoggedOut, setHasExplicitlyLoggedOut] = useState(
+    () => localStorage.getItem(EXPLICIT_LOGOUT_STORAGE_KEY) === 'true',
+  )
   const [currentUser, setCurrentUser] = useState<UserResponse | null>(null)
   const [profile, setProfile] = useState<UserProfileResponse | null>(null)
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(
@@ -40,6 +55,8 @@ export function AppProvider({ children }: PropsWithChildren) {
 
   async function login(email: string, password: string) {
     const result = await apiLogin({ email, password })
+    localStorage.removeItem(EXPLICIT_LOGOUT_STORAGE_KEY)
+    setHasExplicitlyLoggedOut(false)
     persistToken(result.access_token)
     setToken(result.access_token)
     setCurrentUser(result.user)
@@ -47,12 +64,16 @@ export function AppProvider({ children }: PropsWithChildren) {
 
   async function signup(payload: SignupRequest) {
     const result = await apiSignup(payload)
+    localStorage.removeItem(EXPLICIT_LOGOUT_STORAGE_KEY)
+    setHasExplicitlyLoggedOut(false)
     persistToken(result.access_token)
     setToken(result.access_token)
     setCurrentUser(result.user)
   }
 
   function logout() {
+    localStorage.setItem(EXPLICIT_LOGOUT_STORAGE_KEY, 'true')
+    setHasExplicitlyLoggedOut(true)
     clearToken()
     setToken(null)
     setCurrentUser(null)
@@ -81,6 +102,7 @@ export function AppProvider({ children }: PropsWithChildren) {
     () => ({
       isLoggedIn,
       token,
+      hasExplicitlyLoggedOut,
       currentUser,
       login,
       signup,
@@ -93,7 +115,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       updateAvatarUrl,
       accountId,
     }),
-    [isLoggedIn, token, currentUser, profile, avatarUrl, accountId],
+    [isLoggedIn, token, hasExplicitlyLoggedOut, currentUser, profile, avatarUrl, accountId],
   )
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>
