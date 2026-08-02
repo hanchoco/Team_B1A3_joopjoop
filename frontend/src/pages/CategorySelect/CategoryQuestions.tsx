@@ -8,10 +8,16 @@ import {
   saveCategoryAnswers,
 } from '../../api/categories'
 import { extractErrorMessage } from '../../api/client'
-import { getCompanySizeOptionLabel } from '../../constants/categoryQuestions'
+import {
+  EMPLOYMENT_COMPANY_SIZE_QUESTION_KEY,
+  getCompanySizeOptionLabel,
+} from '../../constants/categoryQuestions'
 import { HOME_PATH } from '../../constants/routes'
 import type { CategoryAnswerUpsert, CategoryQuestionResponse } from '../../types/api'
-import { filterVisibleCategoryQuestions } from '../../utils/categoryQuestions'
+import {
+  filterCurrentCategoryQuestions,
+  filterVisibleCategoryQuestions,
+} from '../../utils/categoryQuestions'
 
 interface SelectOption {
   label: string
@@ -259,7 +265,8 @@ export default function CategoryQuestions() {
         const category = categories.find((item) => item.id === categoryId)
         const categoryCode = category?.code ?? ''
         const savedQuestionIds = new Set(savedAnswers.map((answer) => answer.question_id))
-        const unansweredQuestions = categoryQuestions.filter(
+        const currentQuestions = filterCurrentCategoryQuestions(categoryQuestions, categoryCode)
+        const unansweredQuestions = currentQuestions.filter(
           (question) => !savedQuestionIds.has(question.id),
         )
         const visibleUnansweredQuestions = filterVisibleCategoryQuestions(
@@ -268,6 +275,8 @@ export default function CategoryQuestions() {
         )
         setCategoryName(category?.name ?? '')
         setCategoryCode(categoryCode)
+        setStep(0)
+        setAnswers({})
         if (visibleUnansweredQuestions.length === 0) {
           navigate(
             policiesLinkFor(
@@ -438,7 +447,7 @@ export default function CategoryQuestions() {
     question.question_key === 'employment.tenure_months'
   const isAnnualIncome = question.question_key === 'finance.annual_income_amount'
   const isTotalAssetQuestion = question.question_key === 'finance.total_asset_amount'
-  const isCompanySizeQuestion = question.question_key === 'employment.company_size_code'
+  const isCompanySizeQuestion = question.question_key === EMPLOYMENT_COMPANY_SIZE_QUESTION_KEY
   const isContractTypeQuestion = question.question_key === 'employment.contract_type_code'
   const monthlyIncomeQuestion = questions.find(
     (item) => item.question_key === 'finance.monthly_income_amount',

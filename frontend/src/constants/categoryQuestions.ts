@@ -1,3 +1,6 @@
+export const EMPLOYMENT_COMPANY_SIZE_QUESTION_KEY = 'employment.company_size_code'
+export const LEGACY_EMPLOYMENT_COMPANY_SIZE_QUESTION_KEY = 'employment.company_size'
+
 export const COMPANY_SIZE_OPTION_LABELS: Record<string, string> = {
   MICRO: '5인 미만',
   SMALL: '5인 이상 50인 미만',

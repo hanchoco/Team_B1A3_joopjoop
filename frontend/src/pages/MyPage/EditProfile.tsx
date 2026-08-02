@@ -11,7 +11,10 @@ import {
   saveCategoryAnswers,
 } from '../../api/categories'
 import { extractErrorMessage } from '../../api/client'
-import { getCompanySizeOptionLabel } from '../../constants/categoryQuestions'
+import {
+  EMPLOYMENT_COMPANY_SIZE_QUESTION_KEY,
+  getCompanySizeOptionLabel,
+} from '../../constants/categoryQuestions'
 import {
   EMPLOYMENT_STATUS_OPTIONS,
   HOUSEHOLD_TYPE_OPTIONS,
@@ -26,6 +29,7 @@ import type {
   CategoryResponse,
   UserProfileUpdate,
 } from '../../types/api'
+import { filterCurrentCategoryQuestions } from '../../utils/categoryQuestions'
 
 const fieldClass =
   'mt-2 w-full rounded-lg border border-gray-300 bg-white p-3 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100'
@@ -110,7 +114,7 @@ function CategoryQuestionField({
   onToggleMultiOption: (option: string) => void
 }) {
   const options = parseQuestionOptions(question.options_json).map((option) =>
-    question.question_key === 'employment.company_size_code'
+    question.question_key === EMPLOYMENT_COMPANY_SIZE_QUESTION_KEY
       ? { ...option, label: getCompanySizeOptionLabel(option.value, option.label) }
       : option,
   )
@@ -273,7 +277,8 @@ export default function EditProfile() {
         const withQuestions = await Promise.all(
           categories.map(async (category) => {
             const questions = await listCategoryQuestions(category.id)
-            return questions.length > 0 ? category : null
+            const currentQuestions = filterCurrentCategoryQuestions(questions, category.code)
+            return currentQuestions.length > 0 ? category : null
           }),
         )
         if (cancelled) return
@@ -343,7 +348,7 @@ export default function EditProfile() {
     reader.readAsDataURL(file)
   }
 
-  function toggleCategorySection(categoryId: number) {
+  function toggleCategorySection(categoryId: number, categoryCode: string) {
     setExpandedCategoryId((current) => (current === categoryId ? null : categoryId))
     const existing = sections[categoryId]
     if (existing) return
@@ -363,16 +368,20 @@ export default function EditProfile() {
     }))
     Promise.all([listCategoryQuestions(categoryId), getCategoryAnswers(categoryId)])
       .then(([questions, answerRecords]) => {
+        const currentQuestions = filterCurrentCategoryQuestions(questions, categoryCode)
+        const currentQuestionIds = new Set(currentQuestions.map((question) => question.id))
         const answers: Record<number, unknown> = {}
         for (const record of answerRecords) {
-          answers[record.question_id] = record.answer_json.value
+          if (currentQuestionIds.has(record.question_id)) {
+            answers[record.question_id] = record.answer_json.value
+          }
         }
         setSections((current) => ({
           ...current,
           [categoryId]: {
             status: 'loaded',
             error: '',
-            questions,
+            questions: currentQuestions,
             answers,
             saving: false,
             resetting: false,
@@ -735,7 +744,7 @@ export default function EditProfile() {
                 <div key={category.id} className="py-4">
                   <button
                     type="button"
-                    onClick={() => toggleCategorySection(category.id)}
+                    onClick={() => toggleCategorySection(category.id, category.code)}
                     className="flex w-full items-center justify-between text-left"
                   >
                     <span className="text-sm font-bold">{category.name}</span>

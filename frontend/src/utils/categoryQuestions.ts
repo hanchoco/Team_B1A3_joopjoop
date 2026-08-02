@@ -1,4 +1,5 @@
 import type { CategoryQuestionResponse } from '../types/api'
+import { LEGACY_EMPLOYMENT_COMPANY_SIZE_QUESTION_KEY } from '../constants/categoryQuestions'
 
 export const HIDDEN_QUESTION_KEYS = new Set(['finance.total_debt_amount'])
 
@@ -22,19 +23,16 @@ export function hasUsableAnswerValue(value: unknown): boolean {
   return true
 }
 
-export function removeDuplicateCompanySizeQuestions(
+export function filterCurrentCategoryQuestions(
   questions: CategoryQuestionResponse[],
+  categoryCode: string,
 ): CategoryQuestionResponse[] {
-  const companySizeQuestions = questions.filter(
-    (item) =>
-      item.question_key.includes('company_size') ||
-      (item.label.includes('회사') && item.label.includes('규모')),
-  )
-  if (companySizeQuestions.length < 2) return questions
+  if (categoryCode !== 'EMPLOYMENT') return questions
 
-  const detailedQuestion = companySizeQuestions.at(-1)
   return questions.filter(
-    (item) => !companySizeQuestions.includes(item) || item.id === detailedQuestion?.id,
+    (question) =>
+      question.question_key !== LEGACY_EMPLOYMENT_COMPANY_SIZE_QUESTION_KEY &&
+      !isRepeatedEmploymentStatusQuestion(question),
   )
 }
 
@@ -54,11 +52,7 @@ export function filterVisibleCategoryQuestions(
   questions: CategoryQuestionResponse[],
   categoryCode: string,
 ): CategoryQuestionResponse[] {
-  return removeDuplicateCompanySizeQuestions(
-    questions.filter(
-      (question) =>
-        !HIDDEN_QUESTION_KEYS.has(question.question_key) &&
-        !(categoryCode === 'EMPLOYMENT' && isRepeatedEmploymentStatusQuestion(question)),
-    ),
+  return filterCurrentCategoryQuestions(questions, categoryCode).filter(
+    (question) => !HIDDEN_QUESTION_KEYS.has(question.question_key),
   )
 }
