@@ -1,10 +1,10 @@
-import type { ChangeEvent } from 'react'
 import type { LoanInterestRuleJson } from '../../types/api'
 import type { SimulatorFormProps } from '../../types/simulator'
 import { formatWon } from '../../utils/formatWon'
 import CurrencyInput from './CurrencyInput'
 import KnownRuleInfo from './KnownRuleInfo'
 import PercentInput from './PercentInput'
+import PositiveIntegerInput from './PositiveIntegerInput'
 
 const REPAYMENT_TYPE_LABEL: Record<string, string> = {
   EQUAL_PRINCIPAL_INTEREST: '원리금균등상환',
@@ -14,8 +14,6 @@ const REPAYMENT_TYPE_LABEL: Record<string, string> = {
 
 export default function LoanInterestSimulatorForm({ rule, values, onChange }: SimulatorFormProps) {
   const r = rule as unknown as LoanInterestRuleJson
-  const update = (event: ChangeEvent<HTMLInputElement>) =>
-    onChange(event.target.name, event.target.value === '' ? undefined : Number(event.target.value))
   const needsGeneralRate = r.interest_reduction_rate_percent === undefined
 
   return (
@@ -55,23 +53,14 @@ export default function LoanInterestSimulatorForm({ rule, values, onChange }: Si
             onChange={onChange}
           />
         )}
-        <label className="text-sm font-semibold">
-          희망 지원 개월 수(선택)
-          <div className="relative mt-2">
-            <input
-              name="support_months"
-              type="number"
-              min={1}
-              max={r.max_support_months}
-              value={values.support_months ?? r.max_support_months}
-              onChange={update}
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 pr-14 font-normal"
-            />
-            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400">
-              개월
-            </span>
-          </div>
-        </label>
+        <PositiveIntegerInput
+          name="support_months"
+          label="희망 지원 개월 수(선택)"
+          value={values.support_months}
+          initialValue={r.max_support_months}
+          max={r.max_support_months}
+          onChange={onChange}
+        />
       </div>
     </div>
   )
