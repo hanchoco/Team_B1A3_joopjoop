@@ -191,11 +191,23 @@ export default function Simulator() {
   // 훈련수당/교육비 없이 취업성공수당 같은 1회성 혜택만 있으면 월/연 절감액이 항상 0이라,
   // "총 절감 금액 +0원"만 보고 혜택이 없다고 오해하기 쉽다 - 이 경우 총 예상 혜택 카드를
   // 상단으로 올리고 1회성 지급임을 배지로 알린다.
+  // CASH_VOUCHER + payment_cycle=ONCE는 반대로 monthly_savings_amount가 0이 아니라
+  // total_benefit_amount와 같은 값이 들어간다(calculate_cash_voucher가 support_months=1일 때
+  // total_amount를 그대로 monthly_effect에 담기 때문) - "월 절감액"처럼 보이는 총액이 오해를
+  // 주므로 monthly_savings_amount 조건 대신 payment_cycle로 직접 판별한다.
+  const cashVoucherPaymentCycle = (rule as { payment_cycle?: unknown }).payment_cycle
   const isOneTimeOnlyBenefit =
     result != null &&
-    result.category === 'EMPLOYMENT_EDUCATION' &&
-    Number(result.monthly_savings_amount) === 0 &&
-    Number(result.total_benefit_amount) > 0
+    ((result.category === 'EMPLOYMENT_EDUCATION' &&
+      Number(result.monthly_savings_amount) === 0 &&
+      Number(result.total_benefit_amount) > 0) ||
+      (result.category === 'CASH_VOUCHER' && cashVoucherPaymentCycle === 'ONCE'))
+  // payment_cycle=ONCE는 "매달 자동 반복이 아니다"는 뜻일 뿐, max_count(PERCENTAGE엔 없는
+  // FIXED 전용 필드)가 1보다 크면 조건 충족 시 여러 번 지급될 수 있다 - "1회성"이라 단정하면
+  // 오해를 주므로 max_count>1이면 문구를 분리한다.
+  const cashVoucherMaxCount = Number((rule as { max_count?: unknown }).max_count ?? 1)
+  const cashVoucherRepeatsMultipleTimes =
+    result?.category === 'CASH_VOUCHER' && cashVoucherMaxCount > 1
   const isReduceDirection = result != null && REDUCE_CALC_TYPES.has(result.category)
   // support_months가 12 미만이면 연 기준 금액이 월×12가 아니라 실제 지원 개월만큼만
   // 반영되므로(_build_result의 active_months_in_year), 오해를 막기 위해 안내 문구를 띄운다.
@@ -287,7 +299,9 @@ export default function Simulator() {
               </div>
               <div className="mt-4 mb-10 flex justify-center">
                 <span className="inline-block rounded bg-blue-50 px-2 py-1 text-xs font-bold text-blue-600">
-                  이 정책은 매월 반복 지급이 아닌, 조건 충족 시 1회성으로 지급되는 수당이에요.
+                  {cashVoucherRepeatsMultipleTimes
+                    ? `이 정책은 매월 반복 지급이 아닌, 조건 충족 시 최대 ${cashVoucherMaxCount}회에 걸쳐 지급되는 혜택이에요.`
+                    : '이 정책은 매월 반복 지급이 아닌, 조건 충족 시 1회성으로 지급되는 혜택이에요.'}
                 </span>
               </div>
             </>
