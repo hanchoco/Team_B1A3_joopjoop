@@ -2,19 +2,10 @@ import type { EmploymentEducationRuleJson } from '../../types/api'
 import type { SimulatorFormProps } from '../../types/simulator'
 import { formatWon } from '../../utils/formatWon'
 import { hasValue } from '../../utils/hasValue'
-import CurrencyInput from './CurrencyInput'
 import KnownRuleInfo from './KnownRuleInfo'
 
-export default function EmploymentEducationSimulatorForm({
-  rule,
-  values,
-  onChange,
-}: SimulatorFormProps) {
+export default function EmploymentEducationSimulatorForm({ rule }: SimulatorFormProps) {
   const r = rule as unknown as EmploymentEducationRuleJson
-  const isOneTimeOnlyBenefit =
-    !r.training_allowance_amount &&
-    !r.education_subsidy_amount &&
-    !!r.employment_success_bonus_amount
 
   return (
     <div>
@@ -34,17 +25,6 @@ export default function EmploymentEducationSimulatorForm({
             : []),
         ]}
       />
-      {!isOneTimeOnlyBenefit && (
-        <div className="grid gap-4 sm:grid-cols-2">
-          <CurrencyInput
-            name="current_monthly_income_amount"
-            label="현재 월 소득(선택)"
-            placeholder="예: 2,000,000"
-            value={values.current_monthly_income_amount ?? 0}
-            onChange={onChange}
-          />
-        </div>
-      )}
     </div>
   )
 }

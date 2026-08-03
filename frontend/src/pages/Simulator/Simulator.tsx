@@ -250,7 +250,7 @@ export default function Simulator() {
       <div className="mt-5">
         <h1 className="text-3xl font-black">예상 시뮬레이션</h1>
         <p className="mt-2 text-sm leading-6 text-gray-500">
-          {policy.title} 혜택을 받으면 생활비가 어떻게 달라지는지 한눈에 확인해보세요.
+          {policy.title} 혜택이 얼마인지 확인해보세요.
         </p>
       </div>
 
