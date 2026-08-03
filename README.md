@@ -42,13 +42,13 @@ joopjoop의 모든 기능은 사용자가 성공적으로 정책을 신청할 �
 
 - **기본/추가 정보 입력**: 가입 시 입력한 기본 정보(출생연도, 거주지역, 소득 등)와 카테고리별 추가 질문을 통해 사용자의 상태를 파악합니다.
 - **지역 청년 정보 격차 해소**: 구·군 단위로 세분화된 지자체 정책까지 필터링해 정보력 차이로 인한 혜택 격차를 줄입니다.
-<img width="1381" height="1395" alt="Image" src="https://github.com/user-attachments/assets/b920aa71-4308-4e58-829a-367e195ab92b" /> <br> <br>
+<img width="1372" height="1354" alt="Image" src="https://github.com/user-attachments/assets/aaa5d7a2-6b37-47b5-85fb-aaccc277b01b" /> <br> <br>
 
 ### 3. 정책 상세 및 시뮬레이션 (결정)
 
 - **예상 시뮬레이션**: 정책을 신청하여 혜택을 받았을 때의 월/연 기준 소득, 지출, 잔여 금액 변화를 비교해 구체적인 경제적 절감 효과를 시각적으로 보여줍니다.
 - **AI에게 물어보기 (Q&A)**: 체크리스트를 진행하다 궁금한 점이 생기면 언제든 질문할 수 있습니다. Solar LLM이 현재 보고 있는 정책 조건만 컨텍스트로 삼아 정확하고 친절하게 답변합니다.
-<img width="1800" height="1413" alt="Image" src="https://github.com/user-attachments/assets/c3febb38-2c46-4e73-bb39-d6cf4ca04c92" /><br><br>
+<img width="2281" height="1386" alt="Image" src="https://github.com/user-attachments/assets/b5a124e9-a797-40b9-b84d-c6678ad1bad0" /><br><br>
 ---
 
 ## 백엔드 및 AI 아키텍처 특징
