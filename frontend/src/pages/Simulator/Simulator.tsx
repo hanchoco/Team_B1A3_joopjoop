@@ -201,17 +201,18 @@ export default function Simulator() {
   // 훈련수당/교육비 없이 취업성공수당 같은 1회성 혜택만 있으면 월/연 절감액이 항상 0이라,
   // "총 절감 금액 +0원"만 보고 혜택이 없다고 오해하기 쉽다 - 이 경우 총 예상 혜택 카드를
   // 상단으로 올리고 1회성 지급임을 배지로 알린다.
-  // CASH_VOUCHER + payment_cycle=ONCE는 반대로 monthly_savings_amount가 0이 아니라
-  // total_benefit_amount와 같은 값이 들어간다(calculate_cash_voucher가 support_months=1일 때
-  // total_amount를 그대로 monthly_effect에 담기 때문) - "월 절감액"처럼 보이는 총액이 오해를
-  // 주므로 monthly_savings_amount 조건 대신 payment_cycle로 직접 판별한다.
+  // CASH_VOUCHER + payment_cycle!==MONTHLY는 반대로 monthly_savings_amount가 0이 아니라
+  // total_benefit_amount와 같은 값이 들어간다(calculate_cash_voucher가 MONTHLY가 아니면
+  // support_months=1로 total_amount를 그대로 monthly_effect에 담기 때문 - ONCE뿐 아니라
+  // YEARLY/MATURITY/VARIABLE도 동일) - "월 절감액"처럼 보이는 총액이 오해를 주므로
+  // monthly_savings_amount 조건 대신 payment_cycle로 직접 판별한다.
   const cashVoucherPaymentCycle = (rule as { payment_cycle?: unknown }).payment_cycle
   const isOneTimeOnlyBenefit =
     result != null &&
     ((result.category === 'EMPLOYMENT_EDUCATION' &&
       Number(result.monthly_savings_amount) === 0 &&
       Number(result.total_benefit_amount) > 0) ||
-      (result.category === 'CASH_VOUCHER' && cashVoucherPaymentCycle === 'ONCE'))
+      (result.category === 'CASH_VOUCHER' && cashVoucherPaymentCycle !== 'MONTHLY'))
   // payment_cycle=ONCE는 "매달 자동 반복이 아니다"는 뜻일 뿐, max_count(PERCENTAGE엔 없는
   // FIXED 전용 필드)가 1보다 크면 조건 충족 시 여러 번 지급될 수 있다 - "1회성"이라 단정하면
   // 오해를 주므로 max_count>1이면 문구를 분리한다.
@@ -310,8 +311,8 @@ export default function Simulator() {
               <div className="mt-4 mb-10 flex justify-center">
                 <span className="inline-block rounded bg-blue-50 px-2 py-1 text-xs font-bold text-blue-600">
                   {cashVoucherRepeatsMultipleTimes
-                    ? `이 정책은 매월 반복 지급이 아닌, 조건 충족 시 최대 ${cashVoucherMaxCount}회에 걸쳐 지급되는 혜택이에요.`
-                    : '이 정책은 매월 반복 지급이 아닌, 조건 충족 시 1회성으로 지급되는 혜택이에요.'}
+                    ? `이 지원금은 계속 반복되는 게 아니라, 조건 충족 시 최대 ${cashVoucherMaxCount}회까지만 지급돼요.`
+                    : '이 지원금은 계속 반복되는 게 아니라, 조건 충족 시 1회성으로 지급돼요.'}
                 </span>
               </div>
             </>
