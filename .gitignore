@@ -12,4 +12,3 @@ __pycache__/
 *.db
 
 .venv/
-.claude/
