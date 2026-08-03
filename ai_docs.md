@@ -33,7 +33,7 @@
 
 - **`AGENTS.md` (전 에이전트 공통 지침)**:
     - 계층 구조 통제 (`crud/` 계층 외 direct DB Query 엄격 금지)
-    - 판정 체계의 명확한 분리 (조건 레벨 `SATISFIED/UNSATISFIED` vs 카드 레벨 `ELIGIBLE/NEEDS_REVIEW/INELIGIBLE`)
+    - 판정 체계의 명확한 분리 (조건 레벨 `SATISFIED/NEEDS_REVIEW/UNSATISFIED` vs 카드 레벨 `ELIGIBLE/NEEDS_REVIEW/INELIGIBLE`, 둘 다 3단계)
     - AI 추출 모듈의 DB 직접 접근 금지 및 검토 파일 적재 의무화
 - **`CLAUDE.md` (Claude Code 전용 지침)**:
     - 다중 파일 수정 전 `Plan Mode` 사전 승인 절차 강제
@@ -49,6 +49,7 @@
 ### 3-1. 정책 데이터 적재 파이프라인 (`scripts/seed_policy_data.py`)
 
 온통청년 API 수집 ➡️ AI 5종 구조화 추출 ➡️ 검토 초안 저장(`review_drafts/`) ➡️ 사람 승인 ➡️ DB 반영
+(단, `calc_rule_extractor`는 신규 정책 수집이 아닌 기존 DB 정책을 대상으로 별도 backfill 스크립트로 실행되며, 승인 후에도 별도 manifest 생성·sync 절차를 거쳐 대상 DB에 반영되는 전용 파이프라인을 사용합니다.)
 
 | 추출 모듈 경로 | 역할 | 사용 프롬프트 (`app/services/ai/prompt_templates.py`) |
 | --- | --- | --- |
